@@ -920,6 +920,251 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
+
+    // ------------------------------------------
+    // Excel TikTok Settlement Report File Parser
+    // ------------------------------------------
+    const inputExcelFile = document.getElementById('input-excel-file');
+    const excelFileStatus = document.getElementById('excel-file-status');
+    const excelParsePreview = document.getElementById('excel-parse-preview');
+    const previewDetails = document.getElementById('preview-details');
+    const btnConfirmExcelImport = document.getElementById('btn-confirm-excel-import');
+    
+    let tempParsedLogs = [];
+
+    if (inputExcelFile) {
+        inputExcelFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            excelFileStatus.textContent = file.name;
+            showToast('Membaca file laporan keuangan...', 'info');
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    // Find Detail pesanan sheet, or fallback to Laporan or first sheet
+                    let targetSheetName = workbook.SheetNames.find(n => n.includes('Detail pesanan') || n.includes('Laporan'));
+                    if (!targetSheetName) {
+                        targetSheetName = workbook.SheetNames[0];
+                    }
+
+                    const worksheet = workbook.Sheets[targetSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if (!jsonData || jsonData.length < 2) {
+                        showToast('File kosong atau format salah!', 'error');
+                        return;
+                    }
+
+                    // Find header row (usually contains "ID Pesanan" or "Jenis transaksi")
+                    let headerIndex = -1;
+                    for (let r = 0; r < Math.min(20, jsonData.length); r++) {
+                        const row = jsonData[r];
+                        if (row && row.some(cell => typeof cell === 'string' && (cell.includes('ID Pesanan') || cell.includes('Jenis transaksi')))) {
+                            headerIndex = r;
+                            break;
+                        }
+                    }
+
+                    if (headerIndex === -1) {
+                        showToast('Format kolom tidak dikenali! Pastikan Anda mengunduh Laporan Penyelesaian Keuangan dari Seller Center.', 'error');
+                        return;
+                    }
+
+                    const headers = jsonData[headerIndex];
+                    
+                    // Column mapping function
+                    const colMap = {
+                        orderId: headers.findIndex(h => h && h.toString().includes('ID Pesanan')),
+                        type: headers.findIndex(h => h && h.toString().includes('Jenis transaksi')),
+                        date: headers.findIndex(h => h && h.toString().includes('Waktu pembayaran') || h && h.toString().includes('Waktu pemesanan') || h && h.toString().includes('Waktu')),
+                        gross: headers.findIndex(h => h && h.toString().includes('Jumlah penyelesaian') || h && h.toString().includes('Total Pendapatan') || h && h.toString().includes('Pendapatan')),
+                        voucher: headers.findIndex(h => h && h.toString().includes('Diskon penjual') || h && h.toString().includes('Diskon voucher yang ditanggung penjual')),
+                        refund: headers.findIndex(h => h && h.toString().includes('Pengembalian dana pembeli') || h && h.toString().includes('Subtotal pengembalian dana')),
+                        affiliate: headers.findIndex(h => h && h.toString().includes('Komisi Afiliasi') || h && h.toString().includes('Komisi mitra')),
+                        ads: headers.findIndex(h => h && h.toString().includes('Biaya iklan GMV Max'))
+                    };
+
+                    if (colMap.date === -1 || colMap.gross === -1) {
+                        showToast('Kolom Waktu/Tanggal atau Pendapatan tidak ditemukan!', 'error');
+                        return;
+                    }
+
+                    // Process rows
+                    const dailyAggregates = {};
+
+                    for (let r = headerIndex + 1; r < jsonData.length; r++) {
+                        const row = jsonData[r];
+                        if (!row || row.length === 0) continue;
+
+                        const rawDate = row[colMap.date];
+                        if (!rawDate) continue;
+
+                        // Clean and parse date
+                        let dateStr = '';
+                        if (rawDate instanceof Date) {
+                            dateStr = rawDate.toISOString().split('T')[0];
+                        } else {
+                            const dateMatch = rawDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                            if (dateMatch) {
+                                dateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
+                            } else {
+                                const parsedD = new Date(rawDate);
+                                if (!isNaN(parsedD.getTime())) {
+                                    dateStr = parsedD.toISOString().split('T')[0];
+                                }
+                            }
+                        }
+
+                        if (!dateStr) continue;
+
+                        if (!dailyAggregates[dateStr]) {
+                            dailyAggregates[dateStr] = {
+                                date: dateStr,
+                                gross: 0,
+                                orders: 0,
+                                refunds: 0,
+                                vouchers: 0,
+                                uniqueOrders: new Set(),
+                                adsShareSum: 0,
+                                affShareSum: 0,
+                                ordersTotalWeight: 0
+                            };
+                        }
+
+                        const dayData = dailyAggregates[dateStr];
+                        const typeVal = colMap.type !== -1 ? (row[colMap.type] || '').toString() : 'Pesanan';
+                        
+                        const grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
+                        const voucherVal = Math.max(0, parseFloat(colMap.voucher !== -1 ? row[colMap.voucher] : 0) || 0);
+                        const refundVal = Math.max(0, parseFloat(colMap.refund !== -1 ? row[colMap.refund] : 0) || 0);
+                        const affCommission = Math.max(0, parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
+                        const adsCost = Math.max(0, parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
+
+                        if (typeVal.includes('Pesanan')) {
+                            dayData.gross += grossVal;
+                            dayData.vouchers += voucherVal;
+                            
+                            const orderId = colMap.orderId !== -1 ? row[colMap.orderId] : null;
+                            if (orderId) {
+                                dayData.uniqueOrders.add(orderId);
+                            }
+
+                            dayData.ordersTotalWeight += 1;
+                            if (adsCost > 0) dayData.adsShareSum += 1;
+                            if (affCommission > 0) dayData.affShareSum += 1;
+                        } else if (typeVal.includes('Pengembalian') || typeVal.includes('Refund') || typeVal.includes('Adjustment') || grossVal < 0) {
+                            dayData.refunds += Math.abs(parseFloat(row[colMap.gross]) || 0) + refundVal;
+                        }
+                    }
+
+                    // Format aggregated data
+                    tempParsedLogs = Object.keys(dailyAggregates).map(dateKey => {
+                        const agg = dailyAggregates[dateKey];
+                        const calculatedOrders = agg.uniqueOrders.size || agg.ordersTotalWeight || 1;
+
+                        let adsPct = 30;
+                        let affPct = 25;
+                        let livePct = 25;
+                        let videoPct = 20;
+
+                        if (agg.ordersTotalWeight > 0) {
+                            const adsRatio = agg.adsShareSum / agg.ordersTotalWeight;
+                            const affRatio = agg.affShareSum / agg.ordersTotalWeight;
+
+                            if (adsRatio > 0 || affRatio > 0) {
+                                adsPct = Math.round(adsRatio * 100);
+                                affPct = Math.round(affRatio * 100);
+                                
+                                const remaining = Math.max(0, 100 - adsPct - affPct);
+                                livePct = Math.round(remaining * 0.55);
+                                videoPct = Math.max(0, 100 - adsPct - affPct - livePct);
+                            }
+                        }
+
+                        return {
+                            id: 'log_imp_' + dateKey.replace(/-/g, '') + '_' + Date.now(),
+                            date: dateKey,
+                            orders: calculatedOrders,
+                            gross: agg.gross,
+                            refunds: agg.refunds,
+                            vouchers: agg.vouchers,
+                            channels: {
+                                ads: adsPct,
+                                affiliate: affPct,
+                                live: livePct,
+                                video: videoPct
+                            }
+                        };
+                    });
+
+                    tempParsedLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                    if (tempParsedLogs.length === 0) {
+                        showToast('Tidak ada data transaksi pesanan yang valid!', 'error');
+                        return;
+                    }
+
+                    const startDate = tempParsedLogs[0].date;
+                    const endDate = tempParsedLogs[tempParsedLogs.length - 1].date;
+                    const totalGrossVal = tempParsedLogs.reduce((sum, item) => sum + item.gross, 0);
+
+                    previewDetails.innerHTML = `
+                        <strong>Detail Excel Hasil Pembacaan:</strong><br>
+                        📅 Rentang Tanggal: <strong>${startDate} s/d ${endDate}</strong> (${tempParsedLogs.length} Hari Aktif)<br>
+                        💰 Total Pendapatan Kotor: <strong>${formatRupiah(totalGrossVal)}</strong><br>
+                        📦 Total Pesanan: <strong>${tempParsedLogs.reduce((sum, item) => sum + item.orders, 0)} Pcs</strong><br>
+                        💸 Potongan Voucher Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0))}</strong><br>
+                        ❌ Nilai Retur Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0))}</strong>
+                    `;
+
+                    excelParsePreview.style.display = 'block';
+                    showToast('File Excel berhasil dianalisis! Silakan klik Impor.', 'success');
+                } catch (err) {
+                    console.error('Error parsing excel:', err);
+                    showToast('Gagal membaca file: ' + err.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    if (btnConfirmExcelImport) {
+        btnConfirmExcelImport.addEventListener('click', () => {
+            if (tempParsedLogs.length === 0) return;
+
+            try {
+                const existingDatesMap = {};
+                tempParsedLogs.forEach(log => {
+                    existingDatesMap[log.date] = log;
+                });
+
+                revenueLogs = revenueLogs.filter(oldLog => !existingDatesMap[oldLog.date]);
+                revenueLogs = [...revenueLogs, ...tempParsedLogs];
+
+                saveLogsToStorage();
+                calculateMetrics();
+                renderDailyLogs();
+                updateCharts();
+
+                excelParsePreview.style.display = 'none';
+                inputExcelFile.value = '';
+                excelFileStatus.textContent = 'Belum ada file terpilih';
+                tempParsedLogs = [];
+
+                showToast('Seluruh data transaksi Excel berhasil diimpor!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal mengimpor database: ' + err.message, 'error');
+            }
+        });
+    }
+
     // ------------------------------------------
     // Initial calls
     // ------------------------------------------
