@@ -745,24 +745,37 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = function(evt) {
                 try {
                     const importedData = JSON.parse(evt.target.result);
-                    if (!importedData || typeof importedData !== 'object') {
+                    if (!importedData) {
                         showToast('Format file cadangan tidak valid!', 'error');
                         return;
                     }
 
-                    if (Array.isArray(importedData.revenueLogs)) {
-                        localStorage.setItem('tiktok_revenue_logs', JSON.stringify(importedData.revenueLogs));
+                    let logsToImport = null;
+                    if (Array.isArray(importedData)) {
+                        logsToImport = importedData;
+                    } else if (typeof importedData === 'object' && Array.isArray(importedData.revenueLogs)) {
+                        logsToImport = importedData.revenueLogs;
                     }
-                    if (importedData.targetRevenue) {
-                        localStorage.setItem('tiktok_target_revenue', importedData.targetRevenue.toString());
-                    }
-                    if (importedData.shopName) {
-                        localStorage.setItem('shop_name', importedData.shopName);
-                    }
-                    if (importedData.shopLogoBase64) {
-                        localStorage.setItem('shop_logo_base64', importedData.shopLogoBase64);
+
+                    if (logsToImport) {
+                        localStorage.setItem('tiktok_revenue_logs', JSON.stringify(logsToImport));
                     } else {
-                        localStorage.removeItem('shop_logo_base64');
+                        showToast('Format data omset tidak ditemukan di file!', 'error');
+                        return;
+                    }
+
+                    if (typeof importedData === 'object') {
+                        if (importedData.targetRevenue) {
+                            localStorage.setItem('tiktok_target_revenue', importedData.targetRevenue.toString());
+                        }
+                        if (importedData.shopName) {
+                            localStorage.setItem('shop_name', importedData.shopName);
+                        }
+                        if (importedData.shopLogoBase64) {
+                            localStorage.setItem('shop_logo_base64', importedData.shopLogoBase64);
+                        } else {
+                            localStorage.removeItem('shop_logo_base64');
+                        }
                     }
 
                     showToast('Seluruh data omset berhasil dipulihkan! Memuat ulang...', 'success');
