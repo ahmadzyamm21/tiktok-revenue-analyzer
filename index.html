@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Shop Revenue & Omset Analyzer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="shop-badge" id="shop-badge-container" title="Klik untuk edit nama & logo toko">
+                    <div class="shop-logo" id="shop-logo-container">
+                        <i class="fas fa-store text-cyan" id="shop-logo-icon"></i>
+                    </div>
+                    <div class="shop-info">
+                        <span class="shop-title" id="shop-name-display">My TikTok Shop</span>
+                        <span class="shop-status"><span class="status-dot"></span>Online</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-tab="tab-dashboard">
+                    <i class="fas fa-chart-pie"></i> Dashboard Overview
+                </a>
+                <a href="#" class="menu-item" data-tab="tab-daily">
+                    <i class="fas fa-calendar-day"></i> Catatan Harian
+                </a>
+                <a href="#" class="menu-item" data-tab="tab-channels">
+                    <i class="fas fa-network-wired"></i> Analisis Saluran
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="app-version">TikTok Revenue Analyzer v1.0.0</div>
+                <div class="developer-tag">Designed for TikTok Sellers</div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-title-group">
+                    <h1 class="header-title">Analisis & Manajemen Omset</h1>
+                    <p class="header-subtitle">Monitor target bulanan, kontribusi channel sales, diskon, dan retur toko Anda.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="btn-open-settings" style="display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-sliders-h"></i> Pengaturan
+                    </button>
+                    <button class="btn btn-cyan" id="btn-print-dashboard" style="display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-print"></i> Cetak Laporan
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: DASHBOARD OVERVIEW -->
+            <section id="tab-dashboard" class="tab-content active">
+                <!-- KPI CARDS GRID -->
+                <div class="kpi-grid">
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan);">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Target Bulan Ini</span>
+                            <span class="kpi-value" id="kpi-target-rev">Rp 0</span>
+                            <span class="kpi-subtext" id="kpi-target-pct">Progress: 0%</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(0, 255, 135, 0.1); color: var(--accent-green);">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Omset Kotor (Gross)</span>
+                            <span class="kpi-value" id="kpi-gross-rev">Rp 0</span>
+                            <span class="kpi-subtext" id="kpi-order-count">Total: 0 Order</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(0, 255, 135, 0.15); color: var(--accent-green);">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Omset Bersih Riil</span>
+                            <span class="kpi-value text-green" id="kpi-net-rev">Rp 0</span>
+                            <span class="kpi-subtext" id="kpi-voucher-deduction">Potongan Voucher/Retur: Rp 0</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(254, 44, 85, 0.1); color: var(--accent-pink);">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Rata-Rata AOV</span>
+                            <span class="kpi-value" id="kpi-aov">Rp 0</span>
+                            <span class="kpi-subtext" id="kpi-daily-avg">Rata-rata Harian: Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TARGET & CHANNEL GRID -->
+                <div class="charts-grid-two">
+                    <!-- Target Progress Bar Card -->
+                    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 25px;">
+                        <h3 style="margin-top: 0; margin-bottom: 15px; color: #FFF; width: 100%; text-align: left;">Pencapaian Target Bulanan</h3>
+                        <div class="progress-ring-container">
+                            <svg class="progress-ring" width="160" height="160">
+                                <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.03)" stroke-width="12" fill="transparent" r="70" cx="80" cy="80" />
+                                <circle class="progress-ring-bar" id="target-progress-bar" stroke="var(--accent-cyan)" stroke-width="12" fill="transparent" r="70" cx="80" cy="80" />
+                            </svg>
+                            <div class="progress-ring-text" id="target-progress-text">0%</div>
+                        </div>
+                        <div style="margin-top: 20px;" class="target-details">
+                            <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">Sisa Target Bulanan</div>
+                            <h4 id="target-remaining-value" style="font-size: 18px; margin: 0; color: #FFF;">Rp 0</h4>
+                            <div id="target-needed-daily" style="font-size: 11.5px; color: var(--accent-cyan); margin-top: 6px; font-weight: 500;">Butuh Rp 0 / hari untuk mencapai target</div>
+                        </div>
+                    </div>
+
+                    <!-- Revenue Channel breakdown -->
+                    <div class="card">
+                        <h3 style="margin-top: 0; margin-bottom: 5px;">Kontribusi Saluran Penjualan</h3>
+                        <p class="section-desc">Persentase sumber omset bulanan yang berasal dari Ads, Affiliate, Live, dan Video.</p>
+                        <div style="position: relative; height: 210px; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="chart-channel-donut"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TREND CHART -->
+                <div class="card mt-4">
+                    <h3 style="margin-top: 0; margin-bottom: 5px;">Tren Omset Kotor vs Omset Bersih</h3>
+                    <p class="section-desc">Grafik tren harian perbandingan total sales bruto terhadap omset bersih setelah dikurangi retur & voucher.</p>
+                    <div style="position: relative; height: 320px; width: 100%;">
+                        <canvas id="chart-revenue-trend"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: DAILY CATATAN HARIAN -->
+            <section id="tab-daily" class="tab-content">
+                <div class="simulator-layout">
+                    <!-- Left: Input Form -->
+                    <div class="simulator-controls card">
+                        <h3 id="form-title">Pencatatan Omset Harian</h3>
+                        <p class="section-desc">Masukkan omset kotor, refund/retur, voucher, dan breakdown asal omset penjualan Anda.</p>
+                        
+                        <form id="revenue-log-form" class="sim-inputs" novalidate>
+                            <input type="hidden" id="log-id">
+                            
+                            <div class="form-row">
+                                <div class="form-group flex-1">
+                                    <label for="log-date">Tanggal Transaksi</label>
+                                    <input type="date" id="log-date" required>
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="log-orders">Jumlah Order (pcs)</label>
+                                    <input type="number" id="log-orders" placeholder="100" min="0" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="log-gross">Omset Kotor (Bruto)</label>
+                                <div class="input-with-addon">
+                                    <span class="addon">Rp</span>
+                                    <input type="number" id="log-gross" placeholder="15000000" min="0" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row mt-3">
+                                <div class="form-group flex-1">
+                                    <label for="log-refunds">Nilai Retur / Refund (Rp)</label>
+                                    <div class="input-with-addon">
+                                        <span class="addon">Rp</span>
+                                        <input type="number" id="log-refunds" placeholder="500000" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="log-vouchers">Voucher Toko & Diskon (Rp)</label>
+                                    <div class="input-with-addon">
+                                        <span class="addon">Rp</span>
+                                        <input type="number" id="log-vouchers" placeholder="250000" min="0" value="0">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px solid var(--border-color); margin-top: 20px; padding-top: 15px;">
+                                <h4 style="margin: 0 0 10px 0; color: var(--accent-cyan); font-size: 13px; text-transform: uppercase;">Breakdown Saluran Omset (%)</h4>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Masukkan porsi persentase kontribusi masing-masing channel sales (Total harus 100%).</p>
+                                
+                                <div class="form-row">
+                                    <div class="form-group flex-1">
+                                        <label for="pct-ads">Ads (%)</label>
+                                        <input type="number" id="pct-ads" value="30" min="0" max="100" step="1" required>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="pct-affiliate">Affiliate (%)</label>
+                                        <input type="number" id="pct-affiliate" value="25" min="0" max="100" step="1" required>
+                                    </div>
+                                </div>
+                                <div class="form-row mt-2">
+                                    <div class="form-group flex-1">
+                                        <label for="pct-live">Live Org (%)</label>
+                                        <input type="number" id="pct-live" value="25" min="0" max="100" step="1" required>
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label for="pct-video">Video Org (%)</label>
+                                        <input type="number" id="pct-video" value="20" min="0" max="100" step="1" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; margin-top: 24px;">
+                                <button type="button" class="btn btn-secondary" id="btn-cancel-edit" style="display: none; flex: 1;">Batal</button>
+                                <button type="submit" class="btn btn-cyan" id="btn-save-log" style="flex: 2;">
+                                    <i class="fas fa-save"></i> Simpan Catatan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right: Table History -->
+                    <div class="simulator-display">
+                        <div class="table-card card">
+                            <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <h3>Riwayat Catatan Omset</h3>
+                                <div style="display: flex; gap: 8px;">
+                                    <button id="btn-export-csv" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 6px 10px;">
+                                        <i class="fas fa-file-export mr-1"></i> Ekspor CSV
+                                    </button>
+                                    <button id="btn-print-logs" class="btn btn-cyan btn-sm" style="font-size: 11px; padding: 6px 10px;">
+                                        <i class="fas fa-print mr-1"></i> Cetak PDF
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="premium-table" id="logs-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th style="text-align: right;">Omset Kotor</th>
+                                            <th style="text-align: right;">Retur</th>
+                                            <th style="text-align: right;">Voucher</th>
+                                            <th style="text-align: right;">Omset Bersih</th>
+                                            <th style="text-align: right;">Order</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="logs-table-body">
+                                        <!-- Dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: ANALISIS SALURAN -->
+            <section id="tab-channels" class="tab-content">
+                <div class="kpi-grid" id="channels-cards-container">
+                    <!-- Populated via Javascript -->
+                </div>
+                
+                <div class="card mt-4">
+                    <h3 style="margin-top: 0; margin-bottom: 5px;">Rekomendasi Optimasi Saluran Sales</h3>
+                    <p class="section-desc">Saran cerdas berdasarkan rasio persentase performa saluran omset untuk menyeimbangkan profitabilitas toko.</p>
+                    <div class="recommendations-container" id="channel-recommendations-list">
+                        <!-- Populated via Javascript -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Hidden Layout for Printing -->
+    <div id="print-layout" style="display: none;">
+        <!-- Header -->
+        <div class="print-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="print-shop-logo" style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background: #eee; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-store" style="font-size: 24px; color: #333;"></i>
+                </div>
+                <div>
+                    <h1 id="print-shop-name" style="margin: 0; font-size: 20px; color: #111;">My TikTok Shop</h1>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #666;">Laporan Hasil Analisis Omset & Saluran Penjualan Bulanan</p>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <h3 style="margin: 0; font-size: 13px; color: #333;">Laporan Keuangan Toko</h3>
+                <p id="print-report-date" style="margin: 2px 0 0 0; font-size: 10px; color: #777;">Tanggal Cetak: -</p>
+            </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;" id="print-kpi-row">
+            <!-- Dynamic -->
+        </div>
+
+        <!-- Section 1: Daily Revenue History -->
+        <div style="margin-bottom: 25px;" id="print-section-history">
+            <h3 style="font-size: 13px; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; color: #111;">
+                <i class="fas fa-history"></i> Riwayat Keuangan Harian
+            </h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px;" id="print-table">
+                <thead>
+                    <tr style="background-color: #f5f5f5; border-bottom: 2px solid #bbb;">
+                        <th style="padding: 6px; text-align: left; border-bottom: 1px solid #ccc;">Tanggal</th>
+                        <th style="padding: 6px; text-align: right; border-bottom: 1px solid #ccc;">Omset Kotor</th>
+                        <th style="padding: 6px; text-align: right; border-bottom: 1px solid #ccc;">Nilai Retur</th>
+                        <th style="padding: 6px; text-align: right; border-bottom: 1px solid #ccc;">Nilai Voucher</th>
+                        <th style="padding: 6px; text-align: right; border-bottom: 1px solid #ccc;">Omset Bersih</th>
+                        <th style="padding: 6px; text-align: right; border-bottom: 1px solid #ccc;">Jumlah Order</th>
+                    </tr>
+                </thead>
+                <tbody id="print-table-body">
+                    <!-- Dynamic -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Pengaturan Toko & Target -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content card" style="max-width: 400px; padding: 24px; position: relative; border-radius: 16px; background-color: rgba(22, 22, 37, 0.98);">
+            <h3 style="margin-top: 0; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-sliders-h"></i> Pengaturan Toko & Target
+            </h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Sesuaikan nama, logo, serta target omset bulanan toko Anda.</p>
+            
+            <div class="form-group">
+                <label for="settings-shop-name" style="display: block; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Nama Toko</label>
+                <input type="text" id="settings-shop-name" value="My TikTok Shop" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 14px; outline: none;">
+            </div>
+
+            <div class="form-group mt-3" style="margin-top: 15px;">
+                <label for="settings-target-revenue" style="display: block; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Target Omset Bulanan (Rp)</label>
+                <input type="number" id="settings-target-revenue" value="100000000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 14px; outline: none;">
+            </div>
+            
+            <div class="form-group mt-3" style="margin-top: 15px;">
+                <label style="display: block; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Logo Toko</label>
+                <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+                    <div id="settings-logo-preview" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px dashed var(--border-color); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <i class="fas fa-store text-cyan" id="settings-logo-preview-icon" style="font-size: 20px;"></i>
+                        <img id="settings-logo-preview-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="btn-upload-logo-trigger" style="padding: 6px 12px; font-size: 12px;">
+                        <i class="fas fa-upload"></i> Unggah Foto
+                    </button>
+                    <input type="file" id="settings-shop-logo-file" accept="image/*" style="display: none;">
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+            <h4 style="margin: 0 0 8px 0; color: #FFF; font-size: 12px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Pusat Cadangan Data Toko</h4>
+            <p style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 12px;">Cadangkan seluruh database transaksi omset harian Anda atau pulihkan dari file sebelumnya.</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-export-full-backup" style="flex: 1; font-size: 11px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i class="fas fa-file-download"></i> Cadangkan Semua
+                </button>
+                <label class="btn btn-secondary btn-sm" for="input-full-backup-file" style="flex: 1; font-size: 11px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; font-weight: normal;">
+                    <i class="fas fa-file-upload"></i> Pulihkan Data
+                </label>
+                <input type="file" id="input-full-backup-file" accept=".json" style="display: none;">
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" id="btn-close-settings">Batal</button>
+                <button type="button" class="btn btn-cyan" id="btn-save-settings">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast">
+        <i class="fas fa-info-circle toast-icon"></i>
+        <span class="toast-message">Notifikasi</span>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>
