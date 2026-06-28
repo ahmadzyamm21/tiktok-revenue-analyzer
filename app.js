@@ -939,6 +939,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!file) return;
 
             excelFileStatus.textContent = file.name;
+            excelParsePreview.style.display = 'block';
+            previewDetails.innerHTML = `<span style="color: var(--text-muted);"><i class="fas fa-spinner fa-spin mr-1"></i> Sedang menganalisis file Excel...</span>`;
+            btnConfirmExcelImport.style.display = 'none';
+
             showToast('Membaca file laporan keuangan...', 'info');
 
             const reader = new FileReader();
@@ -957,40 +961,61 @@ document.addEventListener('DOMContentLoaded', () => {
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
                     if (!jsonData || jsonData.length < 2) {
+                        previewDetails.innerHTML = `<span style="color: var(--accent-pink); font-weight: bold;">❌ File kosong atau tidak valid.</span>`;
                         showToast('File kosong atau format salah!', 'error');
                         return;
                     }
 
-                    // Find header row (usually contains "ID Pesanan" or "Jenis transaksi")
+                    // Find header row (case-insensitive and type-safe)
                     let headerIndex = -1;
-                    for (let r = 0; r < Math.min(20, jsonData.length); r++) {
+                    for (let r = 0; r < Math.min(30, jsonData.length); r++) {
                         const row = jsonData[r];
-                        if (row && row.some(cell => typeof cell === 'string' && (cell.includes('ID Pesanan') || cell.includes('Jenis transaksi')))) {
-                            headerIndex = r;
-                            break;
+                        if (row && Array.isArray(row)) {
+                            const isHeader = row.some(cell => {
+                                if (cell === null || cell === undefined) return false;
+                                const cellStr = cell.toString().toLowerCase();
+                                return cellStr.includes('id pesanan') || 
+                                       cellStr.includes('jenis transaksi') || 
+                                       cellStr.includes('waktu pemesanan') ||
+                                       cellStr.includes('waktu pembayaran') ||
+                                       cellStr.includes('order id') ||
+                                       cellStr.includes('transaction type');
+                            });
+                            if (isHeader) {
+                                headerIndex = r;
+                                break;
+                            }
                         }
                     }
 
                     if (headerIndex === -1) {
-                        showToast('Format kolom tidak dikenali! Pastikan Anda mengunduh Laporan Penyelesaian Keuangan dari Seller Center.', 'error');
+                        previewDetails.innerHTML = `
+                            <span style="color: var(--accent-pink); font-weight: bold;">❌ Format kolom tidak dikenali.</span><br>
+                            <span style="font-size: 11px; color: var(--text-muted);">Pastikan Anda mengunggah file Laporan Penyelesaian Keuangan (Settlement Report) atau Detail Pesanan dari TikTok Seller Center.</span>
+                        `;
+                        showToast('Format kolom tidak dikenali!', 'error');
                         return;
                     }
 
-                    const headers = jsonData[headerIndex];
+                    const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
                     
-                    // Column mapping function
+                    // Column mapping function (case-insensitive)
                     const colMap = {
-                        orderId: headers.findIndex(h => h && h.toString().includes('ID Pesanan')),
-                        type: headers.findIndex(h => h && h.toString().includes('Jenis transaksi')),
-                        date: headers.findIndex(h => h && h.toString().includes('Waktu pembayaran') || h && h.toString().includes('Waktu pemesanan') || h && h.toString().includes('Waktu')),
-                        gross: headers.findIndex(h => h && h.toString().includes('Jumlah penyelesaian') || h && h.toString().includes('Total Pendapatan') || h && h.toString().includes('Pendapatan')),
-                        voucher: headers.findIndex(h => h && h.toString().includes('Diskon penjual') || h && h.toString().includes('Diskon voucher yang ditanggung penjual')),
-                        refund: headers.findIndex(h => h && h.toString().includes('Pengembalian dana pembeli') || h && h.toString().includes('Subtotal pengembalian dana')),
-                        affiliate: headers.findIndex(h => h && h.toString().includes('Komisi Afiliasi') || h && h.toString().includes('Komisi mitra')),
-                        ads: headers.findIndex(h => h && h.toString().includes('Biaya iklan GMV Max'))
+                        orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id')),
+                        type: headers.findIndex(h => h.includes('jenis transaksi') || h.includes('transaction type')),
+                        date: headers.findIndex(h => h.includes('waktu pembayaran') || h.includes('waktu pemesanan') || h.includes('waktu') || h.includes('date')),
+                        gross: headers.findIndex(h => h.includes('jumlah penyelesaian') || h.includes('total pendapatan') || h.includes('pendapatan') || h.includes('gross') || h.includes('revenue') || h.includes('payout')),
+                        voucher: headers.findIndex(h => h.includes('diskon penjual') || h.includes('diskon voucher') || h.includes('voucher') || h.includes('seller discount')),
+                        refund: headers.findIndex(h => h.includes('pengembalian dana') || h.includes('refund') || h.includes('returned')),
+                        affiliate: headers.findIndex(h => h.includes('komisi afiliasi') || h.includes('komisi mitra') || h.includes('affiliate')),
+                        ads: headers.findIndex(h => h.includes('iklan gmv max') || h.includes('ads cost') || h.includes('iklan gmv') || h.includes('ads share'))
                     };
 
                     if (colMap.date === -1 || colMap.gross === -1) {
+                        previewDetails.innerHTML = `
+                            <span style="color: var(--accent-pink); font-weight: bold;">❌ Kolom penting tidak ditemukan.</span><br>
+                            <span style="font-size: 11px; color: var(--text-muted);">Kolom Waktu (Tanggal) atau Pendapatan tidak terdeteksi di baris kepala.</span>
+                        `;
                         showToast('Kolom Waktu/Tanggal atau Pendapatan tidak ditemukan!', 'error');
                         return;
                     }
@@ -1123,6 +1148,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ❌ Nilai Retur Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0))}</strong>
                     `;
 
+                    btnConfirmExcelImport.style.display = 'inline-flex';
                     excelParsePreview.style.display = 'block';
                     showToast('File Excel berhasil dianalisis! Silakan klik Impor.', 'success');
                 } catch (err) {
