@@ -951,51 +951,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = new Uint8Array(evt.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
 
-                    // Find Detail pesanan sheet, or fallback to Laporan or first sheet
-                    let targetSheetName = workbook.SheetNames.find(n => n.includes('Detail pesanan') || n.includes('Laporan'));
-                    if (!targetSheetName) {
-                        targetSheetName = workbook.SheetNames[0];
-                    }
-
-                    const worksheet = workbook.Sheets[targetSheetName];
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                    if (!jsonData || jsonData.length < 2) {
-                        previewDetails.innerHTML = `<span style="color: var(--accent-pink); font-weight: bold;">❌ File kosong atau tidak valid.</span>`;
-                        showToast('File kosong atau format salah!', 'error');
-                        return;
-                    }
-
-                    // Find header row (case-insensitive and type-safe)
+                    // Dynamic Multi-Sheet Scanner to automatically find the correct sheet & header row
+                    let targetSheetName = '';
+                    let jsonData = null;
                     let headerIndex = -1;
-                    for (let r = 0; r < Math.min(30, jsonData.length); r++) {
-                        const row = jsonData[r];
-                        if (row && Array.isArray(row)) {
-                            const isHeader = row.some(cell => {
-                                if (cell === null || cell === undefined) return false;
-                                const cellStr = cell.toString().toLowerCase();
-                                return cellStr.includes('id pesanan') || 
-                                       cellStr.includes('jenis transaksi') || 
-                                       cellStr.includes('waktu pemesanan') ||
-                                       cellStr.includes('waktu pembayaran') ||
-                                       cellStr.includes('order id') ||
-                                       cellStr.includes('transaction type');
-                            });
-                            if (isHeader) {
-                                headerIndex = r;
-                                break;
+                    let bestHeaderMatchCount = 0;
+
+                    for (let s = 0; s < workbook.SheetNames.length; s++) {
+                        const sheetName = workbook.SheetNames[s];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const currentJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        if (!currentJson || currentJson.length < 2) continue;
+
+                        for (let r = 0; r < Math.min(30, currentJson.length); r++) {
+                            const row = currentJson[r];
+                            if (row && Array.isArray(row)) {
+                                let matchCount = 0;
+                                row.forEach(cell => {
+                                    if (cell === null || cell === undefined) return;
+                                    const cellStr = cell.toString().toLowerCase().trim();
+                                    if (cellStr.includes('id pesanan') || cellStr.includes('order id')) matchCount += 2;
+                                    if (cellStr.includes('jenis transaksi') || cellStr.includes('transaction type')) matchCount += 2;
+                                    if (cellStr.includes('waktu pemesanan') || cellStr.includes('waktu pembayaran') || cellStr.includes('date')) matchCount += 1;
+                                    if (cellStr.includes('jumlah penyelesaian') || cellStr.includes('total pendapatan') || cellStr.includes('revenue') || cellStr.includes('payout')) matchCount += 1;
+                                    if (cellStr.includes('diskon penjual') || cellStr.includes('voucher')) matchCount += 1;
+                                });
+
+                                if (matchCount > bestHeaderMatchCount) {
+                                    bestHeaderMatchCount = matchCount;
+                                    targetSheetName = sheetName;
+                                    jsonData = currentJson;
+                                    headerIndex = r;
+                                }
                             }
                         }
                     }
 
-                    if (headerIndex === -1) {
+                    if (bestHeaderMatchCount < 3 || !jsonData) {
                         previewDetails.innerHTML = `
                             <span style="color: var(--accent-pink); font-weight: bold;">❌ Format kolom tidak dikenali.</span><br>
-                            <span style="font-size: 11px; color: var(--text-muted);">Pastikan Anda mengunggah file Laporan Penyelesaian Keuangan (Settlement Report) atau Detail Pesanan dari TikTok Seller Center.</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Format transaksi pesanan tidak ditemukan di lembar (sheet) mana pun. Pastikan Anda mengunggah file Laporan Penyelesaian Keuangan (Settlement Report) atau Detail Pesanan dari TikTok Seller Center.</span>
                         `;
                         showToast('Format kolom tidak dikenali!', 'error');
                         return;
                     }
+
+
 
                     const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
                     
