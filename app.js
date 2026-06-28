@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let targetRevenue = parseFloat(localStorage.getItem('tiktok_target_revenue')) || 100000000;
     let shopName = localStorage.getItem('shop_name') || 'My TikTok Shop';
     let currentLogoBase64 = localStorage.getItem('shop_logo_base64') || null;
+    let withdrawalsList = JSON.parse(localStorage.getItem('tiktok_withdrawals')) || [];
 
     let revenueTrendChart = null;
     let channelDonutChart = null;
@@ -353,6 +354,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+    }
+
+    function renderWithdrawals() {
+        const container = document.getElementById('card-withdrawals');
+        const tbody = document.getElementById('withdrawals-table-body');
+        const totalBadge = document.getElementById('total-withdrawn-badge');
+
+        if (!container || !tbody) return;
+
+        if (withdrawalsList.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        tbody.innerHTML = '';
+
+        let totalSum = 0;
+        const sorted = [...withdrawalsList].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        sorted.forEach(w => {
+            totalSum += w.amount;
+            const tr = document.createElement('tr');
+            
+            const d = new Date(w.date);
+            const formattedDate = !isNaN(d.getTime()) ? d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : w.date;
+
+            tr.innerHTML = `
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-color);">${formattedDate}</td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 12px;">${w.refId}</td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-color); text-align: right; font-weight: bold; color: var(--accent-green);">Rp ${w.amount.toLocaleString('id-ID')}</td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-color); text-align: center; color: var(--accent-cyan);">${w.bank}</td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-color); text-align: center;"><span class="badge" style="background: rgba(0, 255, 135, 0.1); color: var(--accent-green); padding: 2px 6px; border-radius: 4px; font-size: 11px;">${w.status}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        totalBadge.textContent = `Total Cair: Rp ${totalSum.toLocaleString('id-ID')}`;
     }
 
     // Submit daily log
@@ -719,7 +758,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     revenueLogs: revenueLogs,
                     targetRevenue: targetRevenue,
                     shopName: shopName,
-                    shopLogoBase64: localStorage.getItem('shop_logo_base64') || null
+                    shopLogoBase64: localStorage.getItem('shop_logo_base64') || null,
+                    withdrawals: withdrawalsList
                 };
 
                 const jsonStr = JSON.stringify(dbBackup, null, 2);
@@ -780,6 +820,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             localStorage.setItem('shop_logo_base64', importedData.shopLogoBase64);
                         } else {
                             localStorage.removeItem('shop_logo_base64');
+                        }
+                        if (Array.isArray(importedData.withdrawals)) {
+                            localStorage.setItem('tiktok_withdrawals', JSON.stringify(importedData.withdrawals));
+                        } else {
+                            localStorage.removeItem('tiktok_withdrawals');
                         }
                     }
 
@@ -950,6 +995,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnConfirmExcelImport = document.getElementById('btn-confirm-excel-import');
     
     let tempParsedLogs = [];
+    let tempParsedWithdrawals = [];
 
     if (inputExcelFile) {
         inputExcelFile.addEventListener('change', (e) => {
@@ -1121,6 +1167,58 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
+                    // Parse Riwayat penarikan if it exists
+                    tempParsedWithdrawals = [];
+                    const withdrawalSheetName = workbook.SheetNames.find(n => n.includes('Riwayat penarikan'));
+                    if (withdrawalSheetName) {
+                        const wSheet = workbook.Sheets[withdrawalSheetName];
+                        const wJson = XLSX.utils.sheet_to_json(wSheet, { header: 1 });
+                        if (wJson && wJson.length > 1) {
+                            let wHeaderIndex = -1;
+                            for (let r = 0; r < Math.min(10, wJson.length); r++) {
+                                const row = wJson[r];
+                                if (row && row.some(cell => cell && cell.toString().toLowerCase().includes('jenis transaksi'))) {
+                                    wHeaderIndex = r;
+                                    break;
+                                }
+                            }
+                            if (wHeaderIndex !== -1) {
+                                const wHeaders = wJson[wHeaderIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
+                                const colIdx = {
+                                    type: wHeaders.findIndex(h => h.includes('jenis') || h.includes('type')),
+                                    refId: wHeaders.findIndex(h => h.includes('referensi') || h.includes('ref')),
+                                    date: wHeaders.findIndex(h => h.includes('waktu') || h.includes('date') || h.includes('tanggal')),
+                                    total: wHeaders.findIndex(h => h.includes('total') || h.includes('jumlah') || h.includes('amount')),
+                                    status: wHeaders.findIndex(h => h.includes('status')),
+                                    bank: wHeaders.findIndex(h => h.includes('bank') || h.includes('rekening'))
+                                };
+
+                                for (let r = wHeaderIndex + 1; r < wJson.length; r++) {
+                                    const row = wJson[r];
+                                    if (!row || row.length === 0) continue;
+
+                                    const typeVal = colIdx.type !== -1 ? (row[colIdx.type] || '').toString() : '';
+                                    const statusVal = colIdx.status !== -1 ? (row[colIdx.status] || '').toString() : '';
+                                    
+                                    if (typeVal === 'Withdrawal' && statusVal === 'Transferred') {
+                                        const amountVal = Math.abs(parseFloat(row[colIdx.total]) || 0);
+                                        const dateVal = colIdx.date !== -1 ? (row[colIdx.date] || '').toString().split(' ')[0] : '';
+                                        const refVal = colIdx.refId !== -1 ? (row[colIdx.refId] || '').toString() : '-';
+                                        const bankVal = colIdx.bank !== -1 ? (row[colIdx.bank] || '').toString() : '/';
+
+                                        tempParsedWithdrawals.push({
+                                            date: dateVal.replace(/\//g, '-'),
+                                            refId: refVal,
+                                            amount: amountVal,
+                                            bank: bankVal,
+                                            status: statusVal
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // Format aggregated data
                     tempParsedLogs = Object.keys(dailyAggregates).map(dateKey => {
                         const agg = dailyAggregates[dateKey];
@@ -1209,6 +1307,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 revenueLogs = [...revenueLogs, ...tempParsedLogs];
 
                 saveLogsToStorage();
+
+                if (tempParsedWithdrawals.length > 0) {
+                    withdrawalsList = tempParsedWithdrawals;
+                    localStorage.setItem('tiktok_withdrawals', JSON.stringify(withdrawalsList));
+                    renderWithdrawals();
+                }
+
                 calculateMetrics();
                 renderDailyLogs();
                 updateCharts();
@@ -1217,6 +1322,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputExcelFile.value = '';
                 excelFileStatus.textContent = 'Belum ada file terpilih';
                 tempParsedLogs = [];
+                tempParsedWithdrawals = [];
 
                 showToast('Seluruh data transaksi Excel berhasil diimpor!', 'success');
             } catch (err) {
@@ -1232,5 +1338,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadShopSettings();
     calculateMetrics();
     renderDailyLogs();
+    renderWithdrawals();
     updateCharts();
 });
