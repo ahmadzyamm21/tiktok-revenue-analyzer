@@ -1001,16 +1001,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
                     
-                    // Column mapping function (case-insensitive)
+                    // Column mapping function (highly defensive and multi-format compatible)
                     const colMap = {
-                        orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id')),
-                        type: headers.findIndex(h => h.includes('jenis transaksi') || h.includes('transaction type')),
-                        date: headers.findIndex(h => h.includes('waktu pembayaran') || h.includes('waktu pemesanan') || h.includes('waktu') || h.includes('date')),
-                        gross: headers.findIndex(h => h.includes('jumlah penyelesaian') || h.includes('total pendapatan') || h.includes('pendapatan') || h.includes('gross') || h.includes('revenue') || h.includes('payout')),
-                        voucher: headers.findIndex(h => h.includes('diskon penjual') || h.includes('diskon voucher') || h.includes('voucher') || h.includes('seller discount')),
-                        refund: headers.findIndex(h => h.includes('pengembalian dana') || h.includes('refund') || h.includes('returned')),
-                        affiliate: headers.findIndex(h => h.includes('komisi afiliasi') || h.includes('komisi mitra') || h.includes('affiliate')),
-                        ads: headers.findIndex(h => h.includes('iklan gmv max') || h.includes('ads cost') || h.includes('iklan gmv') || h.includes('ads share'))
+                        orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id') || h.includes('pesanan') || h.includes('id') || h.includes('number')),
+                        type: headers.findIndex(h => h.includes('jenis transaksi') || h.includes('transaction type') || h.includes('tipe') || h.includes('status')),
+                        date: headers.findIndex(h => h.includes('waktu') || h.includes('date') || h.includes('tanggal') || h.includes('time') || h.includes('created') || h.includes('payment')),
+                        gross: headers.findIndex(h => h.includes('jumlah penyelesaian') || h.includes('total pendapatan') || h.includes('pendapatan') || h.includes('gross') || h.includes('revenue') || h.includes('payout') || h.includes('subtotal') || h.includes('harga') || h.includes('amount') || h.includes('total') || h.includes('nilai') || h.includes('price')),
+                        voucher: headers.findIndex(h => h.includes('diskon penjual') || h.includes('diskon voucher') || h.includes('voucher') || h.includes('seller discount') || h.includes('diskon toko') || h.includes('coupon')),
+                        refund: headers.findIndex(h => h.includes('pengembalian dana') || h.includes('refund') || h.includes('returned') || h.includes('retur') || h.includes('batal')),
+                        affiliate: headers.findIndex(h => h.includes('komisi afiliasi') || h.includes('komisi mitra') || h.includes('affiliate') || h.includes('komisi')),
+                        ads: headers.findIndex(h => h.includes('iklan gmv max') || h.includes('ads cost') || h.includes('iklan gmv') || h.includes('ads share') || h.includes('belanja iklan'))
                     };
 
                     if (colMap.date === -1 || colMap.gross === -1) {
