@@ -118,8 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tab switcher
     tabMenuItems.forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
             const tabId = item.getAttribute('data-tab');
+            if (!tabId) return;
+            e.preventDefault();
             
             tabMenuItems.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
