@@ -214,15 +214,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalRefunds = 0;
         let totalVouchers = 0;
         let totalOrders = 0;
+        let totalAdminFees = 0;
+        let totalAdsSpend = 0;
 
         revenueLogs.forEach(log => {
             totalGross += log.gross;
             totalRefunds += log.refunds;
             totalVouchers += (log.vouchers || 0);
             totalOrders += log.orders;
+            totalAdminFees += (log.adminFees || 0);
+            totalAdsSpend += (log.adsSpend || 0);
         });
 
         const totalNet = totalGross - totalRefunds - totalVouchers;
+        const totalPayout = totalNet - totalAdminFees - totalAdsSpend;
         const targetPct = targetRevenue > 0 ? (totalNet / targetRevenue) * 100 : 0;
         const aov = totalOrders > 0 ? totalGross / totalOrders : 0;
 
@@ -241,8 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
         kpiTargetPct.textContent = `Progress: ${targetPct.toFixed(1)}%`;
         kpiGrossRev.textContent = formatRupiah(totalGross);
         kpiOrderCount.textContent = `Total: ${totalOrders} Order`;
-        kpiNetRev.textContent = formatRupiah(totalNet);
-        kpiVoucherDeduction.textContent = `Potongan Voucher/Retur: ${formatRupiah(totalRefunds + totalVouchers)}`;
+        kpiNetRev.textContent = formatRupiah(totalPayout);
+        kpiVoucherDeduction.textContent = `Omset Net: ${formatRupiah(totalNet)} | Admin & Iklan: ${formatRupiah(totalAdminFees + totalAdsSpend)}`;
         kpiAov.textContent = formatRupiah(aov);
 
         const dailyAvgVal = revenueLogs.length > 0 ? totalGross / revenueLogs.length : 0;
@@ -1023,7 +1028,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         voucher: headers.findIndex(h => h.includes('diskon penjual') || h.includes('diskon voucher') || h.includes('voucher') || h.includes('seller discount') || h.includes('diskon toko') || h.includes('coupon')),
                         refund: headers.findIndex(h => h.includes('pengembalian dana') || h.includes('refund') || h.includes('returned') || h.includes('retur') || h.includes('batal')),
                         affiliate: headers.findIndex(h => h.includes('komisi afiliasi') || h.includes('komisi mitra') || h.includes('affiliate') || h.includes('komisi')),
-                        ads: headers.findIndex(h => h.includes('iklan gmv max') || h.includes('ads cost') || h.includes('iklan gmv') || h.includes('ads share') || h.includes('belanja iklan'))
+                        ads: headers.findIndex(h => h.includes('iklan gmv max') || h.includes('ads cost') || h.includes('iklan gmv') || h.includes('ads share') || h.includes('belanja iklan')),
+                        adminFees: headers.findIndex(h => h.includes('total biaya') || h.includes('platform fee') || h.includes('biaya platform') || h.includes('admin fee'))
                     };
 
                     if (colMap.date === -1 || colMap.gross === -1) {
@@ -1070,6 +1076,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 orders: 0,
                                 refunds: 0,
                                 vouchers: 0,
+                                adminFees: 0,
+                                adsSpend: 0,
                                 uniqueOrders: new Set(),
                                 adsShareSum: 0,
                                 affShareSum: 0,
@@ -1085,9 +1093,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const refundVal = Math.abs(parseFloat(colMap.refund !== -1 ? row[colMap.refund] : 0) || 0);
                         const affCommission = Math.abs(parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
                         const adsCost = Math.abs(parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
+                        const adminFeesVal = Math.abs(parseFloat(colMap.adminFees !== -1 ? row[colMap.adminFees] : 0) || 0);
 
-                        // If the gross column is net of discounts/refunds (like Total Pendapatan), add them back to make it the true gross sales.
-                        // This prevents double deduction when the app calculates Net = Gross - Voucher - Refund.
                         const grossHeader = headers[colMap.gross] || '';
                         if (grossHeader.includes('pendapatan') || grossHeader.includes('penyelesaian') || grossHeader.includes('payout')) {
                             grossVal = grossVal + voucherVal + refundVal;
@@ -1096,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (typeVal.includes('Pesanan')) {
                             dayData.gross += grossVal;
                             dayData.vouchers += voucherVal;
+                            dayData.adminFees += adminFeesVal;
                             
                             const orderId = colMap.orderId !== -1 ? row[colMap.orderId] : null;
                             if (orderId) {
@@ -1105,8 +1113,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             dayData.ordersTotalWeight += 1;
                             if (adsCost > 0) dayData.adsShareSum += 1;
                             if (affCommission > 0) dayData.affShareSum += 1;
+                        } else if (typeVal.includes('Iklan') || typeVal.includes('Ads')) {
+                            dayData.adsSpend += Math.abs(parseFloat(row[colMap.gross]) || 0);
                         } else if (typeVal.includes('Pengembalian') || typeVal.includes('Refund') || typeVal.includes('Adjustment') || grossVal < 0) {
                             dayData.refunds += Math.abs(parseFloat(row[colMap.gross]) || 0) + refundVal;
+                            dayData.adminFees += adminFeesVal;
                         }
                     }
 
@@ -1141,6 +1152,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             gross: agg.gross,
                             refunds: agg.refunds,
                             vouchers: agg.vouchers,
+                            adminFees: agg.adminFees,
+                            adsSpend: agg.adsSpend,
                             channels: {
                                 ads: adsPct,
                                 affiliate: affPct,
