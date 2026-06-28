@@ -1080,11 +1080,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         const dayData = dailyAggregates[dateStr];
                         const typeVal = colMap.type !== -1 ? (row[colMap.type] || '').toString() : 'Pesanan';
                         
-                        const grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
-                        const voucherVal = Math.max(0, parseFloat(colMap.voucher !== -1 ? row[colMap.voucher] : 0) || 0);
-                        const refundVal = Math.max(0, parseFloat(colMap.refund !== -1 ? row[colMap.refund] : 0) || 0);
-                        const affCommission = Math.max(0, parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
-                        const adsCost = Math.max(0, parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
+                        let grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
+                        const voucherVal = Math.abs(parseFloat(colMap.voucher !== -1 ? row[colMap.voucher] : 0) || 0);
+                        const refundVal = Math.abs(parseFloat(colMap.refund !== -1 ? row[colMap.refund] : 0) || 0);
+                        const affCommission = Math.abs(parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
+                        const adsCost = Math.abs(parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
+
+                        // If the gross column is net of discounts/refunds (like Total Pendapatan), add them back to make it the true gross sales.
+                        // This prevents double deduction when the app calculates Net = Gross - Voucher - Refund.
+                        const grossHeader = headers[colMap.gross] || '';
+                        if (grossHeader.includes('pendapatan') || grossHeader.includes('penyelesaian') || grossHeader.includes('payout')) {
+                            grossVal = grossVal + voucherVal + refundVal;
+                        }
 
                         if (typeVal.includes('Pesanan')) {
                             dayData.gross += grossVal;
