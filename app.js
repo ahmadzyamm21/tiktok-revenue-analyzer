@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const d = new Date(log.date);
             const formattedDate = !isNaN(d.getTime()) ? d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : log.date;
 
-            const netProfit = log.gross - log.refunds - (log.vouchers || 0);
+            const netProfit = log.gross - log.refunds - (log.vouchers || 0) - (log.adminFees || 0) - (log.adsSpend || 0);
 
             tr.innerHTML = `
                 <td><strong>${formattedDate}</strong></td>
@@ -325,6 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('log-gross').value = log.gross;
                     document.getElementById('log-refunds').value = log.refunds;
                     document.getElementById('log-vouchers').value = log.vouchers || 0;
+                    document.getElementById('log-admin-fees').value = log.adminFees || 0;
+                    document.getElementById('log-ads-spend').value = log.adsSpend || 0;
                     
                     document.getElementById('pct-ads').value = log.channels.ads;
                     document.getElementById('pct-affiliate').value = log.channels.affiliate;
@@ -406,6 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const grossVal = parseFloat(document.getElementById('log-gross').value);
                 const refundsVal = parseFloat(document.getElementById('log-refunds').value) || 0;
                 const vouchersVal = parseFloat(document.getElementById('log-vouchers').value) || 0;
+                const adminFeesVal = parseFloat(document.getElementById('log-admin-fees').value) || 0;
+                const adsSpendVal = parseFloat(document.getElementById('log-ads-spend').value) || 0;
 
                 const pctAds = parseInt(document.getElementById('pct-ads').value) || 0;
                 const pctAff = parseInt(document.getElementById('pct-affiliate').value) || 0;
@@ -429,6 +433,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     gross: grossVal,
                     refunds: refundsVal,
                     vouchers: vouchersVal,
+                    adminFees: adminFeesVal,
+                    adsSpend: adsSpendVal,
                     channels: {
                         ads: pctAds,
                         affiliate: pctAff,
@@ -1272,13 +1278,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     const endDate = tempParsedLogs[tempParsedLogs.length - 1].date;
                     const totalGrossVal = tempParsedLogs.reduce((sum, item) => sum + item.gross, 0);
 
+                    const totalAdminFeesVal = tempParsedLogs.reduce((sum, item) => sum + (item.adminFees || 0), 0);
+                    const totalAdsSpendVal = tempParsedLogs.reduce((sum, item) => sum + (item.adsSpend || 0), 0);
+                    const totalWithdrawalsVal = tempParsedWithdrawals.reduce((sum, item) => sum + item.amount, 0);
+
                     previewDetails.innerHTML = `
                         <strong>Detail Excel Hasil Pembacaan:</strong><br>
                         📅 Rentang Tanggal: <strong>${startDate} s/d ${endDate}</strong> (${tempParsedLogs.length} Hari Aktif)<br>
                         💰 Total Pendapatan Kotor: <strong>${formatRupiah(totalGrossVal)}</strong><br>
                         📦 Total Pesanan: <strong>${tempParsedLogs.reduce((sum, item) => sum + item.orders, 0)} Pcs</strong><br>
                         💸 Potongan Voucher Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0))}</strong><br>
-                        ❌ Nilai Retur Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0))}</strong>
+                        ❌ Nilai Retur Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0))}</strong><br>
+                        🏦 Biaya Admin Platform: <strong>${formatRupiah(totalAdminFeesVal)}</strong><br>
+                        📢 Biaya Iklan (Ads): <strong>${formatRupiah(totalAdsSpendVal)}</strong>
+                        ${tempParsedWithdrawals.length > 0 ? `<br>💳 Riwayat Penarikan ke Bank: <strong>${tempParsedWithdrawals.length} transaksi (${formatRupiah(totalWithdrawalsVal)})</strong>` : ''}
                     `;
 
                     btnConfirmExcelImport.style.display = 'inline-flex';
