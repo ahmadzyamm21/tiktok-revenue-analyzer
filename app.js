@@ -217,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalOrders = 0;
         let totalAdminFees = 0;
         let totalAdsSpend = 0;
+        let totalAdjustments = 0;
 
         revenueLogs.forEach(log => {
             totalGross += log.gross;
@@ -225,10 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
             totalOrders += log.orders;
             totalAdminFees += (log.adminFees || 0);
             totalAdsSpend += (log.adsSpend || 0);
+            totalAdjustments += (log.adjustments || 0);
         });
 
         const totalNet = totalGross - totalRefunds - totalVouchers;
-        const totalPayout = totalNet - totalAdminFees - totalAdsSpend;
+        const totalPayout = totalNet - totalAdminFees - totalAdsSpend + totalAdjustments;
         const targetPct = targetRevenue > 0 ? (totalNet / targetRevenue) * 100 : 0;
         const aov = totalOrders > 0 ? totalGross / totalOrders : 0;
 
@@ -248,7 +250,12 @@ document.addEventListener('DOMContentLoaded', () => {
         kpiGrossRev.textContent = formatRupiah(totalGross);
         kpiOrderCount.textContent = `Total: ${totalOrders} Order`;
         kpiNetRev.textContent = formatRupiah(totalPayout);
-        kpiVoucherDeduction.textContent = `Omset Net: ${formatRupiah(totalNet)} | Admin & Iklan: ${formatRupiah(totalAdminFees + totalAdsSpend)}`;
+        
+        let subtext = `Omset Net: ${formatRupiah(totalNet)} | Admin: -${formatRupiah(totalAdminFees)} | Iklan: -${formatRupiah(totalAdsSpend)}`;
+        if (totalAdjustments > 0) {
+            subtext += ` | Penyesuaian: +${formatRupiah(totalAdjustments)}`;
+        }
+        kpiVoucherDeduction.textContent = subtext;
         kpiAov.textContent = formatRupiah(aov);
 
         const dailyAvgVal = revenueLogs.length > 0 ? totalGross / revenueLogs.length : 0;
@@ -294,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const d = new Date(log.date);
             const formattedDate = !isNaN(d.getTime()) ? d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : log.date;
 
-            const netProfit = log.gross - log.refunds - (log.vouchers || 0) - (log.adminFees || 0) - (log.adsSpend || 0);
+            const netProfit = log.gross - log.refunds - (log.vouchers || 0) - (log.adminFees || 0) - (log.adsSpend || 0) + (log.adjustments || 0);
 
             tr.innerHTML = `
                 <td><strong>${formattedDate}</strong></td>
@@ -426,6 +433,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                const existingLog = logId ? revenueLogs.find(x => x.id === logId) : null;
+                const adjustmentsVal = existingLog ? (existingLog.adjustments || 0) : 0;
+
                 const logEntry = {
                     id: logId || 'log_' + Date.now(),
                     date: dateVal,
@@ -435,6 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     vouchers: vouchersVal,
                     adminFees: adminFeesVal,
                     adsSpend: adsSpendVal,
+                    adjustments: adjustmentsVal,
                     channels: {
                         ads: pctAds,
                         affiliate: pctAff,
@@ -1071,17 +1082,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
                     
-                    // Column mapping function (highly defensive and multi-format compatible)
+                    // Helper to search index defensively with exclusion support
+                    function findColIdx(keywords, excludeKeywords = []) {
+                        return headers.findIndex(h => {
+                            const match = keywords.some(k => h.includes(k));
+                            if (!match) return false;
+                            if (excludeKeywords.length > 0 && excludeKeywords.some(e => h.includes(e))) return false;
+                            return true;
+                        });
+                    }
+
+                    // Column mapping function (highly precise for TikTok Shop reports)
                     const colMap = {
-                        orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id') || h.includes('pesanan') || h.includes('id') || h.includes('number')),
-                        type: headers.findIndex(h => h.includes('jenis transaksi') || h.includes('transaction type') || h.includes('tipe') || h.includes('status')),
-                        date: headers.findIndex(h => h.includes('waktu') || h.includes('date') || h.includes('tanggal') || h.includes('time') || h.includes('created') || h.includes('payment')),
-                        gross: headers.findIndex(h => h.includes('jumlah penyelesaian') || h.includes('total pendapatan') || h.includes('pendapatan') || h.includes('gross') || h.includes('revenue') || h.includes('payout') || h.includes('subtotal') || h.includes('harga') || h.includes('amount') || h.includes('total') || h.includes('nilai') || h.includes('price')),
-                        voucher: headers.findIndex(h => h.includes('diskon penjual') || h.includes('diskon voucher') || h.includes('voucher') || h.includes('seller discount') || h.includes('diskon toko') || h.includes('coupon')),
-                        refund: headers.findIndex(h => h.includes('pengembalian dana') || h.includes('refund') || h.includes('returned') || h.includes('retur') || h.includes('batal')),
-                        affiliate: headers.findIndex(h => h.includes('komisi afiliasi') || h.includes('komisi mitra') || h.includes('affiliate') || h.includes('komisi')),
-                        ads: headers.findIndex(h => h.includes('iklan gmv max') || h.includes('ads cost') || h.includes('iklan gmv') || h.includes('ads share') || h.includes('belanja iklan')),
-                        adminFees: headers.findIndex(h => h.includes('total biaya') || h.includes('platform fee') || h.includes('biaya platform') || h.includes('admin fee'))
+                        orderId: findColIdx(['id pesanan', 'order id', 'id pesanan/penyesuaian']),
+                        type: findColIdx(['jenis transaksi', 'transaction type', 'tipe', 'status']),
+                        date: findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) !== -1 
+                            ? findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) 
+                            : findColIdx(['waktu pemesanan', 'tanggal pemesanan', 'date', 'tanggal']),
+                        gross: findColIdx(['subtotal sebelum diskon', 'subtotal before discount', 'original price']) !== -1 
+                            ? findColIdx(['subtotal sebelum diskon', 'subtotal before discount', 'original price']) 
+                            : findColIdx(['jumlah penyelesaian', 'total pendapatan', 'pendapatan', 'gross']),
+                        settlement: findColIdx(['jumlah penyelesaian pembayaran', 'jumlah penyelesaian', 'payout amount', 'settlement amount']),
+                        voucher: findColIdx(['diskon penjual', 'seller discount', 'diskon voucher yang ditanggung penjual'], ['subtotal', 'pengembalian']),
+                        refund: findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) !== -1 
+                            ? findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) 
+                            : findColIdx(['pengembalian dana', 'refund', 'retur']),
+                        adminFees: findColIdx(['total biaya', 'platform fee', 'biaya platform', 'admin fee'], ['ongkir', 'logistik', 'produk']),
+                        ads: findColIdx(['iklan gmv max', 'ads cost', 'iklan gmv', 'ads share', 'belanja iklan']),
+                        affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi'])
                     };
 
                     if (colMap.date === -1 || colMap.gross === -1) {
@@ -1130,6 +1158,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 vouchers: 0,
                                 adminFees: 0,
                                 adsSpend: 0,
+                                adjustments: 0,
                                 uniqueOrders: new Set(),
                                 adsShareSum: 0,
                                 affShareSum: 0,
@@ -1141,6 +1170,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const typeVal = colMap.type !== -1 ? (row[colMap.type] || '').toString() : 'Pesanan';
                         
                         let grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
+                        const settlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
                         const voucherVal = Math.abs(parseFloat(colMap.voucher !== -1 ? row[colMap.voucher] : 0) || 0);
                         const refundVal = Math.abs(parseFloat(colMap.refund !== -1 ? row[colMap.refund] : 0) || 0);
                         const affCommission = Math.abs(parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
@@ -1155,6 +1185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (typeVal.includes('Pesanan')) {
                             dayData.gross += grossVal;
                             dayData.vouchers += voucherVal;
+                            dayData.refunds += refundVal;
                             dayData.adminFees += adminFeesVal;
                             
                             const orderId = colMap.orderId !== -1 ? row[colMap.orderId] : null;
@@ -1166,10 +1197,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (adsCost > 0) dayData.adsShareSum += 1;
                             if (affCommission > 0) dayData.affShareSum += 1;
                         } else if (typeVal.includes('Iklan') || typeVal.includes('Ads')) {
-                            dayData.adsSpend += Math.abs(parseFloat(row[colMap.gross]) || 0);
-                        } else if (typeVal.includes('Pengembalian') || typeVal.includes('Refund') || typeVal.includes('Adjustment') || grossVal < 0) {
-                            dayData.refunds += Math.abs(parseFloat(row[colMap.gross]) || 0) + refundVal;
+                            dayData.adsSpend += Math.abs(settlementVal);
+                        } else if (typeVal.includes('Pengembalian') || typeVal.includes('Refund') || typeVal.includes('Adjustment') || settlementVal < 0) {
+                            dayData.refunds += Math.abs(settlementVal) + refundVal;
                             dayData.adminFees += adminFeesVal;
+                        } else if (typeVal.includes('Penggantian') || typeVal.includes('Reimbursement') || typeVal.includes('Logistik')) {
+                            dayData.adjustments += Math.abs(settlementVal);
                         }
                     }
 
@@ -1258,6 +1291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             vouchers: agg.vouchers,
                             adminFees: agg.adminFees,
                             adsSpend: agg.adsSpend,
+                            adjustments: agg.adjustments,
                             channels: {
                                 ads: adsPct,
                                 affiliate: affPct,
