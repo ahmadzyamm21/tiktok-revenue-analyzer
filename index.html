@@ -107,6 +107,16 @@
                             <span class="kpi-subtext" id="kpi-voucher-deduction">Omset Bersih: Rp 0 | Admin & Iklan: Rp 0</span>
                         </div>
                     </div>
+                    <div class="kpi-card card" id="card-net-profit" style="display: none;">
+                        <div class="kpi-icon-container" style="background: rgba(0, 255, 135, 0.2); color: var(--accent-green);">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Laba Bersih Riil (Net Profit)</span>
+                            <span class="kpi-value text-green" id="kpi-net-profit">Rp 0</span>
+                            <span class="kpi-subtext" id="kpi-net-profit-subtext">HPP (Modal): Rp 0 | Margin: 0%</span>
+                        </div>
+                    </div>
                     <div class="kpi-card card">
                         <div class="kpi-icon-container" style="background: rgba(254, 44, 85, 0.1); color: var(--accent-pink);">
                             <i class="fas fa-shopping-bag"></i>
@@ -426,6 +436,11 @@
             <div class="form-group mt-3" style="margin-top: 15px;">
                 <label for="settings-target-revenue" style="display: block; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Target Omset Bulanan (Rp)</label>
                 <input type="number" id="settings-target-revenue" value="100000000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 14px; outline: none;">
+            </div>
+            
+            <div class="form-group mt-3" style="margin-top: 15px;">
+                <label for="settings-monthly-hpp" style="display: block; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Estimasi Modal / HPP Bulanan (Rp)</label>
+                <input type="number" id="settings-monthly-hpp" value="0" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 14px; outline: none;">
             </div>
             
             <div class="form-group mt-3" style="margin-top: 15px;">

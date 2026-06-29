@@ -54,10 +54,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const settingsShopName = document.getElementById('settings-shop-name');
     const settingsTargetRevenue = document.getElementById('settings-target-revenue');
+    const settingsMonthlyHpp = document.getElementById('settings-monthly-hpp');
     const settingsShopLogoFile = document.getElementById('settings-shop-logo-file');
     const btnUploadLogoTrigger = document.getElementById('btn-upload-logo-trigger');
     const settingsLogoPreviewIcon = document.getElementById('settings-logo-preview-icon');
     const settingsLogoPreviewImg = document.getElementById('settings-logo-preview-img');
+
+    const kpiNetProfit = document.getElementById('kpi-net-profit');
+    const kpiNetProfitSubtext = document.getElementById('kpi-net-profit-subtext');
+    const cardNetProfit = document.getElementById('card-net-profit');
+
+    let monthlyHpp = parseInt(localStorage.getItem('tiktok_monthly_hpp')) || 0;
 
     const btnExportFullBackup = document.getElementById('btn-export-full-backup');
     const inputFullBackupFile = document.getElementById('input-full-backup-file');
@@ -103,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         shopNameDisplay.textContent = shopName;
         settingsShopName.value = shopName;
         settingsTargetRevenue.value = targetRevenue;
+        settingsMonthlyHpp.value = monthlyHpp;
 
         if (currentLogoBase64) {
             shopLogoContainer.innerHTML = `<img src="${currentLogoBase64}" style="width: 100%; height: 100%; object-fit: cover;">`;
@@ -177,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSaveSettings.addEventListener('click', () => {
             const newName = settingsShopName.value.trim();
             const newTarget = parseFloat(settingsTargetRevenue.value);
+            const newHpp = parseInt(settingsMonthlyHpp.value) || 0;
             
             if (!newName) {
                 showToast('Nama toko tidak boleh kosong!', 'error');
@@ -189,8 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             shopName = newName;
             targetRevenue = newTarget;
+            monthlyHpp = newHpp;
             localStorage.setItem('shop_name', newName);
             localStorage.setItem('tiktok_target_revenue', newTarget.toString());
+            localStorage.setItem('tiktok_monthly_hpp', newHpp.toString());
             if (currentLogoBase64) {
                 localStorage.setItem('shop_logo_base64', currentLogoBase64);
             }
@@ -256,6 +267,27 @@ document.addEventListener('DOMContentLoaded', () => {
             subtext += ` | Penyesuaian: +${formatRupiah(totalAdjustments)}`;
         }
         kpiVoucherDeduction.textContent = subtext;
+        
+        // Render Net Profit Card dynamically
+        if (cardNetProfit && kpiNetProfit && kpiNetProfitSubtext) {
+            if (monthlyHpp > 0) {
+                cardNetProfit.style.display = 'flex';
+                const netProfitVal = totalPayout - monthlyHpp;
+                kpiNetProfit.textContent = formatRupiah(netProfitVal);
+                
+                if (netProfitVal < 0) {
+                    kpiNetProfit.style.color = 'var(--accent-pink)';
+                } else {
+                    kpiNetProfit.style.color = 'var(--accent-green)';
+                }
+                
+                const marginPctVal = totalGross > 0 ? (netProfitVal / totalGross) * 100 : 0;
+                kpiNetProfitSubtext.textContent = `HPP: ${formatRupiah(monthlyHpp)} | Margin Bersih: ${marginPctVal.toFixed(1)}%`;
+            } else {
+                cardNetProfit.style.display = 'none';
+            }
+        }
+        
         kpiAov.textContent = formatRupiah(aov);
 
         const dailyAvgVal = revenueLogs.length > 0 ? totalGross / revenueLogs.length : 0;
