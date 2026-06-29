@@ -1208,7 +1208,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         const dayData = dailyAggregates[dateStr];
-                        const typeVal = colMap.type !== -1 ? (row[colMap.type] || '').toString() : 'Pesanan';
+                        const typeVal = colMap.type !== -1 ? (row[colMap.type] || '').toString().toLowerCase().trim() : 'pesanan';
                         
                         let grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
                         const settlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
@@ -1223,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             grossVal = grossVal + voucherVal + refundVal;
                         }
 
-                        if (typeVal.includes('Pesanan')) {
+                        if (typeVal.includes('pesanan')) {
                             dayData.gross += grossVal;
                             dayData.vouchers += voucherVal;
                             dayData.refunds += refundVal;
@@ -1237,12 +1237,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             dayData.ordersTotalWeight += 1;
                             if (adsCost > 0) dayData.adsShareSum += 1;
                             if (affCommission > 0) dayData.affShareSum += 1;
-                        } else if (typeVal.includes('Iklan') || typeVal.includes('Ads')) {
+                        } else if (typeVal.includes('iklan') || typeVal.includes('ads')) {
                             dayData.adsSpend += Math.abs(settlementVal);
-                        } else if (typeVal.includes('Pengembalian') || typeVal.includes('Refund') || typeVal.includes('Adjustment') || settlementVal < 0) {
+                        } else if (typeVal.includes('pengembalian') || typeVal.includes('refund') || typeVal.includes('adjustment') || settlementVal < 0) {
                             dayData.refunds += Math.abs(settlementVal) + refundVal;
                             dayData.adminFees += adminFeesVal;
-                        } else if (typeVal.includes('Penggantian') || typeVal.includes('Reimbursement') || typeVal.includes('Logistik')) {
+                        } else if (typeVal.includes('penggantian') || typeVal.includes('reimbursement') || typeVal.includes('logistik')) {
                             dayData.adjustments += Math.abs(settlementVal);
                         }
                     }
@@ -1277,10 +1277,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const row = wJson[r];
                                     if (!row || row.length === 0) continue;
 
-                                    const typeVal = colIdx.type !== -1 ? (row[colIdx.type] || '').toString() : '';
-                                    const statusVal = colIdx.status !== -1 ? (row[colIdx.status] || '').toString() : '';
+                                    const typeVal = colIdx.type !== -1 ? (row[colIdx.type] || '').toString().toLowerCase().trim() : '';
+                                    const statusVal = colIdx.status !== -1 ? (row[colIdx.status] || '').toString().toLowerCase().trim() : '';
                                     
-                                    if (typeVal === 'Withdrawal' && statusVal === 'Transferred') {
+                                    if (typeVal === 'withdrawal' && statusVal === 'transferred') {
                                         const amountVal = Math.abs(parseFloat(row[colIdx.total]) || 0);
                                         const dateVal = colIdx.date !== -1 ? (row[colIdx.date] || '').toString().split(' ')[0] : '';
                                         const refVal = colIdx.refId !== -1 ? (row[colIdx.refId] || '').toString() : '-';
