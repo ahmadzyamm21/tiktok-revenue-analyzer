@@ -229,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalAdminFees = 0;
         let totalAdsSpend = 0;
         let totalAdjustments = 0;
+        let totalHppFromLogs = 0;
 
         revenueLogs.forEach(log => {
             totalGross += log.gross;
@@ -238,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalAdminFees += (log.adminFees || 0);
             totalAdsSpend += (log.adsSpend || 0);
             totalAdjustments += (log.adjustments || 0);
+            totalHppFromLogs += (log.hpp || 0);
         });
 
         const totalNet = totalGross - totalRefunds - totalVouchers;
@@ -269,10 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
         kpiVoucherDeduction.textContent = subtext;
         
         // Render Net Profit Card dynamically
+        const activeHpp = totalHppFromLogs > 0 ? totalHppFromLogs : monthlyHpp;
         if (cardNetProfit && kpiNetProfit && kpiNetProfitSubtext) {
-            if (monthlyHpp > 0) {
+            if (activeHpp > 0) {
                 cardNetProfit.style.display = 'flex';
-                const netProfitVal = totalPayout - monthlyHpp;
+                const netProfitVal = totalPayout - activeHpp;
                 kpiNetProfit.textContent = formatRupiah(netProfitVal);
                 
                 if (netProfitVal < 0) {
@@ -282,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 const marginPctVal = totalGross > 0 ? (netProfitVal / totalGross) * 100 : 0;
-                kpiNetProfitSubtext.textContent = `HPP: ${formatRupiah(monthlyHpp)} | Margin Bersih: ${marginPctVal.toFixed(1)}%`;
+                kpiNetProfitSubtext.textContent = `HPP: ${formatRupiah(activeHpp)} | Margin Bersih: ${marginPctVal.toFixed(1)}%`;
             } else {
                 cardNetProfit.style.display = 'none';
             }
@@ -366,6 +369,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('log-vouchers').value = log.vouchers || 0;
                     document.getElementById('log-admin-fees').value = log.adminFees || 0;
                     document.getElementById('log-ads-spend').value = log.adsSpend || 0;
+                    document.getElementById('log-hpp').value = log.hpp || 0;
+                    document.getElementById('log-adjustments').value = log.adjustments || 0;
                     
                     document.getElementById('pct-ads').value = log.channels.ads;
                     document.getElementById('pct-affiliate').value = log.channels.affiliate;
@@ -449,6 +454,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const vouchersVal = parseFloat(document.getElementById('log-vouchers').value) || 0;
                 const adminFeesVal = parseFloat(document.getElementById('log-admin-fees').value) || 0;
                 const adsSpendVal = parseFloat(document.getElementById('log-ads-spend').value) || 0;
+                const hppVal = parseFloat(document.getElementById('log-hpp').value) || 0;
+                const adjustmentsVal = parseFloat(document.getElementById('log-adjustments').value) || 0;
 
                 const pctAds = parseInt(document.getElementById('pct-ads').value) || 0;
                 const pctAff = parseInt(document.getElementById('pct-affiliate').value) || 0;
@@ -465,9 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                const existingLog = logId ? revenueLogs.find(x => x.id === logId) : null;
-                const adjustmentsVal = existingLog ? (existingLog.adjustments || 0) : 0;
-
                 const logEntry = {
                     id: logId || 'log_' + Date.now(),
                     date: dateVal,
@@ -477,6 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     vouchers: vouchersVal,
                     adminFees: adminFeesVal,
                     adsSpend: adsSpendVal,
+                    hpp: hppVal,
                     adjustments: adjustmentsVal,
                     channels: {
                         ads: pctAds,
@@ -521,6 +526,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('log-gross').value = '';
         document.getElementById('log-refunds').value = '0';
         document.getElementById('log-vouchers').value = '0';
+        document.getElementById('log-admin-fees').value = '0';
+        document.getElementById('log-ads-spend').value = '0';
+        document.getElementById('log-hpp').value = '0';
+        document.getElementById('log-adjustments').value = '0';
         document.getElementById('pct-ads').value = '30';
         document.getElementById('pct-affiliate').value = '25';
         document.getElementById('pct-live').value = '25';
@@ -1340,25 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
 
-                    const startDate = tempParsedLogs[0].date;
-                    const endDate = tempParsedLogs[tempParsedLogs.length - 1].date;
-                    const totalGrossVal = tempParsedLogs.reduce((sum, item) => sum + item.gross, 0);
-
-                    const totalAdminFeesVal = tempParsedLogs.reduce((sum, item) => sum + (item.adminFees || 0), 0);
-                    const totalAdsSpendVal = tempParsedLogs.reduce((sum, item) => sum + (item.adsSpend || 0), 0);
-                    const totalWithdrawalsVal = tempParsedWithdrawals.reduce((sum, item) => sum + item.amount, 0);
-
-                    previewDetails.innerHTML = `
-                        <strong>Detail Excel Hasil Pembacaan:</strong><br>
-                        📅 Rentang Tanggal: <strong>${startDate} s/d ${endDate}</strong> (${tempParsedLogs.length} Hari Aktif)<br>
-                        💰 Total Pendapatan Kotor: <strong>${formatRupiah(totalGrossVal)}</strong><br>
-                        📦 Total Pesanan: <strong>${tempParsedLogs.reduce((sum, item) => sum + item.orders, 0)} Pcs</strong><br>
-                        💸 Potongan Voucher Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0))}</strong><br>
-                        ❌ Nilai Retur Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0))}</strong><br>
-                        🏦 Biaya Admin Platform: <strong>${formatRupiah(totalAdminFeesVal)}</strong><br>
-                        📢 Biaya Iklan (Ads): <strong>${formatRupiah(totalAdsSpendVal)}</strong>
-                        ${tempParsedWithdrawals.length > 0 ? `<br>💳 Riwayat Penarikan ke Bank: <strong>${tempParsedWithdrawals.length} transaksi (${formatRupiah(totalWithdrawalsVal)})</strong>` : ''}
-                    `;
+                    recalculateHppForTempLogs();
 
                     btnConfirmExcelImport.style.display = 'inline-flex';
                     excelParsePreview.style.display = 'block';
@@ -1412,11 +1403,448 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ------------------------------------------
+    // Database HPP SKU State & UI Logic
+    // ------------------------------------------
+    let hppSkuDb = {};
+    try {
+        hppSkuDb = JSON.parse(localStorage.getItem('tiktok_sku_hpp')) || {};
+    } catch (e) {
+        hppSkuDb = {};
+    }
+
+    function saveHppDb() {
+        localStorage.setItem('tiktok_sku_hpp', JSON.stringify(hppSkuDb));
+    }
+
+    const hppSkuForm = document.getElementById('hpp-sku-form');
+    const hppSkuCode = document.getElementById('hpp-sku-code');
+    const hppProductName = document.getElementById('hpp-product-name');
+    const hppVariation = document.getElementById('hpp-variation');
+    const hppUnitValue = document.getElementById('hpp-unit-value');
+    const btnCancelHppEdit = document.getElementById('btn-cancel-hpp-edit');
+    const btnBackupHpp = document.getElementById('btn-backup-hpp');
+    const inputRestoreHpp = document.getElementById('input-restore-hpp');
+    const hppSearchInput = document.getElementById('hpp-search-input');
+    const hppTableBody = document.getElementById('hpp-table-body');
+    const inputOrderFile = document.getElementById('input-order-file');
+    const orderFileStatus = document.getElementById('order-file-status');
+
+    let hppEditSku = null;
+    let tempParsedOrders = [];
+
+    function renderHppTable() {
+        if (!hppTableBody) return;
+        hppTableBody.innerHTML = '';
+
+        const searchQuery = hppSearchInput ? hppSearchInput.value.toLowerCase().trim() : '';
+        const skus = Object.values(hppSkuDb);
+
+        let filtered = skus;
+        if (searchQuery) {
+            filtered = skus.filter(s => 
+                (s.sku && s.sku.toLowerCase().includes(searchQuery)) ||
+                (s.product && s.product.toLowerCase().includes(searchQuery)) ||
+                (s.variation && s.variation.toLowerCase().includes(searchQuery))
+            );
+        }
+
+        if (filtered.length === 0) {
+            hppTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-gray">Tidak ada data SKU ditemukan. Silakan tambahkan baru atau impor dari JSON.</td></tr>';
+            return;
+        }
+
+        filtered.sort((a, b) => (a.sku || '').localeCompare(b.sku || ''));
+
+        filtered.forEach(s => {
+            const tr = document.createElement('tr');
+            
+            const tdSku = document.createElement('td');
+            tdSku.textContent = s.sku;
+            tdSku.style.fontWeight = '500';
+            tdSku.style.color = 'var(--accent-cyan)';
+            tr.appendChild(tdSku);
+
+            const tdProduct = document.createElement('td');
+            tdProduct.textContent = s.product || '-';
+            tr.appendChild(tdProduct);
+
+            const tdVariation = document.createElement('td');
+            tdVariation.textContent = s.variation || '-';
+            tr.appendChild(tdVariation);
+
+            const tdHpp = document.createElement('td');
+            tdHpp.textContent = formatRupiah(s.hpp || 0);
+            tdHpp.style.textAlign = 'right';
+            tdHpp.style.fontWeight = '500';
+            tdHpp.style.color = 'var(--accent-green)';
+            tr.appendChild(tdHpp);
+
+            const tdActions = document.createElement('td');
+            tdActions.style.textAlign = 'center';
+            
+            const btnEdit = document.createElement('button');
+            btnEdit.className = 'btn btn-secondary btn-sm';
+            btnEdit.style.padding = '4px 8px';
+            btnEdit.style.marginRight = '6px';
+            btnEdit.style.fontSize = '11px';
+            btnEdit.innerHTML = '<i class="fas fa-edit"></i> Edit';
+            btnEdit.addEventListener('click', () => {
+                hppEditSku = s.sku;
+                hppSkuCode.value = s.sku;
+                hppSkuCode.disabled = true;
+                hppProductName.value = s.product || '';
+                hppVariation.value = s.variation || '';
+                hppUnitValue.value = s.hpp || 0;
+                
+                document.getElementById('hpp-form-title').textContent = 'Perbarui HPP SKU';
+                btnCancelHppEdit.style.display = 'inline-block';
+            });
+            tdActions.appendChild(btnEdit);
+
+            const btnDelete = document.createElement('button');
+            btnDelete.className = 'btn btn-secondary btn-sm';
+            btnDelete.style.padding = '4px 8px';
+            btnDelete.style.fontSize = '11px';
+            btnDelete.style.borderColor = 'rgba(254, 44, 85, 0.3)';
+            btnDelete.style.color = 'var(--accent-pink)';
+            btnDelete.innerHTML = '<i class="fas fa-trash-alt"></i> Hapus';
+            btnDelete.addEventListener('click', () => {
+                if (confirm(`Apakah Anda yakin ingin menghapus HPP untuk SKU: ${s.sku}?`)) {
+                    delete hppSkuDb[s.sku];
+                    saveHppDb();
+                    renderHppTable();
+                    calculateMetrics();
+                    showToast(`HPP SKU ${s.sku} berhasil dihapus.`, 'success');
+                }
+            });
+            tdActions.appendChild(btnDelete);
+
+            tr.appendChild(tdActions);
+            hppTableBody.appendChild(tr);
+        });
+    }
+
+    if (hppSkuForm) {
+        hppSkuForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const sku = hppSkuCode.value.trim();
+            const product = hppProductName.value.trim();
+            const variation = hppVariation.value.trim();
+            const hppVal = parseFloat(hppUnitValue.value) || 0;
+
+            if (!sku) {
+                showToast('Kode SKU tidak boleh kosong!', 'error');
+                return;
+            }
+
+            hppSkuDb[sku] = {
+                sku: sku,
+                product: product,
+                variation: variation,
+                hpp: hppVal
+            };
+
+            saveHppDb();
+            renderHppTable();
+            calculateMetrics();
+
+            hppSkuForm.reset();
+            hppSkuCode.disabled = false;
+            hppEditSku = null;
+            document.getElementById('hpp-form-title').textContent = 'Atur HPP per SKU';
+            btnCancelHppEdit.style.display = 'none';
+
+            showToast(`HPP untuk SKU ${sku} berhasil disimpan.`, 'success');
+        });
+    }
+
+    if (btnCancelHppEdit) {
+        btnCancelHppEdit.addEventListener('click', () => {
+            hppSkuForm.reset();
+            hppSkuCode.disabled = false;
+            hppEditSku = null;
+            document.getElementById('hpp-form-title').textContent = 'Atur HPP per SKU';
+            btnCancelHppEdit.style.display = 'none';
+        });
+    }
+
+    if (hppSearchInput) {
+        hppSearchInput.addEventListener('input', () => {
+            renderHppTable();
+        });
+    }
+
+    if (btnBackupHpp) {
+        btnBackupHpp.addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(hppSkuDb, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `tiktok_revenue_hpp_sku_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Database HPP berhasil diekspor.', 'success');
+        });
+    }
+
+    if (inputRestoreHpp) {
+        inputRestoreHpp.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const parsed = JSON.parse(evt.target.result);
+                    let count = 0;
+                    
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(item => {
+                            const skuCode = (item.sku || item.name || item.id || '').trim();
+                            if (skuCode) {
+                                hppSkuDb[skuCode] = {
+                                    sku: skuCode,
+                                    product: item.product || item.name || '',
+                                    variation: item.variation || '',
+                                    hpp: parseFloat(item.hpp) || 0
+                                };
+                                count++;
+                            }
+                        });
+                    } else if (typeof parsed === 'object') {
+                        Object.keys(parsed).forEach(skuKey => {
+                            const item = parsed[skuKey];
+                            hppSkuDb[skuKey] = {
+                                sku: item.sku || skuKey,
+                                product: item.product || '',
+                                variation: item.variation || '',
+                                hpp: parseFloat(item.hpp) || 0
+                            };
+                            count++;
+                        });
+                    }
+
+                    saveHppDb();
+                    renderHppTable();
+                    calculateMetrics();
+                    showToast(`Berhasil mengimpor ${count} data HPP SKU!`, 'success');
+                } catch(err) {
+                    showToast('Gagal memproses file JSON HPP: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            inputRestoreHpp.value = '';
+        });
+    }
+
+    // Recalculate HPP inside tempParsedLogs using tempParsedOrders + hppSkuDb
+    function recalculateHppForTempLogs() {
+        if (tempParsedLogs.length === 0) return;
+
+        const ordersByDate = {};
+        tempParsedOrders.forEach(o => {
+            if (!ordersByDate[o.date]) {
+                ordersByDate[o.date] = [];
+            }
+            ordersByDate[o.date].push(o);
+        });
+
+        let totalHppSum = 0;
+
+        tempParsedLogs.forEach(log => {
+            const dateStr = log.date;
+            const ordersOnDate = ordersByDate[dateStr] || [];
+            
+            let dateHpp = 0;
+            ordersOnDate.forEach(o => {
+                const skuInfo = hppSkuDb[o.sku];
+                const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                dateHpp += o.qty * hppVal;
+            });
+
+            log.hpp = dateHpp;
+            totalHppSum += dateHpp;
+        });
+
+        const startDate = tempParsedLogs[0].date;
+        const endDate = tempParsedLogs[tempParsedLogs.length - 1].date;
+        const totalGrossVal = tempParsedLogs.reduce((sum, item) => sum + item.gross, 0);
+        const totalAdminFeesVal = tempParsedLogs.reduce((sum, item) => sum + (item.adminFees || 0), 0);
+        const totalAdsSpendVal = tempParsedLogs.reduce((sum, item) => sum + (item.adsSpend || 0), 0);
+        const totalWithdrawalsVal = tempParsedWithdrawals.reduce((sum, item) => sum + item.amount, 0);
+
+        let previewHtml = `
+            <strong>Detail Excel Hasil Pembacaan:</strong><br>
+            📅 Rentang Tanggal: <strong>${startDate} s/d ${endDate}</strong> (${tempParsedLogs.length} Hari Aktif)<br>
+            💰 Total Pendapatan Kotor: <strong>${formatRupiah(totalGrossVal)}</strong><br>
+            📦 Total Pesanan: <strong>${tempParsedLogs.reduce((sum, item) => sum + item.orders, 0)} Pcs</strong><br>
+            💸 Potongan Voucher Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0))}</strong><br>
+            ❌ Nilai Retur Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0))}</strong><br>
+            🏦 Biaya Admin Platform: <strong>${formatRupiah(totalAdminFeesVal)}</strong><br>
+            📢 Biaya Iklan (Ads): <strong>${formatRupiah(totalAdsSpendVal)}</strong>
+        `;
+
+        if (totalHppSum > 0) {
+            previewHtml += `<br>📦 Total HPP (Modal Produk): <strong style="color: var(--accent-pink);">${formatRupiah(totalHppSum)}</strong>`;
+            const estNetPayout = totalGrossVal - tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0) - tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0) - totalAdminFeesVal - totalAdsSpendVal;
+            const estNetProfit = estNetPayout - totalHppSum;
+            previewHtml += `<br>🚀 Estimasi Laba Bersih: <strong style="color: var(--accent-green);">${formatRupiah(estNetProfit)}</strong>`;
+        } else {
+            previewHtml += `<br>⚠️ HPP belum dihitung (Unggah berkas Daftar Pesanan untuk mencocokkan HPP).`;
+        }
+
+        if (tempParsedWithdrawals.length > 0) {
+            previewHtml += `<br>💳 Riwayat Penarikan ke Bank: <strong>${tempParsedWithdrawals.length} transaksi (${formatRupiah(totalWithdrawalsVal)})</strong>`;
+        }
+
+        previewDetails.innerHTML = previewHtml;
+    }
+
+    if (inputOrderFile) {
+        inputOrderFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            orderFileStatus.textContent = file.name;
+            showToast('Membaca file daftar pesanan (SKU)...', 'info');
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    const targetSheetName = workbook.SheetNames.find(n => n.includes('OrderSKUList') || n.includes('pesanan') || n.includes('Orders'));
+                    if (!targetSheetName) {
+                        showToast('Sheet OrderSKUList tidak ditemukan di file Pesanan!', 'error');
+                        orderFileStatus.textContent = 'Gagal (Sheet tidak ditemukan)';
+                        return;
+                    }
+
+                    const worksheet = workbook.Sheets[targetSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    if (!jsonData || jsonData.length < 2) {
+                        showToast('File pesanan kosong!', 'error');
+                        return;
+                    }
+
+                    let headerIndex = -1;
+                    for (let r = 0; r < Math.min(20, jsonData.length); r++) {
+                        const row = jsonData[r];
+                        if (row && row.some(cell => cell && (cell.toString().toLowerCase().includes('id pesanan') || cell.toString().toLowerCase().includes('order id')))) {
+                            headerIndex = r;
+                            break;
+                        }
+                    }
+
+                    if (headerIndex === -1) {
+                        showToast('Kolom Id Pesanan tidak ditemukan!', 'error');
+                        return;
+                    }
+
+                    const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
+                    const colMap = {
+                        orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id')),
+                        status: headers.findIndex(h => h.includes('status pesanan') || h.includes('order status')),
+                        sku: headers.findIndex(h => h.includes('sku') || h.includes('seller sku')),
+                        product: headers.findIndex(h => h.includes('nama produk') || h.includes('product name')),
+                        variation: headers.findIndex(h => h.includes('variasi') || h.includes('variation')),
+                        qty: headers.findIndex(h => h.includes('jumlah') || h.includes('quantity')),
+                        createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('created time'))
+                    };
+
+                    tempParsedOrders = [];
+                    let newSkusFound = 0;
+
+                    for (let r = headerIndex + 1; r < jsonData.length; r++) {
+                        const row = jsonData[r];
+                        if (!row || row.length === 0) continue;
+
+                        const statusVal = colMap.status !== -1 ? (row[colMap.status] || '').toString() : '';
+                        
+                        if (statusVal.includes('Selesai') || statusVal.toLowerCase().includes('completed')) {
+                            const orderIdVal = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : '';
+                            const skuVal = colMap.sku !== -1 ? (row[colMap.sku] || '').toString().trim() : 'Unknown SKU';
+                            const productVal = colMap.product !== -1 ? (row[colMap.product] || '').toString().trim() : '';
+                            const variationVal = colMap.variation !== -1 ? (row[colMap.variation] || '').toString().trim() : '';
+                            const qtyVal = colMap.qty !== -1 ? parseInt(row[colMap.qty]) || 1 : 1;
+                            const rawDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
+
+                            let dateStr = '';
+                            if (rawDate) {
+                                if (rawDate instanceof Date) {
+                                    dateStr = rawDate.toISOString().split('T')[0];
+                                } else {
+                                    const dateMatch = rawDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                                    if (dateMatch) {
+                                        dateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
+                                    } else {
+                                        const parsedD = new Date(rawDate);
+                                        if (!isNaN(parsedD.getTime())) {
+                                            dateStr = parsedD.toISOString().split('T')[0];
+                                        }
+                                    }
+                                    if (!dateStr) {
+                                        const slashMatch = rawDate.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                                        if (slashMatch) {
+                                            dateStr = `${slashMatch[3]}-${slashMatch[2].padStart(2, '0')}-${slashMatch[1].padStart(2, '0')}`;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (!dateStr) continue;
+
+                            tempParsedOrders.push({
+                                orderId: orderIdVal,
+                                sku: skuVal,
+                                product: productVal,
+                                variation: variationVal,
+                                qty: qtyVal,
+                                date: dateStr
+                            });
+
+                            if (skuVal && !hppSkuDb[skuVal]) {
+                                hppSkuDb[skuVal] = {
+                                    sku: skuVal,
+                                    product: productVal,
+                                    variation: variationVal,
+                                    hpp: 0
+                                };
+                                newSkusFound++;
+                            }
+                        }
+                    }
+
+                    if (newSkusFound > 0) {
+                        saveHppDb();
+                        renderHppTable();
+                        showToast(`Menemukan ${newSkusFound} SKU baru! Harap isi HPP mereka di tab Database HPP.`, 'info');
+                    }
+
+                    orderFileStatus.textContent = `${file.name} (${tempParsedOrders.length} item)`;
+                    showToast(`Selesai membaca ${tempParsedOrders.length} detail pesanan!`, 'success');
+                    
+                    if (tempParsedLogs.length > 0) {
+                        recalculateHppForTempLogs();
+                    }
+                } catch(err) {
+                    console.error(err);
+                    showToast('Gagal membaca file Pesanan: ' + err.message, 'error');
+                    orderFileStatus.textContent = 'Gagal';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // ------------------------------------------
     // Initial calls
     // ------------------------------------------
     loadShopSettings();
     calculateMetrics();
     renderDailyLogs();
     renderWithdrawals();
+    renderHppTable();
     updateCharts();
 });

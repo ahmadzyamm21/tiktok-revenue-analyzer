@@ -43,6 +43,9 @@
                 <a href="#" class="menu-item" data-tab="tab-channels">
                     <i class="fas fa-network-wired"></i> Analisis Saluran
                 </a>
+                <a href="#" class="menu-item" data-tab="tab-hpp-db">
+                    <i class="fas fa-boxes"></i> Database HPP SKU
+                </a>
                 <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 15px;"></div>
                 <a href="https://ahmadzyamm21.github.io/tiktok-ads-analyzer-new/" target="_blank" class="menu-item" style="color: var(--accent-pink);">
                     <i class="fas fa-chart-line"></i> Analisis Iklan & HPP ↗
@@ -205,12 +208,30 @@
                     </h3>
                     <p class="section-desc" style="margin-bottom: 12px;">Unggah file hasil penjualan bulanan / laporan penyelesaian detail pesanan TikTok Shop Anda (.xlsx atau .csv) untuk mengisi data harian secara instan.</p>
                     
-                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <label class="btn btn-cyan btn-sm" for="input-excel-file" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: normal; margin-bottom: 0;">
-                            <i class="fas fa-upload"></i> Unggah Laporan (.xlsx / .csv)
-                        </label>
-                        <input type="file" id="input-excel-file" accept=".xlsx, .csv" style="display: none;">
-                        <span id="excel-file-status" style="font-size: 12.5px; color: var(--text-muted);">Belum ada file terpilih</span>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 12px;">
+                        <!-- File 1: Settlement -->
+                        <div style="padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                            <div style="font-weight: 500; font-size: 12.5px; color: #FFF; margin-bottom: 8px;">1. File Laporan Keuangan (Settlement)</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label class="btn btn-cyan btn-sm" for="input-excel-file" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: normal; margin-bottom: 0; padding: 6px 12px; font-size: 11.5px;">
+                                    <i class="fas fa-upload"></i> Pilih Berkas Keuangan
+                                </label>
+                                <input type="file" id="input-excel-file" accept=".xlsx, .csv" style="display: none;">
+                                <span id="excel-file-status" style="font-size: 11.5px; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 150px;">Belum ada file</span>
+                            </div>
+                        </div>
+
+                        <!-- File 2: Orders List -->
+                        <div style="padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                            <div style="font-weight: 500; font-size: 12.5px; color: #FFF; margin-bottom: 8px;">2. File Daftar Pesanan (Order List - SKU)</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label class="btn btn-secondary btn-sm" for="input-order-file" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: normal; margin-bottom: 0; padding: 6px 12px; font-size: 11.5px; border-color: var(--accent-cyan); color: var(--accent-cyan); background: transparent;">
+                                    <i class="fas fa-upload"></i> Pilih Berkas Pesanan
+                                </label>
+                                <input type="file" id="input-order-file" accept=".xlsx, .csv" style="display: none;">
+                                <span id="order-file-status" style="font-size: 11.5px; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 150px;">Belum ada file</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="excel-parse-preview" style="display: none; margin-top: 15px; padding: 12px; border-radius: 8px; background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); font-size: 12px; line-height: 1.6;">
@@ -279,6 +300,22 @@
                                     <div class="input-with-addon">
                                         <span class="addon">Rp</span>
                                         <input type="number" id="log-ads-spend" placeholder="50000" min="0" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row mt-2" style="margin-top: 8px;">
+                                <div class="form-group flex-1">
+                                    <label for="log-hpp">Total Modal HPP Produk (Rp)</label>
+                                    <div class="input-with-addon">
+                                        <span class="addon">Rp</span>
+                                        <input type="number" id="log-hpp" placeholder="4000000" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label for="log-adjustments">Penyesuaian / Klaim (Rp)</label>
+                                    <div class="input-with-addon">
+                                        <span class="addon">Rp</span>
+                                        <input type="number" id="log-adjustments" placeholder="100000" min="0" value="0">
                                     </div>
                                 </div>
                             </div>
@@ -367,6 +404,91 @@
                     <p class="section-desc">Saran cerdas berdasarkan rasio persentase performa saluran omset untuk menyeimbangkan profitabilitas toko.</p>
                     <div class="recommendations-container" id="channel-recommendations-list">
                         <!-- Populated via Javascript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: DATABASE HPP SKU -->
+            <section id="tab-hpp-db" class="tab-content">
+                <div class="simulator-layout">
+                    <!-- Left: Input Form -->
+                    <div class="simulator-controls card">
+                        <h3 id="hpp-form-title">Atur HPP per SKU</h3>
+                        <p class="section-desc">Masukkan modal HPP untuk masing-masing kode SKU / variasi produk Anda.</p>
+                        
+                        <form id="hpp-sku-form" class="sim-inputs" novalidate>
+                            <div class="form-group">
+                                <label for="hpp-sku-code">Seller SKU (Kode SKU)</label>
+                                <input type="text" id="hpp-sku-code" placeholder="GTZ-AK-HTAM-BAT" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                            </div>
+                            
+                            <div class="form-group mt-3" style="margin-top: 15px;">
+                                <label for="hpp-product-name">Nama Produk</label>
+                                <input type="text" id="hpp-product-name" placeholder="Helm Anak" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                            </div>
+
+                            <div class="form-group mt-3" style="margin-top: 15px;">
+                                <label for="hpp-variation">Nama Variasi</label>
+                                <input type="text" id="hpp-variation" placeholder="BATMAN HITAM" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                            </div>
+
+                            <div class="form-group mt-3" style="margin-top: 15px;">
+                                <label for="hpp-unit-value">HPP Satuan (Rp)</label>
+                                <div class="input-with-addon">
+                                    <span class="addon">Rp</span>
+                                    <input type="number" id="hpp-unit-value" placeholder="45000" min="0" required>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 8px; margin-top: 20px;">
+                                <button type="button" class="btn btn-secondary flex-1" id="btn-cancel-hpp-edit" style="display: none;">Batal</button>
+                                <button type="submit" class="btn btn-cyan flex-1" id="btn-save-hpp-sku"><i class="fas fa-save"></i> Simpan HPP</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right: SKU List Table -->
+                    <div class="simulator-results" style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- Actions & Table Card -->
+                        <div class="card" style="flex: 1;">
+                            <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                                <div>
+                                    <h3 style="margin: 0;">Database Harga Pokok Penjualan (HPP)</h3>
+                                    <p class="section-desc" style="margin: 4px 0 0 0;">Daftar harga modal untuk setiap SKU yang terjual.</p>
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button id="btn-backup-hpp" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 6px 10px;">
+                                        <i class="fas fa-download mr-1"></i> Ekspor HPP (JSON)
+                                    </button>
+                                    <label class="btn btn-cyan btn-sm" for="input-restore-hpp" style="font-size: 11px; padding: 6px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: normal; margin-bottom: 0;">
+                                        <i class="fas fa-upload mr-1"></i> Impor HPP (JSON)
+                                    </label>
+                                    <input type="file" id="input-restore-hpp" accept=".json" style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <!-- Search filter -->
+                            <div class="form-group mb-3" style="margin-bottom: 15px;">
+                                <input type="text" id="hpp-search-input" placeholder="Cari berdasarkan SKU, nama produk, atau variasi..." style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13px; outline: none;">
+                            </div>
+
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="premium-table" id="hpp-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Seller SKU</th>
+                                            <th>Nama Produk</th>
+                                            <th>Variasi</th>
+                                            <th style="text-align: right;">HPP Satuan</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hpp-table-body">
+                                        <!-- Dynamic SKU rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
