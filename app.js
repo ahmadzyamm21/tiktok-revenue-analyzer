@@ -1592,47 +1592,86 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (!file) return;
 
+            const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
             const reader = new FileReader();
+
             reader.onload = function(evt) {
                 try {
-                    const parsed = JSON.parse(evt.target.result);
                     let count = 0;
-                    
-                    if (Array.isArray(parsed)) {
-                        parsed.forEach(item => {
-                            const skuCode = (item.sku || item.name || item.id || '').trim();
-                            if (skuCode) {
-                                hppSkuDb[skuCode] = {
-                                    sku: skuCode,
-                                    product: item.product || item.name || '',
+                    if (isExcel) {
+                        const data = new Uint8Array(evt.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames.find(n => n.includes('Isi HPP') || n.includes('HPP'));
+                        if (!sheetName) {
+                            showToast('Sheet Isi HPP tidak ditemukan di file Excel!', 'error');
+                            return;
+                        }
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        // Row 0 is headers: SKU, Product Name, Variation, HPP
+                        for (let r = 1; r < jsonData.length; r++) {
+                            const row = jsonData[r];
+                            if (!row || row.length === 0) continue;
+                            const skuVal = (row[0] || '').toString().trim();
+                            const productVal = (row[1] || '').toString().trim();
+                            const variationVal = (row[2] || '').toString().trim();
+                            const hppVal = parseFloat(row[3]) || 0;
+
+                            if (skuVal) {
+                                hppSkuDb[skuVal] = {
+                                    sku: skuVal,
+                                    product: productVal,
+                                    variation: variationVal,
+                                    hpp: hppVal
+                                };
+                                count++;
+                            }
+                        }
+                        showToast(`Berhasil mengimpor ${count} HPP dari Excel!`, 'success');
+                    } else {
+                        const parsed = JSON.parse(evt.target.result);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                const skuCode = (item.sku || item.name || item.id || '').trim();
+                                if (skuCode) {
+                                    hppSkuDb[skuCode] = {
+                                        sku: skuCode,
+                                        product: item.product || item.name || '',
+                                        variation: item.variation || '',
+                                        hpp: parseFloat(item.hpp) || 0
+                                    };
+                                    count++;
+                                }
+                            });
+                        } else if (typeof parsed === 'object') {
+                            Object.keys(parsed).forEach(skuKey => {
+                                const item = parsed[skuKey];
+                                hppSkuDb[skuKey] = {
+                                    sku: item.sku || skuKey,
+                                    product: item.product || '',
                                     variation: item.variation || '',
                                     hpp: parseFloat(item.hpp) || 0
                                 };
                                 count++;
-                            }
-                        });
-                    } else if (typeof parsed === 'object') {
-                        Object.keys(parsed).forEach(skuKey => {
-                            const item = parsed[skuKey];
-                            hppSkuDb[skuKey] = {
-                                sku: item.sku || skuKey,
-                                product: item.product || '',
-                                variation: item.variation || '',
-                                hpp: parseFloat(item.hpp) || 0
-                            };
-                            count++;
-                        });
+                            });
+                        }
+                        showToast(`Berhasil mengimpor ${count} data HPP SKU dari JSON!`, 'success');
                     }
 
                     saveHppDb();
                     renderHppTable();
                     calculateMetrics();
-                    showToast(`Berhasil mengimpor ${count} data HPP SKU!`, 'success');
                 } catch(err) {
-                    showToast('Gagal memproses file JSON HPP: ' + err.message, 'error');
+                    showToast('Gagal memproses file HPP: ' + err.message, 'error');
                 }
             };
-            reader.readAsText(file);
+
+            if (isExcel) {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file);
+            }
             inputRestoreHpp.value = '';
         });
     }
