@@ -1841,10 +1841,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         for (let r = 1; r < jsonData.length; r++) {
                             const row = jsonData[r];
                             if (!row || row.length === 0) continue;
-                            const skuVal = (row[0] || '').toString().trim();
+                            let skuVal = (row[0] || '').toString().trim();
                             const productVal = (row[1] || '').toString().trim();
                             const variationVal = (row[2] || '').toString().trim();
                             const hppVal = parseFloat(row[3]) || 0;
+
+                            if (!skuVal && productVal) {
+                                skuVal = 'NO-SKU-' + productVal + (variationVal ? ' (' + variationVal + ')' : '');
+                            }
 
                             if (skuVal) {
                                 hppSkuDb[skuVal] = {
@@ -2106,9 +2110,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!orderIdVal) continue;
 
                         const statusVal = colMap.status !== -1 ? (row[colMap.status] || '').toString().trim() : 'Completed';
-                        const skuVal = colMap.sku !== -1 ? (row[colMap.sku] || '').toString().trim() : 'Unknown SKU';
                         const productVal = colMap.product !== -1 ? (row[colMap.product] || '').toString().trim() : '';
                         const variationVal = colMap.variation !== -1 ? (row[colMap.variation] || '').toString().trim() : '';
+                        let skuVal = colMap.sku !== -1 ? (row[colMap.sku] || '').toString().trim() : '';
+                        if (!skuVal) {
+                            skuVal = 'NO-SKU-' + productVal + (variationVal ? ' (' + variationVal + ')' : '');
+                        }
                         const qtyVal = colMap.qty !== -1 ? parseInt(row[colMap.qty]) || 1 : 1;
                         const trackingIdVal = colMap.trackingId !== -1 ? (row[colMap.trackingId] || '').toString().trim() : '';
                         const rawDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
