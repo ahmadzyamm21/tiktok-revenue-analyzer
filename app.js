@@ -2012,26 +2012,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // Build orderId -> list of order items mapping (only completed orders for HPP)
         const ordersMap = {};
         
-        // 1. Load from saved database of orders
+        // Combine orderItemsDb and tempParsedOrders, unique-ifying by orderId + sku + variation
+        const uniqueItemsMap = {};
         if (orderItemsDb && orderItemsDb.length > 0) {
             orderItemsDb.forEach(o => {
-                const st = (o.status || '').toLowerCase();
-                if (st.includes('selesai') || st.includes('completed') || st === '' || st === 'completed') {
-                    const oid = o.orderId;
-                    if (!ordersMap[oid]) {
-                        ordersMap[oid] = [];
-                    }
-                    ordersMap[oid].push(o);
-                }
+                const key = o.orderId + '_' + (o.sku || '') + '_' + (o.variation || '');
+                uniqueItemsMap[key] = o;
             });
         }
-        
-        // 2. Overwrite/supplement with newly parsed orders in this session
         tempParsedOrders.forEach(o => {
+            const key = o.orderId + '_' + (o.sku || '') + '_' + (o.variation || '');
+            uniqueItemsMap[key] = o;
+        });
+        
+        // Group by orderId (only for completed orders)
+        Object.values(uniqueItemsMap).forEach(o => {
             const st = (o.status || '').toLowerCase();
             if (st.includes('selesai') || st.includes('completed') || st === '' || st === 'completed') {
                 const oid = o.orderId;
-                ordersMap[oid] = [o]; // Overwrite to prevent duplication
+                if (!ordersMap[oid]) {
+                    ordersMap[oid] = [];
+                }
+                ordersMap[oid].push(o);
             }
         });
 
