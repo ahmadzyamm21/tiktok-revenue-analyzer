@@ -1668,8 +1668,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('tiktok_order_payouts', JSON.stringify(orderPayouts));
 
                 if (tempParsedOrders.length > 0) {
-                    const existingItemIds = new Set(orderItemsDb.map(item => item.orderId));
-                    const newItems = tempParsedOrders.filter(item => !existingItemIds.has(item.orderId));
+                    const existingKeys = new Set(orderItemsDb.map(item => item.orderId + '_' + (item.sku || '') + '_' + (item.variation || '')));
+                    const newItems = tempParsedOrders.filter(item => !existingKeys.has(item.orderId + '_' + (item.sku || '') + '_' + (item.variation || '')));
                     orderItemsDb = [...orderItemsDb, ...newItems];
                     localStorage.setItem('tiktok_order_items', JSON.stringify(orderItemsDb));
                 }
@@ -2295,13 +2295,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         showToast(`Menemukan ${newSkusFound} SKU baru! Harap isi HPP mereka di tab Database HPP.`, 'info');
                     }
 
-                    // Save parsed orders to database immediately (map-based merge)
+                    // Save parsed orders to database immediately (map-based merge by orderId + sku + variation)
                     const itemsMap = {};
                     orderItemsDb.forEach(item => {
-                        itemsMap[item.orderId] = item;
+                        const key = item.orderId + '_' + (item.sku || '') + '_' + (item.variation || '');
+                        itemsMap[key] = item;
                     });
                     tempParsedOrders.forEach(item => {
-                        itemsMap[item.orderId] = item;
+                        const key = item.orderId + '_' + (item.sku || '') + '_' + (item.variation || '');
+                        itemsMap[key] = item;
                     });
                     orderItemsDb = Object.values(itemsMap);
                     localStorage.setItem('tiktok_order_items', JSON.stringify(orderItemsDb));
@@ -2347,15 +2349,21 @@ document.addEventListener('DOMContentLoaded', () => {
         let csvContent = "\uFEFF"; // UTF-8 BOM for Excel compatibility
         csvContent += "No,Tanggal Pemesanan,No. Resi (Tracking ID),ID Pesanan,Nama Produk,SKU,Variasi,Qty,Status,Dana Cair,HPP,Laba Bersih\n";
 
+        const orderIdCounts = {};
+        orderItemsDb.forEach(item => {
+            orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
+        });
+
         orderItemsDb.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
             const isSettled = !!payoutInfo;
-            const settlementAmt = isSettled ? payoutInfo.amount : 0;
+            const fullSettlementAmt = isSettled ? payoutInfo.amount : 0;
+            const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
             const statusStr = isSettled ? 'Sudah Cair' : (item.status === 'Cancelled' ? 'Dibatalkan' : 'Belum Cair');
 
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-            const totalHpp = item.qty * hppVal;
+            const totalHpp = item.status === 'Cancelled' ? 0 : (item.qty * hppVal);
             const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
 
             const row = [
@@ -2368,9 +2376,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.variation || '',
                 item.qty,
                 statusStr,
-                settlementAmt,
+                Math.round(settlementAmt),
                 totalHpp,
-                netProfit
+                Math.round(netProfit)
             ];
             csvContent += row.join(",") + "\n";
         });
@@ -2417,11 +2425,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rowsHtml = [];
 
+        const orderIdCounts = {};
+        orderItemsDb.forEach(item => {
+            orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
+        });
+
         orderItemsDb.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
             const isCancelled = (item.status || '').toLowerCase().includes('batal') || item.status === 'Cancelled';
             const isSettled = payoutInfo && payoutInfo.amount > 0;
-            const settlementAmt = isSettled ? payoutInfo.amount : 0;
+            const fullSettlementAmt = isSettled ? payoutInfo.amount : 0;
+            const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
             const statusStr = isSettled ? 'Sudah Cair' : (isCancelled ? 'Dibatalkan' : 'Belum Cair');
 
             // Apply filters
