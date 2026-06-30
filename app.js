@@ -337,6 +337,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderChannelAnalysis(totalNet);
+
+        // Update Rincian Laba Rugi Table
+        const pnlGross = document.getElementById('pnl-gross-rev');
+        const pnlVoucher = document.getElementById('pnl-voucher-deduction');
+        const pnlVoucherPct = document.getElementById('pnl-voucher-pct');
+        const pnlRefund = document.getElementById('pnl-refund-deduction');
+        const pnlRefundPct = document.getElementById('pnl-refund-pct');
+        const pnlNetRevText = document.getElementById('pnl-net-rev');
+        const pnlNetRevPctText = document.getElementById('pnl-net-rev-pct');
+        const pnlAdmin = document.getElementById('pnl-admin-fees');
+        const pnlAdminPct = document.getElementById('pnl-admin-pct');
+        const pnlAds = document.getElementById('pnl-ads-spend');
+        const pnlAdsPct = document.getElementById('pnl-ads-pct');
+        const pnlPayout = document.getElementById('pnl-net-payout');
+        const pnlPayoutPct = document.getElementById('pnl-payout-pct');
+        const pnlHpp = document.getElementById('pnl-total-hpp');
+        const pnlHppPct = document.getElementById('pnl-hpp-pct');
+        const pnlNetProfitText = document.getElementById('pnl-net-profit');
+        const pnlNetProfitPctText = document.getElementById('pnl-net-profit-pct');
+
+        if (pnlGross) pnlGross.textContent = formatRupiah(totalGross);
+        
+        const pctDenom = totalGross > 0 ? totalGross : 1;
+        
+        if (pnlVoucher) pnlVoucher.textContent = `-${formatRupiah(totalVouchers)}`;
+        if (pnlVoucherPct) pnlVoucherPct.textContent = `${((totalVouchers / pctDenom) * 100).toFixed(1)}%`;
+        
+        if (pnlRefund) pnlRefund.textContent = `-${formatRupiah(totalRefunds)}`;
+        if (pnlRefundPct) pnlRefundPct.textContent = `${((totalRefunds / pctDenom) * 100).toFixed(1)}%`;
+        
+        if (pnlNetRevText) pnlNetRevText.textContent = formatRupiah(totalNet);
+        if (pnlNetRevPctText) pnlNetRevPctText.textContent = `${((totalNet / pctDenom) * 100).toFixed(1)}%`;
+        
+        if (pnlAdmin) pnlAdmin.textContent = `-${formatRupiah(totalAdminFees)}`;
+        if (pnlAdminPct) pnlAdminPct.textContent = `${((totalAdminFees / pctDenom) * 100).toFixed(1)}%`;
+        
+        if (pnlAds) pnlAds.textContent = `-${formatRupiah(totalAdsSpend)}`;
+        if (pnlAdsPct) pnlAdsPct.textContent = `${((totalAdsSpend / pctDenom) * 100).toFixed(1)}%`;
+        
+        if (pnlPayout) pnlPayout.textContent = formatRupiah(totalPayout);
+        if (pnlPayoutPct) pnlPayoutPct.textContent = `${((totalPayout / pctDenom) * 100).toFixed(1)}%`;
+        
+        if (pnlHpp) pnlHpp.textContent = `-${formatRupiah(activeHpp)}`;
+        if (pnlHppPct) pnlHppPct.textContent = `${((activeHpp / pctDenom) * 100).toFixed(1)}%`;
+        
+        const finalNetProfitVal = totalPayout - activeHpp;
+        if (pnlNetProfitText) {
+            pnlNetProfitText.textContent = formatRupiah(finalNetProfitVal);
+            if (finalNetProfitVal < 0) {
+                pnlNetProfitText.style.color = 'var(--accent-pink)';
+            } else {
+                pnlNetProfitText.style.color = 'var(--accent-green)';
+            }
+        }
+        if (pnlNetProfitPctText) {
+            const netProfitPctVal = ((finalNetProfitVal / pctDenom) * 100).toFixed(1);
+            pnlNetProfitPctText.textContent = `${netProfitPctVal}%`;
+            if (finalNetProfitVal < 0) {
+                pnlNetProfitPctText.style.color = 'var(--accent-pink)';
+            } else {
+                pnlNetProfitPctText.style.color = 'var(--accent-green)';
+            }
+        }
     }
 
     function renderDailyLogs() {
