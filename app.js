@@ -161,41 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ------------------------------------------
-    // Theme Switcher Logic
-    // ------------------------------------------
-    const btnToggleTheme = document.getElementById('btn-toggle-theme');
-    const themeIcon = document.getElementById('theme-icon');
-
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    if (savedTheme === 'light') {
-        document.body.classList.add('light-theme');
-        if (themeIcon) {
-            themeIcon.classList.remove('fa-sun');
-            themeIcon.classList.add('fa-moon');
-        }
-    }
-
-    if (btnToggleTheme) {
-        btnToggleTheme.addEventListener('click', () => {
-            const isLight = document.body.classList.toggle('light-theme');
-            localStorage.setItem('theme', isLight ? 'light' : 'dark');
-            
-            if (themeIcon) {
-                if (isLight) {
-                    themeIcon.classList.remove('fa-sun');
-                    themeIcon.classList.add('fa-moon');
-                } else {
-                    themeIcon.classList.remove('fa-moon');
-                    themeIcon.classList.add('fa-sun');
-                }
-            }
-            
-            // Redraw charts with new theme colors
-            updateCharts();
-        });
-    }
+    // Revert and clean up theme overrides (always dark theme)
+    localStorage.removeItem('theme');
+    document.body.classList.remove('light-theme');
 
     // Logo image uploader base64 conversion
     if (btnUploadLogoTrigger) {

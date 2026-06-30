@@ -20,24 +20,6 @@
     
     --sidebar-width: 260px;
 }
-
-body.light-theme {
-    --bg-primary: #F4F6F9;
-    --bg-secondary: #FFFFFF;
-    --bg-sidebar: #0F172A;
-    --bg-card: #FFFFFF;
-    --border-color: rgba(0, 0, 0, 0.08);
-    
-    --text-primary: #0F172A;
-    --text-secondary: #334155;
-    --text-muted: #64748B;
-    
-    --accent-cyan: #0891B2;
-    --accent-pink: #E11D48;
-    --accent-green: #16A34A;
-    --accent-orange: #EA580C;
-}
-
 /* Reset & Global styles */
 * {
     margin: 0;
