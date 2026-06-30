@@ -161,6 +161,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ------------------------------------------
+    // Theme Switcher Logic
+    // ------------------------------------------
+    const btnToggleTheme = document.getElementById('btn-toggle-theme');
+    const themeIcon = document.getElementById('theme-icon');
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        if (themeIcon) {
+            themeIcon.classList.remove('fa-sun');
+            themeIcon.classList.add('fa-moon');
+        }
+    }
+
+    if (btnToggleTheme) {
+        btnToggleTheme.addEventListener('click', () => {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            
+            if (themeIcon) {
+                if (isLight) {
+                    themeIcon.classList.remove('fa-sun');
+                    themeIcon.classList.add('fa-moon');
+                } else {
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                }
+            }
+            
+            // Redraw charts with new theme colors
+            updateCharts();
+        });
+    }
+
     // Logo image uploader base64 conversion
     if (btnUploadLogoTrigger) {
         btnUploadLogoTrigger.addEventListener('click', () => settingsShopLogoFile.click());
@@ -800,6 +836,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!trendCanvas || !donutCanvas) return;
 
+            const isLight = document.body.classList.contains('light-theme');
+            const textColor = isLight ? '#64748B' : '#90A0B7';
+            const gridColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.03)';
+            const donutBorderColor = isLight ? '#FFFFFF' : '#0A0D14';
+
             // Destroy previous instances
             if (revenueTrendChart) revenueTrendChart.destroy();
             if (channelDonutChart) channelDonutChart.destroy();
@@ -843,17 +884,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { labels: { color: '#90A0B7', font: { family: 'Outfit', size: 11 } } }
+                        legend: { labels: { color: textColor, font: { family: 'Outfit', size: 11 } } }
                     },
                     scales: {
-                        x: { ticks: { color: '#90A0B7', font: { family: 'Outfit' } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } },
+                        x: { ticks: { color: textColor, font: { family: 'Outfit' } }, grid: { color: gridColor } },
                         y: { 
                             ticks: { 
-                                color: '#90A0B7', 
+                                color: textColor, 
                                 font: { family: 'Outfit' },
                                 callback: value => 'Rp ' + (value >= 1e6 ? (value/1e6).toFixed(1) + 'jt' : (value/1e3).toFixed(0) + 'rb')
                             }, 
-                            grid: { color: 'rgba(255, 255, 255, 0.03)' } 
+                            grid: { color: gridColor } 
                         }
                     }
                 }
@@ -884,7 +925,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         data: hasData ? [adsTotal, affTotal, liveTotal, videoTotal] : [25, 25, 25, 25],
                         backgroundColor: hasData ? ['#FE2C55', '#25F4EE', '#00FF87', '#FFAA00'] : ['#2A2F3D', '#222530', '#1C1F28', '#14161C'],
                         borderWidth: 2,
-                        borderColor: '#0A0D14'
+                        borderColor: donutBorderColor
                     }]
                 },
                 options: {
@@ -894,7 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { color: '#90A0B7', font: { family: 'Outfit', size: 10 } }
+                            labels: { color: textColor, font: { family: 'Outfit', size: 10 } }
                         }
                     }
                 }
