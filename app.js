@@ -214,6 +214,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const btnClearDatabase = document.getElementById('btn-clear-database');
+    if (btnClearDatabase) {
+        btnClearDatabase.addEventListener('click', () => {
+            if (confirm('Apakah Anda yakin ingin menghapus dan mengosongkan seluruh database? Tindakan ini akan menghapus semua Catatan Harian, Riwayat Penarikan, dan Database HPP SKU yang tersimpan!')) {
+                revenueLogs = [];
+                withdrawalsList = [];
+                hppSkuDb = {};
+                
+                localStorage.removeItem('tiktok_revenue_logs');
+                localStorage.removeItem('tiktok_withdrawals');
+                localStorage.removeItem('tiktok_sku_hpp');
+                
+                renderHppTable();
+                renderDailyLogs();
+                renderWithdrawals();
+                calculateMetrics();
+                updateCharts();
+                
+                settingsModal.classList.remove('show');
+                showToast('Seluruh database toko berhasil dikosongkan!', 'success');
+            }
+        });
+    }
+
     // ------------------------------------------
     // Calculation & Render Logic
     // ------------------------------------------

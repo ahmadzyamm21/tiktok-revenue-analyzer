@@ -582,7 +582,7 @@
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
             <h4 style="margin: 0 0 8px 0; color: #FFF; font-size: 12px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Pusat Cadangan Data Toko</h4>
             <p style="font-size: 10.5px; color: var(--text-muted); margin-bottom: 12px;">Cadangkan seluruh database transaksi omset harian Anda atau pulihkan dari file sebelumnya.</p>
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <button type="button" class="btn btn-secondary btn-sm" id="btn-export-full-backup" style="flex: 1; font-size: 11px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
                     <i class="fas fa-file-download"></i> Cadangkan Semua
                 </button>
@@ -590,6 +590,11 @@
                     <i class="fas fa-file-upload"></i> Pulihkan Data
                 </label>
                 <input type="file" id="input-full-backup-file" accept=".json" style="display: none;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-database" style="width: 100%; font-size: 11px; padding: 8px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(254, 44, 85, 0.4); color: var(--accent-pink);">
+                    <i class="fas fa-trash-alt"></i> Hapus & Kosongkan Semua Data
+                </button>
             </div>
             
             <div style="display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end;">
