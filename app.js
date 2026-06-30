@@ -1205,6 +1205,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Recalculates the sheet range dynamically by scanning all keys to override incorrect !ref metadata
+    function updateSheetRange(ws) {
+        if (!ws) return;
+        let minRow = Infinity, maxRow = -Infinity;
+        let minCol = Infinity, maxCol = -Infinity;
+        
+        for (let key in ws) {
+            if (key[0] === '!') continue;
+            
+            const match = key.match(/^([A-Z]+)(\d+)$/);
+            if (match) {
+                const colStr = match[1];
+                const rowNum = parseInt(match[2], 10);
+                
+                let colNum = 0;
+                for (let i = 0; i < colStr.length; i++) {
+                    colNum = colNum * 26 + (colStr.charCodeAt(i) - 64);
+                }
+                
+                if (rowNum < minRow) minRow = rowNum;
+                if (rowNum > maxRow) maxRow = rowNum;
+                if (colNum < minCol) minCol = colNum;
+                if (colNum > maxCol) maxCol = colNum;
+            }
+        }
+        
+        if (maxRow !== -Infinity) {
+            function colToLetter(col) {
+                let temp, letter = '';
+                while (col > 0) {
+                    temp = (col - 1) % 26;
+                    letter = String.fromCharCode(65 + temp) + letter;
+                    col = (col - temp - 1) / 26;
+                }
+                return letter;
+            }
+            
+            const rangeStr = `${colToLetter(minCol)}${minRow}:${colToLetter(maxCol)}${maxRow}`;
+            ws['!ref'] = rangeStr;
+        }
+    }
+
     // Extracted Keuangan parsing logic into a reusable function
     function parseKeuanganWorkbook(workbook, allDailyAggregates, fileName) {
 
@@ -1217,6 +1259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let s = 0; s < workbook.SheetNames.length; s++) {
                         const sheetName = workbook.SheetNames[s];
                         const worksheet = workbook.Sheets[sheetName];
+                        updateSheetRange(worksheet);
                         const currentJson = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                         
                         if (!currentJson || currentJson.length < 2) continue;
@@ -1407,6 +1450,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const withdrawalSheetName = workbook.SheetNames.find(n => n.includes('Riwayat penarikan'));
                     if (withdrawalSheetName) {
                         const wSheet = workbook.Sheets[withdrawalSheetName];
+                        updateSheetRange(wSheet);
                         const wJson = XLSX.utils.sheet_to_json(wSheet, { header: 1 });
                         if (wJson && wJson.length > 1) {
                             let wHeaderIndex = -1;
@@ -1835,6 +1879,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             return;
                         }
                         const worksheet = workbook.Sheets[sheetName];
+                        updateSheetRange(worksheet);
                         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                         
                         // Row 0 is headers: SKU, Product Name, Variation, HPP
@@ -2054,6 +2099,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }) || workbook.SheetNames[0]; // Fallback to first sheet
 
                     const worksheet = workbook.Sheets[targetSheetName];
+                    updateSheetRange(worksheet);
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     if (!jsonData || jsonData.length < 2) {
                         showToast('File pesanan kosong!', 'error');
