@@ -1668,8 +1668,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('tiktok_order_payouts', JSON.stringify(orderPayouts));
 
                 if (tempParsedOrders.length > 0) {
-                    const existingKeys = new Set(orderItemsDb.map(item => item.orderId + '_' + (item.sku || '') + '_' + (item.variation || '')));
-                    const newItems = tempParsedOrders.filter(item => !existingKeys.has(item.orderId + '_' + (item.sku || '') + '_' + (item.variation || '')));
+                    const existingKeys = new Set(orderItemsDb.map(item => item.orderId + '_' + (item.product || '') + '_' + (item.sku || '') + '_' + (item.variation || '')));
+                    const newItems = tempParsedOrders.filter(item => !existingKeys.has(item.orderId + '_' + (item.product || '') + '_' + (item.sku || '') + '_' + (item.variation || '')));
                     orderItemsDb = [...orderItemsDb, ...newItems];
                     localStorage.setItem('tiktok_order_items', JSON.stringify(orderItemsDb));
                 }
@@ -2012,16 +2012,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Build orderId -> list of order items mapping (only completed orders for HPP)
         const ordersMap = {};
         
-        // Combine orderItemsDb and tempParsedOrders, unique-ifying by orderId + sku + variation
+        // Combine orderItemsDb and tempParsedOrders, unique-ifying by orderId + product + sku + variation
         const uniqueItemsMap = {};
         if (orderItemsDb && orderItemsDb.length > 0) {
             orderItemsDb.forEach(o => {
-                const key = o.orderId + '_' + (o.sku || '') + '_' + (o.variation || '');
+                const key = o.orderId + '_' + (o.product || '') + '_' + (o.sku || '') + '_' + (o.variation || '');
                 uniqueItemsMap[key] = o;
             });
         }
         tempParsedOrders.forEach(o => {
-            const key = o.orderId + '_' + (o.sku || '') + '_' + (o.variation || '');
+            const key = o.orderId + '_' + (o.product || '') + '_' + (o.sku || '') + '_' + (o.variation || '');
             uniqueItemsMap[key] = o;
         });
         
@@ -2297,14 +2297,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         showToast(`Menemukan ${newSkusFound} SKU baru! Harap isi HPP mereka di tab Database HPP.`, 'info');
                     }
 
-                    // Save parsed orders to database immediately (map-based merge by orderId + sku + variation)
+                    // Save parsed orders to database immediately (map-based merge by orderId + product + sku + variation)
                     const itemsMap = {};
                     orderItemsDb.forEach(item => {
-                        const key = item.orderId + '_' + (item.sku || '') + '_' + (item.variation || '');
+                        const key = item.orderId + '_' + (item.product || '') + '_' + (item.sku || '') + '_' + (item.variation || '');
                         itemsMap[key] = item;
                     });
                     tempParsedOrders.forEach(item => {
-                        const key = item.orderId + '_' + (item.sku || '') + '_' + (item.variation || '');
+                        const key = item.orderId + '_' + (item.product || '') + '_' + (item.sku || '') + '_' + (item.variation || '');
                         itemsMap[key] = item;
                     });
                     orderItemsDb = Object.values(itemsMap);
