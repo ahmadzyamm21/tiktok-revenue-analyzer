@@ -1241,12 +1241,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi'])
                     };
 
-                    if (colMap.date === -1 || colMap.gross === -1) {
+                    if (colMap.date === -1 || colMap.gross === -1 || colMap.orderId === -1) {
                         previewDetails.innerHTML = `
                             <span style="color: var(--accent-pink); font-weight: bold;">❌ Kolom penting tidak ditemukan.</span><br>
-                            <span style="font-size: 11px; color: var(--text-muted);">Kolom Waktu (Tanggal) atau Pendapatan tidak terdeteksi di baris kepala.</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Kolom Waktu, Pendapatan, atau ID Pesanan tidak terdeteksi di baris kepala berkas Keuangan.</span>
                         `;
-                        showToast('Kolom Waktu/Tanggal atau Pendapatan tidak ditemukan!', 'error');
+                        showToast('Kolom penting (Waktu, Pendapatan, atau ID Pesanan) tidak ditemukan!', 'error');
                         return;
                     }
 
@@ -1925,6 +1925,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         qty: headers.findIndex(h => h.includes('jumlah') || h.includes('quantity')),
                         createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('created time'))
                     };
+
+                    if (colMap.orderId === -1 || colMap.sku === -1) {
+                        showToast('Kolom ID Pesanan atau Seller SKU tidak ditemukan di berkas Daftar Pesanan!', 'error');
+                        orderFileStatus.textContent = 'Gagal (Kolom tidak lengkap)';
+                        return;
+                    }
 
                     tempParsedOrders = [];
                     let newSkusFound = 0;
