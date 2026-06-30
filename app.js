@@ -1296,7 +1296,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 uniqueOrders: new Set(),
                                 adsShareSum: 0,
                                 affShareSum: 0,
-                                ordersTotalWeight: 0
+                                ordersTotalWeight: 0,
+                                orderIds: []
                             };
                         }
 
@@ -1322,9 +1323,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             dayData.refunds += refundVal;
                             dayData.adminFees += adminFeesVal;
                             
-                            const orderId = colMap.orderId !== -1 ? row[colMap.orderId] : null;
+                            const orderId = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : null;
                             if (orderId) {
                                 dayData.uniqueOrders.add(orderId);
+                                dayData.orderIds.push(orderId);
                             }
 
                             dayData.ordersTotalWeight += 1;
@@ -1426,6 +1428,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             adminFees: agg.adminFees,
                             adsSpend: agg.adsSpend,
                             adjustments: agg.adjustments,
+                            orderIds: agg.orderIds,
                             channels: {
                                 ads: adsPct,
                                 affiliate: affPct,
@@ -1461,13 +1464,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tempParsedLogs.length === 0) return;
 
             try {
+                const cleanLogs = tempParsedLogs.map(log => {
+                    const copy = { ...log };
+                    delete copy.orderIds;
+                    return copy;
+                });
+
                 const existingDatesMap = {};
-                tempParsedLogs.forEach(log => {
+                cleanLogs.forEach(log => {
                     existingDatesMap[log.date] = log;
                 });
 
                 revenueLogs = revenueLogs.filter(oldLog => !existingDatesMap[oldLog.date]);
-                revenueLogs = [...revenueLogs, ...tempParsedLogs];
+                revenueLogs = [...revenueLogs, ...cleanLogs];
 
                 saveLogsToStorage();
 
@@ -1773,26 +1782,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function recalculateHppForTempLogs() {
         if (tempParsedLogs.length === 0) return;
 
-        const ordersByDate = {};
+        // Build orderId -> list of order items mapping
+        const ordersMap = {};
         tempParsedOrders.forEach(o => {
-            if (!ordersByDate[o.date]) {
-                ordersByDate[o.date] = [];
+            const oid = o.orderId;
+            if (!ordersMap[oid]) {
+                ordersMap[oid] = [];
             }
-            ordersByDate[o.date].push(o);
+            ordersMap[oid].push(o);
         });
 
         let totalHppSum = 0;
 
         tempParsedLogs.forEach(log => {
-            const dateStr = log.date;
-            const ordersOnDate = ordersByDate[dateStr] || [];
-            
             let dateHpp = 0;
-            ordersOnDate.forEach(o => {
-                const skuInfo = hppSkuDb[o.sku];
-                const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-                dateHpp += o.qty * hppVal;
-            });
+            if (log.orderIds && log.orderIds.length > 0) {
+                log.orderIds.forEach(oid => {
+                    const items = ordersMap[oid] || [];
+                    items.forEach(o => {
+                        const skuInfo = hppSkuDb[o.sku];
+                        const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                        dateHpp += o.qty * hppVal;
+                    });
+                });
+            }
 
             log.hpp = dateHpp;
             totalHppSum += dateHpp;
