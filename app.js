@@ -1509,24 +1509,42 @@ document.addEventListener('DOMContentLoaded', () => {
                                     }
                                 }
 
-                                // Distribute GMV ads spend to daily aggregates
+                                // Distribute GMV ads spend to daily aggregates (only for matching month)
                                 if (gmvAdsTotal > 0) {
-                                    console.log(`[Keuangan Parser] GMV Pay Deduction total: Rp ${gmvAdsTotal.toLocaleString()}`);
                                     const aggDates = Object.keys(dailyAggregates);
                                     if (aggDates.length > 0) {
-                                        // Distribute proportionally based on gross revenue per day
-                                        const totalGross = aggDates.reduce((s, d) => s + (dailyAggregates[d].gross || 0), 0);
-                                        if (totalGross > 0) {
-                                            aggDates.forEach(d => {
-                                                const proportion = (dailyAggregates[d].gross || 0) / totalGross;
-                                                dailyAggregates[d].adsSpend += Math.round(gmvAdsTotal * proportion);
-                                            });
-                                        } else {
-                                            // Fallback: distribute equally
-                                            const perDay = Math.round(gmvAdsTotal / aggDates.length);
-                                            aggDates.forEach(d => {
-                                                dailyAggregates[d].adsSpend += perDay;
-                                            });
+                                        // Determine the primary analysis month (e.g., '2026-05')
+                                        const monthCounts = {};
+                                        aggDates.forEach(d => {
+                                            const ym = d.substring(0, 7); // '2026-05'
+                                            monthCounts[ym] = (monthCounts[ym] || 0) + 1;
+                                        });
+                                        const primaryMonth = Object.keys(monthCounts).sort((a, b) => monthCounts[b] - monthCounts[a])[0];
+                                        
+                                        // Only sum GMV entries that match the primary analysis month
+                                        let filteredGmvTotal = 0;
+                                        Object.keys(gmvAdsByDate).forEach(dateKey => {
+                                            if (dateKey.substring(0, 7) === primaryMonth) {
+                                                filteredGmvTotal += gmvAdsByDate[dateKey];
+                                            }
+                                        });
+                                        
+                                        console.log(`[Keuangan Parser] GMV Pay Deduction: Total=${gmvAdsTotal.toLocaleString()}, Filtered (${primaryMonth})=${filteredGmvTotal.toLocaleString()}`);
+                                        
+                                        if (filteredGmvTotal > 0) {
+                                            // Distribute proportionally based on gross revenue per day
+                                            const totalGross = aggDates.reduce((s, d) => s + (dailyAggregates[d].gross || 0), 0);
+                                            if (totalGross > 0) {
+                                                aggDates.forEach(d => {
+                                                    const proportion = (dailyAggregates[d].gross || 0) / totalGross;
+                                                    dailyAggregates[d].adsSpend += Math.round(filteredGmvTotal * proportion);
+                                                });
+                                            } else {
+                                                const perDay = Math.round(filteredGmvTotal / aggDates.length);
+                                                aggDates.forEach(d => {
+                                                    dailyAggregates[d].adsSpend += perDay;
+                                                });
+                                            }
                                         }
                                     }
                                 }
