@@ -1,5 +1,6 @@
 // TikTok Revenue & Omset Analyzer - Logic script
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("TikTok Revenue & Omset Analyzer v1.1.0 loaded (Order ID Join HPP fix active).");
     // ------------------------------------------
     // State variables
     // ------------------------------------------
@@ -1464,19 +1465,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tempParsedLogs.length === 0) return;
 
             try {
-                const cleanLogs = tempParsedLogs.map(log => {
-                    const copy = { ...log };
-                    delete copy.orderIds;
-                    return copy;
-                });
-
                 const existingDatesMap = {};
-                cleanLogs.forEach(log => {
+                tempParsedLogs.forEach(log => {
                     existingDatesMap[log.date] = log;
                 });
 
                 revenueLogs = revenueLogs.filter(oldLog => !existingDatesMap[oldLog.date]);
-                revenueLogs = [...revenueLogs, ...cleanLogs];
+                revenueLogs = [...revenueLogs, ...tempParsedLogs];
 
                 saveLogsToStorage();
 
@@ -1780,8 +1775,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Recalculate HPP inside tempParsedLogs using tempParsedOrders + hppSkuDb
     function recalculateHppForTempLogs() {
-        if (tempParsedLogs.length === 0) return;
-
         // Build orderId -> list of order items mapping
         const ordersMap = {};
         tempParsedOrders.forEach(o => {
@@ -1794,22 +1787,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let totalHppSum = 0;
 
-        tempParsedLogs.forEach(log => {
-            let dateHpp = 0;
-            if (log.orderIds && log.orderIds.length > 0) {
-                log.orderIds.forEach(oid => {
-                    const items = ordersMap[oid] || [];
-                    items.forEach(o => {
-                        const skuInfo = hppSkuDb[o.sku];
-                        const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-                        dateHpp += o.qty * hppVal;
+        if (tempParsedLogs.length > 0) {
+            tempParsedLogs.forEach(log => {
+                let dateHpp = 0;
+                if (log.orderIds && log.orderIds.length > 0) {
+                    log.orderIds.forEach(oid => {
+                        const items = ordersMap[oid] || [];
+                        items.forEach(o => {
+                            const skuInfo = hppSkuDb[o.sku];
+                            const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                            dateHpp += o.qty * hppVal;
+                        });
                     });
-                });
-            }
+                }
 
-            log.hpp = dateHpp;
-            totalHppSum += dateHpp;
-        });
+                log.hpp = dateHpp;
+                totalHppSum += dateHpp;
+            });
+        }
+
+        // Also update existing database records in revenueLogs if they have orderIds
+        let updatedDatabase = false;
+        if (revenueLogs.length > 0 && tempParsedOrders.length > 0) {
+            revenueLogs.forEach(log => {
+                let dateHpp = 0;
+                let hasOrders = false;
+                if (log.orderIds && log.orderIds.length > 0) {
+                    log.orderIds.forEach(oid => {
+                        const items = ordersMap[oid] || [];
+                        if (items.length > 0) hasOrders = true;
+                        items.forEach(o => {
+                            const skuInfo = hppSkuDb[o.sku];
+                            const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                            dateHpp += o.qty * hppVal;
+                        });
+                    });
+                }
+                if (hasOrders || dateHpp > 0) {
+                    log.hpp = dateHpp;
+                    updatedDatabase = true;
+                }
+            });
+        }
+
+        if (updatedDatabase) {
+            saveLogsToStorage();
+            calculateMetrics();
+            renderDailyLogs();
+            updateCharts();
+        }
+
+        if (tempParsedLogs.length === 0) return;
 
         const startDate = tempParsedLogs[0].date;
         const endDate = tempParsedLogs[tempParsedLogs.length - 1].date;
