@@ -1832,14 +1832,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Recalculate HPP inside tempParsedLogs using tempParsedOrders + hppSkuDb
     function recalculateHppForTempLogs() {
-        // Build orderId -> list of order items mapping
+        // Build orderId -> list of order items mapping (only completed orders for HPP)
         const ordersMap = {};
         tempParsedOrders.forEach(o => {
-            const oid = o.orderId;
-            if (!ordersMap[oid]) {
-                ordersMap[oid] = [];
+            // Only include completed orders for HPP calculation
+            const st = (o.status || '').toLowerCase();
+            if (st.includes('selesai') || st.includes('completed') || st === '' || st === 'completed') {
+                const oid = o.orderId;
+                if (!ordersMap[oid]) {
+                    ordersMap[oid] = [];
+                }
+                ordersMap[oid].push(o);
             }
-            ordersMap[oid].push(o);
         });
 
         let totalHppSum = 0;
