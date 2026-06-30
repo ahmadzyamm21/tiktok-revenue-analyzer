@@ -1262,7 +1262,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Clean and parse date
                         let dateStr = '';
                         if (rawDate instanceof Date) {
-                            dateStr = rawDate.toISOString().split('T')[0];
+                            const y = rawDate.getFullYear();
+                            const m = String(rawDate.getMonth() + 1).padStart(2, '0');
+                            const d = String(rawDate.getDate()).padStart(2, '0');
+                            dateStr = `${y}-${m}-${d}`;
                         } else {
                             const dateMatch = rawDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
                             if (dateMatch) {
@@ -1270,7 +1273,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             } else {
                                 const parsedD = new Date(rawDate);
                                 if (!isNaN(parsedD.getTime())) {
-                                    dateStr = parsedD.toISOString().split('T')[0];
+                                    const y = parsedD.getFullYear();
+                                    const m = String(parsedD.getMonth() + 1).padStart(2, '0');
+                                    const d = String(parsedD.getDate()).padStart(2, '0');
+                                    dateStr = `${y}-${m}-${d}`;
                                 }
                             }
                         }
@@ -1899,7 +1905,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             let dateStr = '';
                             if (rawDate) {
                                 if (rawDate instanceof Date) {
-                                    dateStr = rawDate.toISOString().split('T')[0];
+                                    const y = rawDate.getFullYear();
+                                    const m = String(rawDate.getMonth() + 1).padStart(2, '0');
+                                    const d = String(rawDate.getDate()).padStart(2, '0');
+                                    dateStr = `${y}-${m}-${d}`;
                                 } else {
                                     const dateMatch = rawDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
                                     if (dateMatch) {
@@ -1907,7 +1916,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     } else {
                                         const parsedD = new Date(rawDate);
                                         if (!isNaN(parsedD.getTime())) {
-                                            dateStr = parsedD.toISOString().split('T')[0];
+                                            const y = parsedD.getFullYear();
+                                            const m = String(parsedD.getMonth() + 1).padStart(2, '0');
+                                            const d = String(parsedD.getDate()).padStart(2, '0');
+                                            dateStr = `${y}-${m}-${d}`;
                                         }
                                     }
                                     if (!dateStr) {
