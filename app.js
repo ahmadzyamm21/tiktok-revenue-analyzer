@@ -1472,6 +1472,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     bank: wHeaders.findIndex(h => h.includes('bank') || h.includes('rekening'))
                                 };
 
+                                // Track GMV Pay Deduction entries as ads spend
+                                let gmvAdsTotal = 0;
+                                const gmvAdsByDate = {};
+
                                 for (let r = wHeaderIndex + 1; r < wJson.length; r++) {
                                     const row = wJson[r];
                                     if (!row || row.length === 0) continue;
@@ -1492,6 +1496,38 @@ document.addEventListener('DOMContentLoaded', () => {
                                             bank: bankVal,
                                             status: statusVal
                                         });
+                                    }
+
+                                    // Capture GMV Pay Deduction as ads spend
+                                    if (typeVal.includes('gmv') && typeVal.includes('deduction')) {
+                                        const adsAmount = Math.abs(parseFloat(row[colIdx.total]) || 0);
+                                        const dateVal = colIdx.date !== -1 ? (row[colIdx.date] || '').toString().split(' ')[0].replace(/\//g, '-') : '';
+                                        gmvAdsTotal += adsAmount;
+                                        if (dateVal) {
+                                            gmvAdsByDate[dateVal] = (gmvAdsByDate[dateVal] || 0) + adsAmount;
+                                        }
+                                    }
+                                }
+
+                                // Distribute GMV ads spend to daily aggregates
+                                if (gmvAdsTotal > 0) {
+                                    console.log(`[Keuangan Parser] GMV Pay Deduction total: Rp ${gmvAdsTotal.toLocaleString()}`);
+                                    const aggDates = Object.keys(dailyAggregates);
+                                    if (aggDates.length > 0) {
+                                        // Distribute proportionally based on gross revenue per day
+                                        const totalGross = aggDates.reduce((s, d) => s + (dailyAggregates[d].gross || 0), 0);
+                                        if (totalGross > 0) {
+                                            aggDates.forEach(d => {
+                                                const proportion = (dailyAggregates[d].gross || 0) / totalGross;
+                                                dailyAggregates[d].adsSpend += Math.round(gmvAdsTotal * proportion);
+                                            });
+                                        } else {
+                                            // Fallback: distribute equally
+                                            const perDay = Math.round(gmvAdsTotal / aggDates.length);
+                                            aggDates.forEach(d => {
+                                                dailyAggregates[d].adsSpend += perDay;
+                                            });
+                                        }
                                     }
                                 }
                             }
