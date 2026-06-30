@@ -1954,12 +1954,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = new Uint8Array(evt.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
 
-                    const targetSheetName = workbook.SheetNames.find(n => n.includes('OrderSKUList') || n.includes('pesanan') || n.includes('Orders'));
-                    if (!targetSheetName) {
-                        showToast('Sheet OrderSKUList tidak ditemukan di file Pesanan!', 'error');
-                        orderFileStatus.textContent = 'Gagal (Sheet tidak ditemukan)';
-                        return;
-                    }
+                    const targetSheetName = workbook.SheetNames.find(n => {
+                        const nl = n.toLowerCase();
+                        return nl.includes('orderskulist') || nl.includes('pesanan') || nl.includes('orders') || nl.includes('detail') || nl.includes('resi');
+                    }) || workbook.SheetNames[0]; // Fallback to first sheet
 
                     const worksheet = workbook.Sheets[targetSheetName];
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -1985,13 +1983,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
                     const colMap = {
                         orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id')),
-                        status: headers.findIndex(h => h.includes('status pesanan') || h.includes('order status')),
+                        status: headers.findIndex(h => (h.includes('status pesanan') || h.includes('order status') || h === 'status') && !h.includes('pembayaran')),
                         sku: headers.findIndex(h => h.includes('seller sku') || (h.includes('sku') && !h.includes('id'))),
-                        product: headers.findIndex(h => h.includes('nama produk') || h.includes('product name')),
+                        product: headers.findIndex(h => h.includes('nama produk') || h.includes('product name') || h === 'produk'),
                         variation: headers.findIndex(h => h.includes('variasi') || h.includes('variation')),
-                        qty: headers.findIndex(h => h.includes('jumlah') || h.includes('quantity')),
-                        createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('created time')),
-                        trackingId: headers.findIndex(h => h.includes('resi') || h.includes('tracking id') || h.includes('no resi') || h.includes('resi id'))
+                        qty: headers.findIndex(h => h.includes('jumlah') || h.includes('quantity') || h === 'qty'),
+                        createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('created time') || h.includes('tanggal order') || h.includes('tanggal pesanan')),
+                        trackingId: headers.findIndex(h => h.includes('resi') || h.includes('tracking id') || h.includes('no resi') || h.includes('resi id')),
+                        settlement: headers.findIndex(h => h.includes('settlement') || h.includes('penyelesaian') || h.includes('dana cair') || h.includes('payout'))
                     };
 
                     if (colMap.orderId === -1 || colMap.sku === -1) {
@@ -2000,8 +1999,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
 
+                    const hasSettlementCol = colMap.settlement !== -1;
+                    if (hasSettlementCol) {
+                        console.log('[Orders Parser] Settlement column detected at index', colMap.settlement, '- will auto-populate payouts.');
+                    }
+
                     tempParsedOrders = [];
                     let newSkusFound = 0;
+                    let autoPayoutsCount = 0;
 
                     for (let r = headerIndex + 1; r < jsonData.length; r++) {
                         const row = jsonData[r];
@@ -2030,18 +2035,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (dateMatch) {
                                     dateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
                                 } else {
-                                    const parsedD = new Date(rawDate);
-                                    if (!isNaN(parsedD.getTime())) {
-                                        const y = parsedD.getFullYear();
-                                        const m = String(parsedD.getMonth() + 1).padStart(2, '0');
-                                        const d = String(parsedD.getDate()).padStart(2, '0');
-                                        dateStr = `${y}-${m}-${d}`;
-                                    }
-                                }
-                                if (!dateStr) {
+                                    // Try DD/MM/YYYY format (common in Indonesian reports)
                                     const slashMatch = rawDate.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
                                     if (slashMatch) {
                                         dateStr = `${slashMatch[3]}-${slashMatch[2].padStart(2, '0')}-${slashMatch[1].padStart(2, '0')}`;
+                                    } else {
+                                        const parsedD = new Date(rawDate);
+                                        if (!isNaN(parsedD.getTime())) {
+                                            const y = parsedD.getFullYear();
+                                            const m = String(parsedD.getMonth() + 1).padStart(2, '0');
+                                            const d = String(parsedD.getDate()).padStart(2, '0');
+                                            dateStr = `${y}-${m}-${d}`;
+                                        }
                                     }
                                 }
                             }
@@ -2060,6 +2065,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             trackingId: trackingIdVal
                         });
 
+                        // Auto-populate payouts from settlement column in orders file
+                        if (hasSettlementCol) {
+                            const settlementVal = parseFloat(row[colMap.settlement]) || 0;
+                            if (settlementVal > 0) {
+                                if (!tempParsedOrderPayouts[orderIdVal]) {
+                                    tempParsedOrderPayouts[orderIdVal] = { amount: 0, date: dateStr };
+                                }
+                                tempParsedOrderPayouts[orderIdVal].amount += settlementVal;
+                                autoPayoutsCount++;
+                            }
+                        }
+
                         if (skuVal && !hppSkuDb[skuVal]) {
                             hppSkuDb[skuVal] = {
                                 sku: skuVal,
@@ -2069,6 +2086,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             };
                             newSkusFound++;
                         }
+                    }
+
+                    if (hasSettlementCol && autoPayoutsCount > 0) {
+                        showToast(`Otomatis mendeteksi ${autoPayoutsCount} data pencairan dari file pesanan!`, 'success');
                     }
 
                     if (newSkusFound > 0) {
