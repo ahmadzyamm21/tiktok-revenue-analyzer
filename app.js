@@ -1275,6 +1275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         date: findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) !== -1 
                             ? findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) 
                             : findColIdx(['waktu pemesanan', 'tanggal pemesanan', 'date', 'tanggal']),
+                        createdTime: findColIdx(['waktu pemesanan', 'tanggal pemesanan', 'created time', 'order date', 'order time']),
                         gross: findColIdx(['subtotal sebelum diskon', 'subtotal before discount', 'original price']) !== -1 
                             ? findColIdx(['subtotal sebelum diskon', 'subtotal before discount', 'original price']) 
                             : findColIdx(['jumlah penyelesaian', 'total pendapatan', 'pendapatan', 'gross']),
@@ -1304,36 +1305,54 @@ document.addEventListener('DOMContentLoaded', () => {
                         const row = jsonData[r];
                         if (!row || row.length === 0) continue;
 
-                        const rawDate = row[colMap.date];
-                        if (!rawDate) continue;
+                        const orderId = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : null;
+                        if (!orderId) continue;
 
-                        // Clean and parse date
-                        let dateStr = '';
-                        if (rawDate instanceof Date) {
-                            const y = rawDate.getFullYear();
-                            const m = String(rawDate.getMonth() + 1).padStart(2, '0');
-                            const d = String(rawDate.getDate()).padStart(2, '0');
-                            dateStr = `${y}-${m}-${d}`;
-                        } else {
-                            const dateMatch = rawDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
-                            if (dateMatch) {
-                                dateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
+                        const typeVal = colMap.type !== -1 ? (row[colMap.type] || '').toString().toLowerCase().trim() : 'pesanan';
+                        const isOrderPayment = typeVal.includes('pesanan') || typeVal.includes('order') || typeVal.includes('payment') || typeVal.includes('gmv');
+                        
+                        if (!isOrderPayment) {
+                            continue; // Discard non-order payments, ads, adjustments, etc.
+                        }
+
+                        // Try to clean and parse the order date (waktu pemesanan)
+                        const rawOrderDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
+                        let orderDateStr = '';
+                        if (rawOrderDate) {
+                            if (rawOrderDate instanceof Date) {
+                                const y = rawOrderDate.getFullYear();
+                                const m = String(rawOrderDate.getMonth() + 1).padStart(2, '0');
+                                const d = String(rawOrderDate.getDate()).padStart(2, '0');
+                                orderDateStr = `${y}-${m}-${d}`;
                             } else {
-                                const parsedD = new Date(rawDate);
-                                if (!isNaN(parsedD.getTime())) {
-                                    const y = parsedD.getFullYear();
-                                    const m = String(parsedD.getMonth() + 1).padStart(2, '0');
-                                    const d = String(parsedD.getDate()).padStart(2, '0');
-                                    dateStr = `${y}-${m}-${d}`;
+                                const dateMatch = rawOrderDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                                if (dateMatch) {
+                                    orderDateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
+                                } else {
+                                    const slashMatch = rawOrderDate.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                                    if (slashMatch) {
+                                        orderDateStr = `${slashMatch[3]}-${slashMatch[2].padStart(2, '0')}-${slashMatch[1].padStart(2, '0')}`;
+                                    }
                                 }
                             }
                         }
 
-                        if (!dateStr) continue;
+                        // Look up in database to see if we have order date there
+                        const orderInDb = orderItemsDb.find(item => item.orderId === orderId);
 
-                        if (!dailyAggregates[dateStr]) {
-                            dailyAggregates[dateStr] = {
-                                date: dateStr,
+                        // We only process if it is a May 2026 order
+                        const isMayOrder = (orderDateStr && orderDateStr.startsWith('2026-05')) || (orderInDb && orderInDb.date.startsWith('2026-05'));
+                        if (!isMayOrder) {
+                            continue; // Skip orders outside May 2026
+                        }
+
+                        // Determine the correct aggregation date (must be the order date in May 2026)
+                        const aggDate = (orderDateStr && orderDateStr.startsWith('2026-05')) ? orderDateStr : (orderInDb ? orderInDb.date : null);
+                        if (!aggDate) continue;
+
+                        if (!dailyAggregates[aggDate]) {
+                            dailyAggregates[aggDate] = {
+                                date: aggDate,
                                 gross: 0,
                                 orders: 0,
                                 refunds: 0,
@@ -1349,8 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             };
                         }
 
-                        const dayData = dailyAggregates[dateStr];
-                        const typeVal = colMap.type !== -1 ? (row[colMap.type] || '').toString().toLowerCase().trim() : 'pesanan';
+                        const dayData = dailyAggregates[aggDate];
                         
                         let grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
                         const settlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
@@ -1365,34 +1383,24 @@ document.addEventListener('DOMContentLoaded', () => {
                             grossVal = grossVal + voucherVal + refundVal;
                         }
 
-                        if (typeVal.includes('pesanan')) {
-                            dayData.gross += grossVal;
-                            dayData.vouchers += voucherVal;
-                            dayData.refunds += refundVal;
-                            dayData.adminFees += adminFeesVal;
-                            
-                            const orderId = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : null;
-                            if (orderId) {
-                                dayData.uniqueOrders.add(orderId);
-                                dayData.orderIds.push(orderId);
-
-                                if (!tempParsedOrderPayouts[orderId]) {
-                                    tempParsedOrderPayouts[orderId] = { amount: 0, date: dateStr };
-                                }
-                                tempParsedOrderPayouts[orderId].amount += settlementVal;
-                            }
-
-                            dayData.ordersTotalWeight += 1;
-                            if (adsCost > 0) dayData.adsShareSum += 1;
-                            if (affCommission > 0) dayData.affShareSum += 1;
-                        } else if (typeVal.includes('iklan') || typeVal.includes('ads')) {
-                            dayData.adsSpend += Math.abs(settlementVal);
-                        } else if (typeVal.includes('pengembalian') || typeVal.includes('refund') || typeVal.includes('adjustment') || settlementVal < 0) {
-                            dayData.refunds += Math.abs(settlementVal) + refundVal;
-                            dayData.adminFees += adminFeesVal;
-                        } else if (typeVal.includes('penggantian') || typeVal.includes('reimbursement') || typeVal.includes('logistik')) {
-                            dayData.adjustments += Math.abs(settlementVal);
+                        dayData.gross += grossVal;
+                        dayData.vouchers += voucherVal;
+                        dayData.refunds += refundVal;
+                        dayData.adminFees += adminFeesVal;
+                        
+                        dayData.uniqueOrders.add(orderId);
+                        if (!dayData.orderIds.includes(orderId)) {
+                            dayData.orderIds.push(orderId);
                         }
+
+                        if (!tempParsedOrderPayouts[orderId]) {
+                            tempParsedOrderPayouts[orderId] = { amount: 0, date: aggDate };
+                        }
+                        tempParsedOrderPayouts[orderId].amount += settlementVal;
+
+                        dayData.ordersTotalWeight += 1;
+                        if (adsCost > 0) dayData.adsShareSum += 1;
+                        if (affCommission > 0) dayData.affShareSum += 1;
                     }
 
                     // Parse Riwayat penarikan if it exists
@@ -2134,7 +2142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
-                        if (!dateStr) continue;
+                        if (!dateStr || !dateStr.startsWith('2026-05')) continue; // Skip orders outside May 2026
 
                         tempParsedOrders.push({
                             orderId: orderIdVal,
