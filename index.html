@@ -46,6 +46,9 @@
                 <a href="#" class="menu-item" data-tab="tab-hpp-db">
                     <i class="fas fa-boxes"></i> Database HPP SKU
                 </a>
+                <a href="#" class="menu-item" data-tab="tab-payouts">
+                    <i class="fas fa-file-invoice-dollar"></i> Laporan Pencairan (Resi)
+                </a>
                 <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 15px;"></div>
                 <a href="https://ahmadzyamm21.github.io/tiktok-ads-analyzer-new/" target="_blank" class="menu-item" style="color: var(--accent-pink);">
                     <i class="fas fa-chart-line"></i> Analisis Iklan & HPP ↗
@@ -53,7 +56,7 @@
             </nav>
             
             <div class="sidebar-footer">
-                <div class="app-version">TikTok Revenue Analyzer v1.2.0</div>
+                <div class="app-version">TikTok Revenue Analyzer v1.3.0</div>
                 <div class="developer-tag">Designed for TikTok Sellers</div>
             </div>
         </aside>
@@ -556,6 +559,104 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LAPORAN PENCAIRAN (RESI) -->
+            <section id="tab-payouts" class="tab-content">
+                <div class="header-title-group">
+                    <h2 class="header-title">Laporan Pencairan & Status Resi</h2>
+                    <p class="header-subtitle">Pantau status pencairan dana (sudah cair/belum cair) per nomor resi dan ID pesanan.</p>
+                </div>
+
+                <!-- KPI Cards for Payouts -->
+                <div class="kpi-grid" style="margin-top: 20px;">
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan);">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Total Transaksi</span>
+                            <span class="kpi-value" id="kpi-payouts-total">0 Order</span>
+                            <span class="kpi-subtext">Dari Daftar Pesanan</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(0, 255, 135, 0.1); color: var(--accent-green);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Sudah Cair</span>
+                            <span class="kpi-value text-green" id="kpi-payouts-settled">Rp 0</span>
+                            <span class="kpi-subtext" id="kpi-payouts-settled-sub">0 Order Berhasil Cair</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(255, 170, 0, 0.1); color: var(--accent-orange);">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Belum Cair (Pending)</span>
+                            <span class="kpi-value text-orange" id="kpi-payouts-pending">0 Order</span>
+                            <span class="kpi-subtext" id="kpi-payouts-pending-sub">Menunggu Penyelesaian TikTok</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter & Search Bar -->
+                <div class="card" style="margin-bottom: 20px; padding: 15px;">
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+                        <div style="flex: 1; min-width: 250px; position: relative;">
+                            <input type="text" id="search-payouts" class="form-control" placeholder="Cari nomor resi, ID pesanan, SKU, atau produk..." style="width: 100%; padding-left: 35px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: #FFF; border-radius: 8px; height: 38px;">
+                            <i class="fas fa-search" style="position: absolute; left: 12px; top: 12px; color: var(--text-muted);"></i>
+                        </div>
+                        <div style="width: 180px;">
+                            <select id="filter-payouts-status" class="form-control" style="width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: #FFF; border-radius: 8px; height: 38px; padding: 0 10px; cursor: pointer;">
+                                <option value="all">Semua Status</option>
+                                <option value="settled">Sudah Cair</option>
+                                <option value="pending">Belum Cair</option>
+                                <option value="cancelled">Dibatalkan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-secondary" id="btn-export-payouts-csv" style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.03); color: #FFF; cursor: pointer;">
+                                <i class="fas fa-file-csv"></i> Ekspor CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payouts Table -->
+                <div class="card">
+                    <h3>Daftar Detail Transaksi & Resi</h3>
+                    <p class="section-desc">Mencocokkan data nomor resi dari berkas Pesanan dengan pencairan dana di berkas Keuangan.</p>
+                    
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left; color: var(--text-muted); font-size: 12.5px;">
+                                    <th style="padding: 12px 8px; width: 40px;">No</th>
+                                    <th style="padding: 12px 8px; width: 95px;">Tanggal</th>
+                                    <th style="padding: 12px 8px; width: 140px;">No. Resi (Resi)</th>
+                                    <th style="padding: 12px 8px; width: 150px;">ID Pesanan</th>
+                                    <th style="padding: 12px 8px;">Detail Produk & SKU</th>
+                                    <th style="padding: 12px 8px; width: 65px;">Qty</th>
+                                    <th style="padding: 12px 8px; width: 100px;">Status</th>
+                                    <th style="padding: 12px 8px; width: 110px;">Dana Cair</th>
+                                    <th style="padding: 12px 8px; width: 90px;">HPP (Modal)</th>
+                                    <th style="padding: 12px 8px; width: 110px;">Laba Bersih</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payouts-table-body" style="font-size: 13px;">
+                                <tr>
+                                    <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                        <i class="fas fa-cloud-upload-alt" style="font-size: 28px; margin-bottom: 10px; display: block; color: var(--accent-cyan);"></i>
+                                        Silakan unggah berkas Keuangan & Daftar Pesanan di tab <strong>Catatan Harian</strong> terlebih dahulu.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>

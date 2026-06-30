@@ -1,6 +1,6 @@
 // TikTok Revenue & Omset Analyzer - Logic script
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("TikTok Revenue & Omset Analyzer v1.2.0 loaded (Order ID Join & Reactive HPP active).");
+    console.log("TikTok Revenue & Omset Analyzer v1.3.0 loaded (Laporan Pencairan Resi active).");
     // ------------------------------------------
     // State variables
     // ------------------------------------------
@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let shopName = localStorage.getItem('shop_name') || 'My TikTok Shop';
     let currentLogoBase64 = localStorage.getItem('shop_logo_base64') || null;
     let withdrawalsList = JSON.parse(localStorage.getItem('tiktok_withdrawals')) || [];
+    let orderItemsDb = JSON.parse(localStorage.getItem('tiktok_order_items')) || [];
+    let orderPayouts = JSON.parse(localStorage.getItem('tiktok_order_payouts')) || {};
 
     let revenueTrendChart = null;
     let channelDonutChart = null;
@@ -143,6 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabId === 'tab-dashboard') {
                 updateCharts();
             }
+            if (tabId === 'tab-payouts') {
+                renderPayoutsTable();
+            }
         });
     });
 
@@ -222,14 +227,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 revenueLogs = [];
                 withdrawalsList = [];
                 hppSkuDb = {};
+                orderItemsDb = [];
+                orderPayouts = {};
                 
                 localStorage.removeItem('tiktok_revenue_logs');
                 localStorage.removeItem('tiktok_withdrawals');
                 localStorage.removeItem('tiktok_sku_hpp');
+                localStorage.removeItem('tiktok_order_items');
+                localStorage.removeItem('tiktok_order_payouts');
                 
                 renderHppTable();
                 renderDailyLogs();
                 renderWithdrawals();
+                if (typeof renderPayoutsTable === 'function') renderPayoutsTable();
                 calculateMetrics();
                 updateCharts();
                 
@@ -1148,6 +1158,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (!file) return;
 
+            tempParsedOrderPayouts = {};
             excelFileStatus.textContent = file.name;
             excelParsePreview.style.display = 'block';
             previewDetails.innerHTML = `<span style="color: var(--text-muted);"><i class="fas fa-spinner fa-spin mr-1"></i> Sedang menganalisis file Excel...</span>`;
@@ -1328,6 +1339,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (orderId) {
                                 dayData.uniqueOrders.add(orderId);
                                 dayData.orderIds.push(orderId);
+
+                                if (!tempParsedOrderPayouts[orderId]) {
+                                    tempParsedOrderPayouts[orderId] = { amount: 0, date: dateStr };
+                                }
+                                tempParsedOrderPayouts[orderId].amount += settlementVal;
                             }
 
                             dayData.ordersTotalWeight += 1;
@@ -1475,6 +1491,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 saveLogsToStorage();
 
+                // Save order payouts and items
+                orderPayouts = { ...orderPayouts, ...tempParsedOrderPayouts };
+                localStorage.setItem('tiktok_order_payouts', JSON.stringify(orderPayouts));
+
+                if (tempParsedOrders.length > 0) {
+                    const existingItemIds = new Set(orderItemsDb.map(item => item.orderId));
+                    const newItems = tempParsedOrders.filter(item => !existingItemIds.has(item.orderId));
+                    orderItemsDb = [...orderItemsDb, ...newItems];
+                    localStorage.setItem('tiktok_order_items', JSON.stringify(orderItemsDb));
+                }
+
+                if (typeof renderPayoutsTable === 'function') renderPayoutsTable();
+
                 if (tempParsedWithdrawals.length > 0) {
                     withdrawalsList = tempParsedWithdrawals;
                     localStorage.setItem('tiktok_withdrawals', JSON.stringify(withdrawalsList));
@@ -1537,6 +1566,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveHppDb() {
         localStorage.setItem('tiktok_sku_hpp', JSON.stringify(hppSkuDb));
         updateHppFromDatabase();
+        if (typeof renderPayoutsTable === 'function') renderPayoutsTable();
     }
 
     const hppSkuForm = document.getElementById('hpp-sku-form');
@@ -1554,6 +1584,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let hppEditSku = null;
     let tempParsedOrders = [];
+    let tempParsedOrderPayouts = {};
 
     function renderHppTable() {
         if (!hppTableBody) return;
@@ -1959,7 +1990,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         product: headers.findIndex(h => h.includes('nama produk') || h.includes('product name')),
                         variation: headers.findIndex(h => h.includes('variasi') || h.includes('variation')),
                         qty: headers.findIndex(h => h.includes('jumlah') || h.includes('quantity')),
-                        createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('created time'))
+                        createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('created time')),
+                        trackingId: headers.findIndex(h => h.includes('resi') || h.includes('tracking id') || h.includes('no resi') || h.includes('resi id'))
                     };
 
                     if (colMap.orderId === -1 || colMap.sku === -1) {
@@ -1975,65 +2007,67 @@ document.addEventListener('DOMContentLoaded', () => {
                         const row = jsonData[r];
                         if (!row || row.length === 0) continue;
 
-                        const statusVal = colMap.status !== -1 ? (row[colMap.status] || '').toString() : '';
-                        
-                        if (statusVal.includes('Selesai') || statusVal.toLowerCase().includes('completed')) {
-                            const orderIdVal = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : '';
-                            const skuVal = colMap.sku !== -1 ? (row[colMap.sku] || '').toString().trim() : 'Unknown SKU';
-                            const productVal = colMap.product !== -1 ? (row[colMap.product] || '').toString().trim() : '';
-                            const variationVal = colMap.variation !== -1 ? (row[colMap.variation] || '').toString().trim() : '';
-                            const qtyVal = colMap.qty !== -1 ? parseInt(row[colMap.qty]) || 1 : 1;
-                            const rawDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
+                        const orderIdVal = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : '';
+                        if (!orderIdVal) continue;
 
-                            let dateStr = '';
-                            if (rawDate) {
-                                if (rawDate instanceof Date) {
-                                    const y = rawDate.getFullYear();
-                                    const m = String(rawDate.getMonth() + 1).padStart(2, '0');
-                                    const d = String(rawDate.getDate()).padStart(2, '0');
-                                    dateStr = `${y}-${m}-${d}`;
+                        const statusVal = colMap.status !== -1 ? (row[colMap.status] || '').toString().trim() : 'Completed';
+                        const skuVal = colMap.sku !== -1 ? (row[colMap.sku] || '').toString().trim() : 'Unknown SKU';
+                        const productVal = colMap.product !== -1 ? (row[colMap.product] || '').toString().trim() : '';
+                        const variationVal = colMap.variation !== -1 ? (row[colMap.variation] || '').toString().trim() : '';
+                        const qtyVal = colMap.qty !== -1 ? parseInt(row[colMap.qty]) || 1 : 1;
+                        const trackingIdVal = colMap.trackingId !== -1 ? (row[colMap.trackingId] || '').toString().trim() : '';
+                        const rawDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
+
+                        let dateStr = '';
+                        if (rawDate) {
+                            if (rawDate instanceof Date) {
+                                const y = rawDate.getFullYear();
+                                const m = String(rawDate.getMonth() + 1).padStart(2, '0');
+                                const d = String(rawDate.getDate()).padStart(2, '0');
+                                dateStr = `${y}-${m}-${d}`;
+                            } else {
+                                const dateMatch = rawDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                                if (dateMatch) {
+                                    dateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
                                 } else {
-                                    const dateMatch = rawDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
-                                    if (dateMatch) {
-                                        dateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
-                                    } else {
-                                        const parsedD = new Date(rawDate);
-                                        if (!isNaN(parsedD.getTime())) {
-                                            const y = parsedD.getFullYear();
-                                            const m = String(parsedD.getMonth() + 1).padStart(2, '0');
-                                            const d = String(parsedD.getDate()).padStart(2, '0');
-                                            dateStr = `${y}-${m}-${d}`;
-                                        }
+                                    const parsedD = new Date(rawDate);
+                                    if (!isNaN(parsedD.getTime())) {
+                                        const y = parsedD.getFullYear();
+                                        const m = String(parsedD.getMonth() + 1).padStart(2, '0');
+                                        const d = String(parsedD.getDate()).padStart(2, '0');
+                                        dateStr = `${y}-${m}-${d}`;
                                     }
-                                    if (!dateStr) {
-                                        const slashMatch = rawDate.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
-                                        if (slashMatch) {
-                                            dateStr = `${slashMatch[3]}-${slashMatch[2].padStart(2, '0')}-${slashMatch[1].padStart(2, '0')}`;
-                                        }
+                                }
+                                if (!dateStr) {
+                                    const slashMatch = rawDate.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                                    if (slashMatch) {
+                                        dateStr = `${slashMatch[3]}-${slashMatch[2].padStart(2, '0')}-${slashMatch[1].padStart(2, '0')}`;
                                     }
                                 }
                             }
+                        }
 
-                            if (!dateStr) continue;
+                        if (!dateStr) continue;
 
-                            tempParsedOrders.push({
-                                orderId: orderIdVal,
+                        tempParsedOrders.push({
+                            orderId: orderIdVal,
+                            sku: skuVal,
+                            product: productVal,
+                            variation: variationVal,
+                            qty: qtyVal,
+                            date: dateStr,
+                            status: statusVal,
+                            trackingId: trackingIdVal
+                        });
+
+                        if (skuVal && !hppSkuDb[skuVal]) {
+                            hppSkuDb[skuVal] = {
                                 sku: skuVal,
                                 product: productVal,
                                 variation: variationVal,
-                                qty: qtyVal,
-                                date: dateStr
-                            });
-
-                            if (skuVal && !hppSkuDb[skuVal]) {
-                                hppSkuDb[skuVal] = {
-                                    sku: skuVal,
-                                    product: productVal,
-                                    variation: variationVal,
-                                    hpp: 0
-                                };
-                                newSkusFound++;
-                            }
+                                hpp: 0
+                            };
+                            newSkusFound++;
                         }
                     }
 
@@ -2060,6 +2094,177 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ------------------------------------------
+    // Laporan Pencairan (Resi) UI & Logic
+    // ------------------------------------------
+    const searchPayouts = document.getElementById('search-payouts');
+    const filterPayoutsStatus = document.getElementById('filter-payouts-status');
+    const btnExportPayoutsCsv = document.getElementById('btn-export-payouts-csv');
+    const payoutsTableBody = document.getElementById('payouts-table-body');
+
+    function exportPayoutsToCsv() {
+        if (orderItemsDb.length === 0) {
+            showToast('Tidak ada data pencairan untuk diekspor!', 'error');
+            return;
+        }
+
+        let csvContent = "\uFEFF"; // UTF-8 BOM for Excel compatibility
+        csvContent += "No,Tanggal Pemesanan,No. Resi (Tracking ID),ID Pesanan,Nama Produk,SKU,Variasi,Qty,Status,Dana Cair,HPP,Laba Bersih\n";
+
+        orderItemsDb.forEach((item, idx) => {
+            const payoutInfo = orderPayouts[item.orderId];
+            const isSettled = !!payoutInfo;
+            const settlementAmt = isSettled ? payoutInfo.amount : 0;
+            const statusStr = isSettled ? 'Sudah Cair' : (item.status === 'Cancelled' ? 'Dibatalkan' : 'Belum Cair');
+
+            const skuInfo = hppSkuDb[item.sku];
+            const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+            const totalHpp = item.qty * hppVal;
+            const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
+
+            const row = [
+                idx + 1,
+                item.date || '',
+                item.trackingId || '',
+                item.orderId,
+                `"${(item.product || '').replace(/"/g, '""')}"`,
+                item.sku || '',
+                item.variation || '',
+                item.qty,
+                statusStr,
+                settlementAmt,
+                totalHpp,
+                netProfit
+            ];
+            csvContent += row.join(",") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `laporan_pencairan_resi_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Berhasil mengekspor Laporan Pencairan ke CSV!', 'success');
+    }
+
+    function renderPayoutsTable() {
+        if (!payoutsTableBody) return;
+        
+        if (orderItemsDb.length === 0) {
+            payoutsTableBody.innerHTML = `
+                <tr>
+                    <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 28px; margin-bottom: 10px; display: block; color: var(--accent-cyan);"></i>
+                        Silakan unggah berkas Keuangan & Daftar Pesanan di tab <strong>Catatan Harian</strong> terlebih dahulu.
+                    </td>
+                </tr>
+            `;
+            // Reset KPI
+            if (document.getElementById('kpi-payouts-total')) document.getElementById('kpi-payouts-total').textContent = '0 Order';
+            if (document.getElementById('kpi-payouts-settled')) document.getElementById('kpi-payouts-settled').textContent = 'Rp 0';
+            if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = '0 Order Berhasil Cair';
+            if (document.getElementById('kpi-payouts-pending')) document.getElementById('kpi-payouts-pending').textContent = '0 Order';
+            if (document.getElementById('kpi-payouts-pending-sub')) document.getElementById('kpi-payouts-pending-sub').textContent = 'Menunggu Penyelesaian TikTok';
+            return;
+        }
+
+        const query = searchPayouts ? searchPayouts.value.toLowerCase().trim() : '';
+        const filterStatus = filterPayoutsStatus ? filterPayoutsStatus.value : 'all';
+
+        let totalCount = 0;
+        let settledCount = 0;
+        let pendingCount = 0;
+        let settledAmountSum = 0;
+
+        const rowsHtml = [];
+
+        orderItemsDb.forEach((item, idx) => {
+            const payoutInfo = orderPayouts[item.orderId];
+            const isSettled = !!payoutInfo;
+            const settlementAmt = isSettled ? payoutInfo.amount : 0;
+            const statusStr = isSettled ? 'Sudah Cair' : (item.status === 'Cancelled' ? 'Dibatalkan' : 'Belum Cair');
+
+            // Apply filters
+            if (filterStatus === 'settled' && !isSettled) return;
+            if (filterStatus === 'pending' && (isSettled || item.status === 'Cancelled')) return;
+            if (filterStatus === 'cancelled' && item.status !== 'Cancelled') return;
+
+            // Apply search query
+            const matchSearch = !query || 
+                item.orderId.toLowerCase().includes(query) ||
+                (item.trackingId || '').toLowerCase().includes(query) ||
+                (item.product || '').toLowerCase().includes(query) ||
+                (item.sku || '').toLowerCase().includes(query);
+
+            if (!matchSearch) return;
+
+            totalCount++;
+            if (isSettled) {
+                settledCount++;
+                settledAmountSum += settlementAmt;
+            } else if (item.status !== 'Cancelled') {
+                pendingCount++;
+            }
+
+            const skuInfo = hppSkuDb[item.sku];
+            const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+            const totalHpp = item.qty * hppVal;
+            const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
+
+            const statusClass = isSettled ? 'status-pill success' : (item.status === 'Cancelled' ? 'status-pill danger' : 'status-pill warning');
+
+            rowsHtml.push(`
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px 8px;">${idx + 1}</td>
+                    <td style="padding: 12px 8px;">${item.date || '-'}</td>
+                    <td style="padding: 12px 8px;"><span class="text-cyan font-mono" style="font-size: 11px;">${item.trackingId || '-'}</span></td>
+                    <td style="padding: 12px 8px;"><span class="text-muted font-mono" style="font-size: 11px;">${item.orderId}</span></td>
+                    <td style="padding: 12px 8px;">
+                        <div style="font-weight: 500; font-size: 13px; color: #FFF; text-align: left;">${item.product}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-align: left;">${item.sku} | ${item.variation || '-'}</div>
+                    </td>
+                    <td style="padding: 12px 8px;">${item.qty} Pcs</td>
+                    <td style="padding: 12px 8px;"><span class="${statusClass}">${statusStr}</span></td>
+                    <td style="padding: 12px 8px;"><strong class="${isSettled ? 'text-green' : ''}">${isSettled ? formatRupiah(settlementAmt) : '-'}</strong></td>
+                    <td style="padding: 12px 8px; color: var(--text-muted);">${formatRupiah(totalHpp)}</td>
+                    <td style="padding: 12px 8px;"><strong class="${isSettled ? (netProfit >= 0 ? 'text-green' : 'text-pink') : ''}">${isSettled ? formatRupiah(netProfit) : '-'}</strong></td>
+                </tr>
+            `);
+        });
+
+        if (rowsHtml.length === 0) {
+            payoutsTableBody.innerHTML = `
+                <tr>
+                    <td colspan="10" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                        Tidak ada transaksi yang cocok dengan pencarian / filter Anda.
+                    </td>
+                </tr>
+            `;
+        } else {
+            payoutsTableBody.innerHTML = rowsHtml.join('');
+        }
+
+        // Update KPI values
+        if (document.getElementById('kpi-payouts-total')) document.getElementById('kpi-payouts-total').textContent = orderItemsDb.length + ' Order';
+        if (document.getElementById('kpi-payouts-settled')) document.getElementById('kpi-payouts-settled').textContent = formatRupiah(settledAmountSum);
+        if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = `${settledCount} Order Berhasil Cair`;
+        if (document.getElementById('kpi-payouts-pending')) document.getElementById('kpi-payouts-pending').textContent = `${pendingCount} Order`;
+        if (document.getElementById('kpi-payouts-pending-sub')) document.getElementById('kpi-payouts-pending-sub').textContent = 'Menunggu Penyelesaian TikTok';
+    }
+
+    if (searchPayouts) {
+        searchPayouts.addEventListener('input', renderPayoutsTable);
+    }
+    if (filterPayoutsStatus) {
+        filterPayoutsStatus.addEventListener('change', renderPayoutsTable);
+    }
+    if (btnExportPayoutsCsv) {
+        btnExportPayoutsCsv.addEventListener('click', exportPayoutsToCsv);
+    }
+
+    // ------------------------------------------
     // Initial calls
     // ------------------------------------------
     loadShopSettings();
@@ -2067,5 +2272,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDailyLogs();
     renderWithdrawals();
     renderHppTable();
+    renderPayoutsTable();
     updateCharts();
 });
