@@ -49,6 +49,9 @@
                 <a href="#" class="menu-item" data-tab="tab-payouts">
                     <i class="fas fa-file-invoice-dollar"></i> Laporan Pencairan (Resi)
                 </a>
+                <a href="#" class="menu-item" data-tab="tab-guide">
+                    <i class="fas fa-book-open"></i> Panduan Penggunaan
+                </a>
                 <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 10px 15px;"></div>
                 <a href="https://ahmadzyamm21.github.io/tiktok-ads-analyzer-new/" target="_blank" class="menu-item" style="color: var(--accent-pink);">
                     <i class="fas fa-chart-line"></i> Analisis Iklan & HPP ↗
@@ -657,6 +660,105 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: PANDUAN PENGGUNAAN -->
+            <section id="tab-guide" class="tab-content">
+                <div class="header-title-group">
+                    <h2 class="header-title"><i class="fas fa-book-open text-cyan" style="margin-right: 10px;"></i>Panduan Penggunaan & Pembacaan Data</h2>
+                    <p class="header-subtitle">Pelajari cara mengimpor berkas, melacak resi, serta memahami setiap metrik analisis omset toko Anda.</p>
+                </div>
+
+                <div class="kpi-grid" style="margin-top: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                    <!-- CARD 1: ALUR KERJA -->
+                    <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                        <h3 style="margin-top: 0; color: #FFF; font-size: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-stream text-cyan"></i> 1. Alur Impor & Penggunaan
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px; line-height: 1.5;">
+                            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                <div style="background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;">1</div>
+                                <div>
+                                    <strong>Unduh Berkas dari Seller Center TikTok:</strong><br>
+                                    • <strong>Daftar Pesanan:</strong> Masuk ke Pesanan > Kelola Pesanan > Ekspor (Format: xlsx).<br>
+                                    • <strong>Laporan Keuangan:</strong> Keuangan > Transaksi > Ekspor Detail Pesanan & Riwayat Penarikan (Format: xlsx).
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                <div style="background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;">2</div>
+                                <div>
+                                    <strong>Kelola HPP Produk (Modal):</strong><br>
+                                    Masuk ke tab <strong>Database HPP SKU</strong> di sidebar. Masukkan modal per SKU Anda di sini agar dashboard dapat menghitung Laba Bersih secara otomatis. Anda juga dapat mengimpor file backup JSON HPP Anda langsung.
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: flex-start;">
+                                <div style="background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;">3</div>
+                                <div>
+                                    <strong>Unggah & Impor di Catatan Harian:</strong><br>
+                                    Pilih tab <strong>Catatan Harian</strong>. Unggah berkas keuangan Anda (<strong>Anda dapat memilih beberapa file keuangan sekaligus</strong> seperti file Mei & Juni agar transaksi cross-month ikut terhitung). Lalu unggah daftar pesanan Anda dan tekan **Konfirmasi Impor**.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: CARA BACA DATA -->
+                    <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                        <h3 style="margin-top: 0; color: #FFF; font-size: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-chart-bar text-green"></i> 2. Panduan Membaca Data & P&L
+                        </h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 1.4;">
+                            <div>
+                                <strong style="color: #FFF;">• Omset Kotor (Gross Revenue):</strong><br>
+                                Total nilai harga asli barang sebelum dipotong diskon seller maupun biaya platform lainnya.
+                            </div>
+                            <div>
+                                <strong style="color: var(--accent-cyan);">• Pendapatan Bersih (Net Revenue):</strong><br>
+                                Omset bersih toko setelah dipotong Diskon Seller/Voucher Penjual dan Refund (Pengembalian Dana).
+                            </div>
+                            <div>
+                                <strong style="color: var(--accent-pink);">• Biaya Platform (Admin Fee):</strong><br>
+                                Seluruh potongan biaya admin komisi platform, ongkir net seller, dan biaya logistik dari TikTok.
+                            </div>
+                            <div>
+                                <strong style="color: var(--accent-orange);">• Biaya Iklan (Ads Spend):</strong><br>
+                                Pengeluaran iklan yang dipotong dari saldo GMV Pay (GMV Pay Deduction) di laporan keuangan Anda.
+                            </div>
+                            <div>
+                                <strong style="color: var(--accent-green);">• Uang Cair Bersih (Net Payout):</strong><br>
+                                Akumulasi dana bersih yang diselesaikan oleh TikTok Shop dan berhasil ditransfer masuk ke saldo bank Anda.
+                            </div>
+                            <div>
+                                <strong style="color: #FFF;">• Modal Produk (Total HPP):</strong><br>
+                                Harga pokok modal dari seluruh barang yang terjual dari pesanan dengan status <strong>Selesai</strong>.
+                            </div>
+                            <div>
+                                <strong style="color: var(--accent-green);">• Laba Bersih Riil (Net Profit):</strong><br>
+                                Keuntungan bersih toko yang dihitung dari: <strong class="text-green">Uang Cair Bersih (Net Payout) - Modal Produk (HPP)</strong>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ & Troubleshooting -->
+                <div class="card mt-4" style="margin-top: 20px; padding: 20px;">
+                    <h3 style="margin-top: 0; color: #FFF; font-size: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-question-circle text-orange"></i> 3. FAQ & Pemecahan Masalah
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 15px; font-size: 13px; line-height: 1.5; margin-top: 10px;">
+                        <div>
+                            <strong style="color: #FFF; font-size: 14px;">Q: Mengapa total HPP/Laba Bersih di dashboard tidak berubah setelah diperbarui?</strong><br>
+                            <span>A: Hal ini biasanya disebabkan oleh cache browser yang agresif. Silakan tekan tombol <strong>Ctrl + F5</strong> di keyboard Anda (atau buka lewat tab penyamaran / Incognito) untuk memuat ulang file JavaScript terbaru dari server GitHub.</span>
+                        </div>
+                        <div>
+                            <strong style="color: #FFF; font-size: 14px;">Q: Kenapa disarankan mengunggah dua file keuangan sekaligus (misal Mei & Juni)?</strong><br>
+                            <span>A: Pesanan yang dibuat pada akhir bulan Mei biasanya baru terselesaikan (*settled*) dan cair di bulan Juni. Karena rincian keuangannya dicatat di file Juni, Anda perlu menyeleksi dan mengunggah berkas keuangan Mei dan Juni bersamaan agar pendapatan dari pesanan tersebut tidak terlewat dan data P&L Anda sinkron.</span>
+                        </div>
+                        <div>
+                            <strong style="color: #FFF; font-size: 14px;">Q: Bagaimana cara kerja pelacakan resi di tab Laporan Pencairan?</strong><br>
+                            <span>A: Tab ini mendeteksi status pengiriman barang dari file pesanan dan mencocokkannya dengan rincian dana cair dari file keuangan. Hal ini memudahkan Anda memantau resi mana saja yang barangnya sudah selesai terkirim tetapi dananya belum ditransfer masuk (*pending*) ke saldo toko Anda.</span>
+                        </div>
                     </div>
                 </div>
             </section>
