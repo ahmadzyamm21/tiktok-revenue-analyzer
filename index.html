@@ -281,13 +281,13 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 12px;">
                         <!-- File 1: Settlement -->
                         <div style="padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
-                            <div style="font-weight: 500; font-size: 12.5px; color: #FFF; margin-bottom: 8px;">1. File Laporan Keuangan (Settlement)</div>
+                            <div style="font-weight: 500; font-size: 12.5px; color: #FFF; margin-bottom: 8px;">1. File Laporan Keuangan (Settlement) <span style="font-size: 10px; color: var(--accent-cyan); font-weight: normal;">— bisa pilih beberapa file sekaligus</span></div>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label class="btn btn-cyan btn-sm" for="input-excel-file" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: normal; margin-bottom: 0; padding: 6px 12px; font-size: 11.5px;">
                                     <i class="fas fa-upload"></i> Pilih Berkas Keuangan
                                 </label>
-                                <input type="file" id="input-excel-file" accept=".xlsx, .csv" style="display: none;">
-                                <span id="excel-file-status" style="font-size: 11.5px; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 150px;">Belum ada file</span>
+                                <input type="file" id="input-excel-file" accept=".xlsx, .csv" multiple style="display: none;">
+                                <span id="excel-file-status" style="font-size: 11.5px; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 250px;">Belum ada file</span>
                             </div>
                         </div>
 

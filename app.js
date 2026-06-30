@@ -1155,22 +1155,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (inputExcelFile) {
         inputExcelFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+            const files = Array.from(e.target.files);
+            if (!files || files.length === 0) return;
 
             tempParsedOrderPayouts = {};
-            excelFileStatus.textContent = file.name;
+            tempParsedLogs = [];
+            tempParsedWithdrawals = [];
+
+            const fileNames = files.map(f => f.name).join(', ');
+            excelFileStatus.textContent = files.length > 1 ? `${files.length} file dipilih` : files[0].name;
             excelParsePreview.style.display = 'block';
-            previewDetails.innerHTML = `<span style="color: var(--text-muted);"><i class="fas fa-spinner fa-spin mr-1"></i> Sedang menganalisis file Excel...</span>`;
+            previewDetails.innerHTML = `<span style="color: var(--text-muted);"><i class="fas fa-spinner fa-spin mr-1"></i> Sedang menganalisis ${files.length} file Excel...</span>`;
             btnConfirmExcelImport.style.display = 'none';
 
-            showToast('Membaca file laporan keuangan...', 'info');
+            showToast(`Membaca ${files.length} file laporan keuangan...`, 'info');
 
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                try {
-                    const data = new Uint8Array(evt.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
+            let filesProcessed = 0;
+            const allDailyAggregates = {};
+
+            function processNextFile(fileIndex) {
+                if (fileIndex >= files.length) {
+                    // All files processed — finalize
+                    finalizeParsedData(allDailyAggregates);
+                    return;
+                }
+
+                const file = files[fileIndex];
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const data = new Uint8Array(evt.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+
+                        parseKeuanganWorkbook(workbook, allDailyAggregates, file.name);
+                        filesProcessed++;
+
+                        // Process next file
+                        processNextFile(fileIndex + 1);
+                    } catch (err) {
+                        console.error('Error parsing excel:', err);
+                        showToast(`Gagal membaca file ${file.name}: ${err.message}`, 'error');
+                        processNextFile(fileIndex + 1); // Continue with next file
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            processNextFile(0);
+        });
+    }
+
+    // Extracted Keuangan parsing logic into a reusable function
+    function parseKeuanganWorkbook(workbook, allDailyAggregates, fileName) {
 
                     // Dynamic Multi-Sheet Scanner to automatically find the correct sheet & header row
                     let targetSheetName = '';
@@ -1261,8 +1297,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
 
-                    // Process rows
-                    const dailyAggregates = {};
+                    // Process rows — merge into allDailyAggregates
+                    const dailyAggregates = allDailyAggregates;
 
                     for (let r = headerIndex + 1; r < jsonData.length; r++) {
                         const row = jsonData[r];
@@ -1360,7 +1396,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     // Parse Riwayat penarikan if it exists
-                    tempParsedWithdrawals = [];
                     const withdrawalSheetName = workbook.SheetNames.find(n => n.includes('Riwayat penarikan'));
                     if (withdrawalSheetName) {
                         const wSheet = workbook.Sheets[withdrawalSheetName];
@@ -1411,6 +1446,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
+                    console.log(`[Keuangan Parser] File "${fileName}" parsed. Payouts: ${Object.keys(tempParsedOrderPayouts).length}, Aggregated days: ${Object.keys(allDailyAggregates).length}`);
+    }
+
+    // Finalize parsed data from all Keuangan files — build tempParsedLogs and show preview
+    function finalizeParsedData(dailyAggregates) {
                     // Format aggregated data
                     tempParsedLogs = Object.keys(dailyAggregates).map(dateKey => {
                         const agg = dailyAggregates[dateKey];
@@ -1467,13 +1507,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     btnConfirmExcelImport.style.display = 'inline-flex';
                     excelParsePreview.style.display = 'block';
                     showToast('File Excel berhasil dianalisis! Silakan klik Impor.', 'success');
-                } catch (err) {
-                    console.error('Error parsing excel:', err);
-                    showToast('Gagal membaca file: ' + err.message, 'error');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        });
+
+                    // Build preview
+                    const totalGrossVal = tempParsedLogs.reduce((sum, item) => sum + item.gross, 0);
+                    const totalHppSum = tempParsedLogs.reduce((sum, item) => sum + (item.hpp || 0), 0);
+                    const totalAdminFeesVal = tempParsedLogs.reduce((sum, item) => sum + item.adminFees, 0);
+                    const totalAdsSpendVal = tempParsedLogs.reduce((sum, item) => sum + item.adsSpend, 0);
+                    const totalWithdrawalsVal = tempParsedWithdrawals.reduce((sum, item) => sum + item.amount, 0);
+
+                    let previewHtml = `
+                        📅 Rentang Tanggal: <strong>${tempParsedLogs[0].date}</strong> s/d <strong>${tempParsedLogs[tempParsedLogs.length - 1].date}</strong> (${tempParsedLogs.length} hari)<br>
+                        💰 Estimasi Omset Bruto: <strong>${formatRupiah(totalGrossVal)}</strong><br>
+                        📦 Total Pesanan: <strong>${tempParsedLogs.reduce((sum, item) => sum + item.orders, 0)} Pcs</strong><br>
+                        💸 Potongan Voucher Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0))}</strong><br>
+                        ❌ Nilai Retur Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0))}</strong><br>
+                        🏦 Biaya Admin Platform: <strong>${formatRupiah(totalAdminFeesVal)}</strong><br>
+                        📢 Biaya Iklan (Ads): <strong>${formatRupiah(totalAdsSpendVal)}</strong><br>
+                        🔍 Data Pencairan Ditemukan: <strong>${Object.keys(tempParsedOrderPayouts).length} Order ID</strong>
+                    `;
+
+                    if (totalHppSum > 0) {
+                        previewHtml += `<br>📦 Total HPP (Modal Produk): <strong style="color: var(--accent-pink);">${formatRupiah(totalHppSum)}</strong>`;
+                        const estNetPayout = totalGrossVal - tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0) - tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0) - totalAdminFeesVal - totalAdsSpendVal;
+                        const estNetProfit = estNetPayout - totalHppSum;
+                        previewHtml += `<br>🚀 Estimasi Laba Bersih: <strong style="color: var(--accent-green);">${formatRupiah(estNetProfit)}</strong>`;
+                    } else {
+                        previewHtml += `<br>⚠️ HPP belum dihitung (Unggah berkas Daftar Pesanan untuk mencocokkan HPP).`;
+                    }
+
+                    if (tempParsedWithdrawals.length > 0) {
+                        previewHtml += `<br>💳 Riwayat Penarikan ke Bank: <strong>${tempParsedWithdrawals.length} transaksi (${formatRupiah(totalWithdrawalsVal)})</strong>`;
+                    }
+
+                    previewDetails.innerHTML = previewHtml;
     }
 
     if (btnConfirmExcelImport) {
@@ -1834,15 +1900,27 @@ document.addEventListener('DOMContentLoaded', () => {
     function recalculateHppForTempLogs() {
         // Build orderId -> list of order items mapping (only completed orders for HPP)
         const ordersMap = {};
+        
+        // 1. Load from saved database of orders
+        if (orderItemsDb && orderItemsDb.length > 0) {
+            orderItemsDb.forEach(o => {
+                const st = (o.status || '').toLowerCase();
+                if (st.includes('selesai') || st.includes('completed') || st === '' || st === 'completed') {
+                    const oid = o.orderId;
+                    if (!ordersMap[oid]) {
+                        ordersMap[oid] = [];
+                    }
+                    ordersMap[oid].push(o);
+                }
+            });
+        }
+        
+        // 2. Overwrite/supplement with newly parsed orders in this session
         tempParsedOrders.forEach(o => {
-            // Only include completed orders for HPP calculation
             const st = (o.status || '').toLowerCase();
             if (st.includes('selesai') || st.includes('completed') || st === '' || st === 'completed') {
                 const oid = o.orderId;
-                if (!ordersMap[oid]) {
-                    ordersMap[oid] = [];
-                }
-                ordersMap[oid].push(o);
+                ordersMap[oid] = [o]; // Overwrite to prevent duplication
             }
         });
 
@@ -2102,12 +2180,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         showToast(`Menemukan ${newSkusFound} SKU baru! Harap isi HPP mereka di tab Database HPP.`, 'info');
                     }
 
-                    orderFileStatus.textContent = `${file.name} (${tempParsedOrders.length} item)`;
-                    showToast(`Selesai membaca ${tempParsedOrders.length} detail pesanan!`, 'success');
-                    
-                    if (tempParsedLogs.length > 0) {
-                        recalculateHppForTempLogs();
+                    // Save parsed orders to database immediately (map-based merge)
+                    const itemsMap = {};
+                    orderItemsDb.forEach(item => {
+                        itemsMap[item.orderId] = item;
+                    });
+                    tempParsedOrders.forEach(item => {
+                        itemsMap[item.orderId] = item;
+                    });
+                    orderItemsDb = Object.values(itemsMap);
+                    localStorage.setItem('tiktok_order_items', JSON.stringify(orderItemsDb));
+
+                    // Save parsed payouts immediately if any
+                    if (Object.keys(tempParsedOrderPayouts).length > 0) {
+                        orderPayouts = { ...orderPayouts, ...tempParsedOrderPayouts };
+                        localStorage.setItem('tiktok_order_payouts', JSON.stringify(orderPayouts));
                     }
+
+                    orderFileStatus.textContent = `${file.name} (${tempParsedOrders.length} item)`;
+                    showToast(`Selesai mengimpor ${tempParsedOrders.length} detail pesanan & memperbarui data!`, 'success');
+                    
+                    // Unconditionally recalculate HPP for temp logs or database
+                    recalculateHppForTempLogs();
+                    
+                    // Refresh payouts table
+                    if (typeof renderPayoutsTable === 'function') renderPayoutsTable();
                 } catch(err) {
                     console.error(err);
                     showToast('Gagal membaca file Pesanan: ' + err.message, 'error');
