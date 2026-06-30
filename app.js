@@ -1,6 +1,6 @@
 // TikTok Revenue & Omset Analyzer - Logic script
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("TikTok Revenue & Omset Analyzer v1.1.0 loaded (Order ID Join HPP fix active).");
+    console.log("TikTok Revenue & Omset Analyzer v1.2.0 loaded (Order ID Join & Reactive HPP active).");
     // ------------------------------------------
     // State variables
     // ------------------------------------------
@@ -1509,8 +1509,34 @@ document.addEventListener('DOMContentLoaded', () => {
         hppSkuDb = {};
     }
 
+    function updateHppFromDatabase() {
+        let updated = false;
+        revenueLogs.forEach(log => {
+            if (log.skuQty) {
+                let dateHpp = 0;
+                for (const sku in log.skuQty) {
+                    const qty = log.skuQty[sku];
+                    const skuInfo = hppSkuDb[sku];
+                    const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                    dateHpp += qty * hppVal;
+                }
+                if (log.hpp !== dateHpp) {
+                    log.hpp = dateHpp;
+                    updated = true;
+                }
+            }
+        });
+        if (updated) {
+            localStorage.setItem('tiktok_revenue_logs', JSON.stringify(revenueLogs));
+            calculateMetrics();
+            renderDailyLogs();
+            if (typeof updateCharts === 'function') updateCharts();
+        }
+    }
+
     function saveHppDb() {
         localStorage.setItem('tiktok_sku_hpp', JSON.stringify(hppSkuDb));
+        updateHppFromDatabase();
     }
 
     const hppSkuForm = document.getElementById('hpp-sku-form');
@@ -1790,10 +1816,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tempParsedLogs.length > 0) {
             tempParsedLogs.forEach(log => {
                 let dateHpp = 0;
+                const skuQty = {};
                 if (log.orderIds && log.orderIds.length > 0) {
                     log.orderIds.forEach(oid => {
                         const items = ordersMap[oid] || [];
                         items.forEach(o => {
+                            if (o.sku) {
+                                skuQty[o.sku] = (skuQty[o.sku] || 0) + o.qty;
+                            }
                             const skuInfo = hppSkuDb[o.sku];
                             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
                             dateHpp += o.qty * hppVal;
@@ -1802,6 +1832,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 log.hpp = dateHpp;
+                log.skuQty = skuQty;
                 totalHppSum += dateHpp;
             });
         }
@@ -1812,11 +1843,15 @@ document.addEventListener('DOMContentLoaded', () => {
             revenueLogs.forEach(log => {
                 let dateHpp = 0;
                 let hasOrders = false;
+                const skuQty = {};
                 if (log.orderIds && log.orderIds.length > 0) {
                     log.orderIds.forEach(oid => {
                         const items = ordersMap[oid] || [];
                         if (items.length > 0) hasOrders = true;
                         items.forEach(o => {
+                            if (o.sku) {
+                                skuQty[o.sku] = (skuQty[o.sku] || 0) + o.qty;
+                            }
                             const skuInfo = hppSkuDb[o.sku];
                             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
                             dateHpp += o.qty * hppVal;
@@ -1825,6 +1860,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (hasOrders || dateHpp > 0) {
                     log.hpp = dateHpp;
+                    log.skuQty = skuQty;
                     updatedDatabase = true;
                 }
             });
