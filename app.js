@@ -2312,14 +2312,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         orderItemsDb.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
-            const isSettled = !!payoutInfo;
+            const isCancelled = (item.status || '').toLowerCase().includes('batal') || item.status === 'Cancelled';
+            const isSettled = payoutInfo && payoutInfo.amount > 0;
             const settlementAmt = isSettled ? payoutInfo.amount : 0;
-            const statusStr = isSettled ? 'Sudah Cair' : (item.status === 'Cancelled' ? 'Dibatalkan' : 'Belum Cair');
+            const statusStr = isSettled ? 'Sudah Cair' : (isCancelled ? 'Dibatalkan' : 'Belum Cair');
 
             // Apply filters
             if (filterStatus === 'settled' && !isSettled) return;
-            if (filterStatus === 'pending' && (isSettled || item.status === 'Cancelled')) return;
-            if (filterStatus === 'cancelled' && item.status !== 'Cancelled') return;
+            if (filterStatus === 'pending' && (isSettled || isCancelled)) return;
+            if (filterStatus === 'cancelled' && !isCancelled) return;
 
             // Apply search query
             const matchSearch = !query || 
@@ -2334,16 +2335,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isSettled) {
                 settledCount++;
                 settledAmountSum += settlementAmt;
-            } else if (item.status !== 'Cancelled') {
+            } else if (!isCancelled) {
                 pendingCount++;
             }
 
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-            const totalHpp = item.qty * hppVal;
+            const totalHpp = isCancelled ? 0 : (item.qty * hppVal);
             const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
 
-            const statusClass = isSettled ? 'status-pill success' : (item.status === 'Cancelled' ? 'status-pill danger' : 'status-pill warning');
+            const statusClass = isSettled ? 'status-pill success' : (isCancelled ? 'status-pill danger' : 'status-pill warning');
 
             rowsHtml.push(`
                 <tr style="border-bottom: 1px solid var(--border-color);">
