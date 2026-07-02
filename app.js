@@ -2469,6 +2469,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = '0 Order Berhasil Cair';
             if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = '0 Order';
             if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = 'Total Produk Diretur';
+            if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = '0 Order';
+            if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Produk Dibatalkan';
             return;
         }
 
@@ -2479,6 +2481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let settledCount = 0;
         let pendingCount = 0;
         let returnedCount = 0;
+        let cancelledCount = 0;
         let settledAmountSum = 0;
 
         const rowsHtml = [];
@@ -2536,7 +2539,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 settledAmountSum += settlementAmt;
             } else if (isReturnedOnly) {
                 returnedCount++;
-            } else if (!isCancelled) {
+            } else if (isCancelled) {
+                cancelledCount++;
+            } else {
                 pendingCount++;
             }
 
@@ -2584,6 +2589,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = `${settledCount} Order Berhasil Cair`;
         if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = `${returnedCount} Order`;
         if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = 'Total Produk Diretur';
+        if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = `${cancelledCount} Order`;
+        if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Produk Dibatalkan';
     }
 
     if (searchPayouts) {
