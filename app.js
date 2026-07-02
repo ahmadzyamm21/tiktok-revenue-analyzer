@@ -1505,12 +1505,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         if (!tempParsedOrderPayouts[orderId]) {
-                            tempParsedOrderPayouts[orderId] = { amount: 0, originalAmount: 0, date: aggDate };
+                            tempParsedOrderPayouts[orderId] = {
+                                amount: 0,
+                                originalAmount: 0,
+                                date: aggDate,
+                                voucher: 0,
+                                refund: 0,
+                                adminFees: 0,
+                                ads: 0,
+                                affiliate: 0
+                            };
                         }
                         tempParsedOrderPayouts[orderId].amount += settlementVal;
                         if (settlementVal > 0 && typeVal === 'pesanan') {
                             tempParsedOrderPayouts[orderId].originalAmount += settlementVal;
                         }
+                        tempParsedOrderPayouts[orderId].voucher += voucherVal;
+                        tempParsedOrderPayouts[orderId].refund += refundVal;
+                        tempParsedOrderPayouts[orderId].adminFees += adminFeesVal;
+                        tempParsedOrderPayouts[orderId].ads += adsCost;
+                        tempParsedOrderPayouts[orderId].affiliate += affCommission;
 
                         dayData.ordersTotalWeight += 1;
                         if (adsCost > 0) dayData.adsShareSum += 1;
@@ -2503,13 +2517,31 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Berhasil mengekspor Laporan Pencairan ke CSV!', 'success');
     }
 
+    window.toggleOrderDetail = function(orderId, sku, idx) {
+        const detailRow = document.getElementById(`detail-row-${idx}`);
+        const toggleIcon = document.getElementById(`toggle-icon-${idx}`);
+        if (detailRow) {
+            if (detailRow.style.display === 'none') {
+                detailRow.style.display = 'table-row';
+                if (toggleIcon) {
+                    toggleIcon.className = 'fas fa-eye-slash text-pink';
+                }
+            } else {
+                detailRow.style.display = 'none';
+                if (toggleIcon) {
+                    toggleIcon.className = 'fas fa-eye text-cyan';
+                }
+            }
+        }
+    };
+
     function renderPayoutsTable() {
         if (!payoutsTableBody) return;
         
         if (orderItemsDb.length === 0) {
             payoutsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="10" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-muted);">
                         <i class="fas fa-cloud-upload-alt" style="font-size: 28px; margin-bottom: 10px; display: block; color: var(--accent-cyan);"></i>
                         Silakan unggah berkas Keuangan & Daftar Pesanan di tab <strong>Catatan Harian</strong> terlebih dahulu.
                     </td>
@@ -2608,6 +2640,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const statusClass = isSettled ? 'status-pill success' : (isCancelled ? 'status-pill danger' : 'status-pill warning');
 
+            const itemAdmin = (payoutInfo && payoutInfo.adminFees ? payoutInfo.adminFees : 0) / (orderIdCounts[item.orderId] || 1);
+            const itemVoucher = (payoutInfo && payoutInfo.voucher ? payoutInfo.voucher : 0) / (orderIdCounts[item.orderId] || 1);
+            const itemAds = (payoutInfo && payoutInfo.ads ? payoutInfo.ads : 0) / (orderIdCounts[item.orderId] || 1);
+            const itemAffiliate = (payoutInfo && payoutInfo.affiliate ? payoutInfo.affiliate : 0) / (orderIdCounts[item.orderId] || 1);
+            const itemRefund = (payoutInfo && payoutInfo.refund ? payoutInfo.refund : 0) / (orderIdCounts[item.orderId] || 1);
+
             rowsHtml.push(`
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 12px 8px;">${idx + 1}</td>
@@ -2623,6 +2661,70 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="padding: 12px 8px;"><strong class="${isSettled ? 'text-green' : ''}">${isSettled ? formatRupiah(settlementAmt) : '-'}</strong></td>
                     <td style="padding: 12px 8px; color: var(--text-muted);">${formatRupiah(totalHpp)}</td>
                     <td style="padding: 12px 8px;"><strong class="${isSettled ? (netProfit >= 0 ? 'text-green' : 'text-pink') : ''}">${isSettled ? formatRupiah(netProfit) : '-'}</strong></td>
+                    <td style="padding: 12px 8px; text-align: center;">
+                        <button onclick="toggleOrderDetail('${item.orderId}', '${item.sku.replace(/'/g, "\\'")}', ${idx})" style="background: none; border: none; cursor: pointer; padding: 4px;" title="Lihat Rincian Biaya">
+                            <i id="toggle-icon-${idx}" class="fas fa-eye text-cyan" style="font-size: 14px;"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr id="detail-row-${idx}" class="detail-row" style="display: none; background: rgba(255, 255, 255, 0.015);">
+                    <td colspan="11" style="padding: 15px 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+                            <div style="background: rgba(255,255,255,0.01); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <strong style="color: var(--accent-cyan); display: block; margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">📦 Detail Produk & Modal</strong>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                    <span style="color: var(--text-muted);">Harga Satuan:</span>
+                                    <strong>${formatRupiah(item.originalPrice || 0)}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                    <span style="color: var(--text-muted);">Total Harga Jual:</span>
+                                    <strong>${formatRupiah(item.subtotalBeforeDiscount || (item.originalPrice * item.qty))}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                    <span style="color: var(--text-muted);">HPP Satuan:</span>
+                                    <strong style="color: var(--accent-pink);">${formatRupiah(hppVal)}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                                    <span style="color: var(--text-muted);">Total HPP:</span>
+                                    <strong style="color: var(--accent-pink);">${formatRupiah(item.qty * hppVal)}</strong>
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.01); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <strong style="color: var(--accent-green); display: block; margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">💸 Rincian Biaya (Per Produk)</strong>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                    <span style="color: var(--text-muted);">Biaya Admin Platform:</span>
+                                    <strong style="color: var(--accent-pink);">${itemAdmin > 0 ? '-' + formatRupiah(itemAdmin) : 'Rp 0'}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                    <span style="color: var(--text-muted);">Potongan Voucher:</span>
+                                    <strong style="color: var(--accent-pink);">${itemVoucher > 0 ? '-' + formatRupiah(itemVoucher) : 'Rp 0'}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                    <span style="color: var(--text-muted);">Biaya Iklan (Ads):</span>
+                                    <strong style="color: var(--accent-pink);">${itemAds > 0 ? '-' + formatRupiah(itemAds) : 'Rp 0'}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                                    <span style="color: var(--text-muted);">Komisi Afiliasi:</span>
+                                    <strong style="color: var(--accent-pink);">${itemAffiliate > 0 ? '-' + formatRupiah(itemAffiliate) : 'Rp 0'}</strong>
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.01); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; gap: 6px;">
+                                <strong style="color: #FFF; display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">📈 Ringkasan Bersih</strong>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                    <span style="color: var(--text-muted);">Dana Cair Bersih:</span>
+                                    <strong style="color: var(--accent-green);">${isSettled ? formatRupiah(settlementAmt) : 'Rp 0'}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
+                                    <span style="color: var(--text-muted);">Modal (HPP):</span>
+                                    <strong style="color: var(--accent-pink);">${formatRupiah(totalHpp)}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; padding-top: 2px;">
+                                    <span style="color: #FFF;">Estimasi Laba Bersih:</span>
+                                    <span style="color: ${netProfit >= 0 ? 'var(--accent-green)' : 'var(--accent-pink)'};">${isSettled ? formatRupiah(Math.round(netProfit)) : '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
             `);
         });
@@ -2630,7 +2732,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rowsHtml.length === 0) {
             payoutsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="10" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                    <td colspan="11" style="text-align: center; padding: 30px; color: var(--text-muted);">
                         Tidak ada transaksi yang cocok dengan pencarian / filter Anda.
                     </td>
                 </tr>
