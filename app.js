@@ -1310,9 +1310,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
                     
-                    // Helper to search index defensively with exclusion support
                     function findColIdx(keywords, excludeKeywords = []) {
                         return headers.findIndex(h => {
+                            if (!h) return false;
                             const match = keywords.some(k => h.includes(k));
                             if (!match) return false;
                             if (excludeKeywords.length > 0 && excludeKeywords.some(e => h.includes(e))) return false;
