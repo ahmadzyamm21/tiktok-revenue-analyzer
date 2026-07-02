@@ -1385,7 +1385,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         adminFees: findColIdx(['total biaya', 'platform fee', 'biaya platform', 'admin fee'], ['ongkir', 'logistik', 'produk']),
                         ads: findColIdx(['iklan gmv max', 'ads cost', 'iklan gmv', 'ads share', 'belanja iklan']),
                         affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi']),
-                        associatedOrderId: findColIdx(['id pesanan terkait', 'associated order id', 'id pesanan referensi', 'reference order id'])
+                        associatedOrderId: findColIdx(['id pesanan terkait', 'associated order id', 'id pesanan referensi', 'reference order id']),
+                        
+                        // Detail Columns
+                        ongkir: findColIdx(['ongkir'], ['ongkir yang', 'pengembalian']),
+                        komisiDinamis: findColIdx(['komisi dinamis']),
+                        komisiAfiliasi: findColIdx(['komisi afiliasi']),
+                        biayaKomisiPlatform: findColIdx(['biaya komisi platform']),
+                        biayaLayananLogistik: findColIdx(['biaya layanan logistik']),
+                        biayaPemrosesanPesanan: findColIdx(['biaya pemrosesan pesanan']),
+                        biayaKomisiSebelumDiskon: findColIdx(['biaya komisi sebelum diskon']),
+                        diskonBelanjaIklan: findColIdx(['diskon (dari belanja iklan)']),
+                        biayaLayananCashbackBonus: findColIdx(['biaya layanan cashback bonus'])
                     };
 
                     if (colMap.date === -1 || colMap.gross === -1 || colMap.orderId === -1) {
@@ -1488,6 +1499,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         const affCommission = Math.abs(parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
                         const adsCost = Math.abs(parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
                         const adminFeesVal = Math.abs(parseFloat(colMap.adminFees !== -1 ? row[colMap.adminFees] : 0) || 0);
+                        
+                        // Extract detailed values
+                        const ongkirVal = Math.abs(parseFloat(colMap.ongkir !== -1 ? row[colMap.ongkir] : 0) || 0);
+                        const komisiDinamisVal = Math.abs(parseFloat(colMap.komisiDinamis !== -1 ? row[colMap.komisiDinamis] : 0) || 0);
+                        const komisiAfiliasiVal = Math.abs(parseFloat(colMap.komisiAfiliasi !== -1 ? row[colMap.komisiAfiliasi] : 0) || 0);
+                        const biayaKomisiPlatformVal = Math.abs(parseFloat(colMap.biayaKomisiPlatform !== -1 ? row[colMap.biayaKomisiPlatform] : 0) || 0);
+                        const biayaLayananLogistikVal = Math.abs(parseFloat(colMap.biayaLayananLogistik !== -1 ? row[colMap.biayaLayananLogistik] : 0) || 0);
+                        const biayaPemrosesanPesananVal = Math.abs(parseFloat(colMap.biayaPemrosesanPesanan !== -1 ? row[colMap.biayaPemrosesanPesanan] : 0) || 0);
+                        const biayaKomisiSebelumDiskonVal = Math.abs(parseFloat(colMap.biayaKomisiSebelumDiskon !== -1 ? row[colMap.biayaKomisiSebelumDiskon] : 0) || 0);
+                        const diskonBelanjaIklanVal = Math.abs(parseFloat(colMap.diskonBelanjaIklan !== -1 ? row[colMap.diskonBelanjaIklan] : 0) || 0);
+                        const biayaLayananCashbackBonusVal = Math.abs(parseFloat(colMap.biayaLayananCashbackBonus !== -1 ? row[colMap.biayaLayananCashbackBonus] : 0) || 0);
 
                         const grossHeader = headers[colMap.gross] || '';
                         if (grossHeader.includes('pendapatan') || grossHeader.includes('penyelesaian') || grossHeader.includes('payout')) {
@@ -1513,7 +1535,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                 refund: 0,
                                 adminFees: 0,
                                 ads: 0,
-                                affiliate: 0
+                                affiliate: 0,
+                                ongkir: 0,
+                                komisiDinamis: 0,
+                                komisiAfiliasi: 0,
+                                biayaKomisiPlatform: 0,
+                                biayaLayananLogistik: 0,
+                                biayaPemrosesanPesanan: 0,
+                                biayaKomisiSebelumDiskon: 0,
+                                diskonBelanjaIklan: 0,
+                                biayaLayananCashbackBonus: 0
                             };
                         }
                         tempParsedOrderPayouts[orderId].amount += settlementVal;
@@ -1525,6 +1556,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempParsedOrderPayouts[orderId].adminFees += adminFeesVal;
                         tempParsedOrderPayouts[orderId].ads += adsCost;
                         tempParsedOrderPayouts[orderId].affiliate += affCommission;
+                        tempParsedOrderPayouts[orderId].ongkir += ongkirVal;
+                        tempParsedOrderPayouts[orderId].komisiDinamis += komisiDinamisVal;
+                        tempParsedOrderPayouts[orderId].komisiAfiliasi += komisiAfiliasiVal;
+                        tempParsedOrderPayouts[orderId].biayaKomisiPlatform += biayaKomisiPlatformVal;
+                        tempParsedOrderPayouts[orderId].biayaLayananLogistik += biayaLayananLogistikVal;
+                        tempParsedOrderPayouts[orderId].biayaPemrosesanPesanan += biayaPemrosesanPesananVal;
+                        tempParsedOrderPayouts[orderId].biayaKomisiSebelumDiskon += biayaKomisiSebelumDiskonVal;
+                        tempParsedOrderPayouts[orderId].diskonBelanjaIklan += diskonBelanjaIklanVal;
+                        tempParsedOrderPayouts[orderId].biayaLayananCashbackBonus += biayaLayananCashbackBonusVal;
 
                         dayData.ordersTotalWeight += 1;
                         if (adsCost > 0) dayData.adsShareSum += 1;
@@ -2646,6 +2686,38 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemAffiliate = (payoutInfo && payoutInfo.affiliate ? payoutInfo.affiliate : 0) / (orderIdCounts[item.orderId] || 1);
             const itemRefund = (payoutInfo && payoutInfo.refund ? payoutInfo.refund : 0) / (orderIdCounts[item.orderId] || 1);
 
+            const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
+            
+            const detailFields = [
+                { name: 'Ongkir', val: (payoutInfo && payoutInfo.ongkir ? payoutInfo.ongkir : 0) / (orderIdCounts[item.orderId] || 1) },
+                { name: 'Komisi dinamis', val: (payoutInfo && payoutInfo.komisiDinamis ? payoutInfo.komisiDinamis : 0) / (orderIdCounts[item.orderId] || 1) },
+                { name: 'Komisi Afiliasi', val: (payoutInfo && payoutInfo.komisiAfiliasi ? payoutInfo.komisiAfiliasi : 0) / (orderIdCounts[item.orderId] || 1) },
+                { name: 'Biaya komisi platform', val: (payoutInfo && payoutInfo.biayaKomisiPlatform ? payoutInfo.biayaKomisiPlatform : 0) / (orderIdCounts[item.orderId] || 1) },
+                { name: 'Biaya layanan logistik', val: (payoutInfo && payoutInfo.biayaLayananLogistik ? payoutInfo.biayaLayananLogistik : 0) / (orderIdCounts[item.orderId] || 1) },
+                { name: 'Biaya pemrosesan pesanan', val: (payoutInfo && payoutInfo.biayaPemrosesanPesanan ? payoutInfo.biayaPemrosesanPesanan : 0) / (orderIdCounts[item.orderId] || 1) },
+                { name: 'Biaya komisi sebelum diskon', val: (payoutInfo && payoutInfo.biayaKomisiSebelumDiskon ? payoutInfo.biayaKomisiSebelumDiskon : 0) / (orderIdCounts[item.orderId] || 1) },
+                { name: 'Diskon (dari belanja iklan)', val: (payoutInfo && payoutInfo.diskonBelanjaIklan ? payoutInfo.diskonBelanjaIklan : 0) / (orderIdCounts[item.orderId] || 1) },
+                { name: 'Biaya layanan cashback bonus', val: (payoutInfo && payoutInfo.biayaLayananCashbackBonus ? payoutInfo.biayaLayananCashbackBonus : 0) / (orderIdCounts[item.orderId] || 1) }
+            ];
+
+            let cardsHtml = '';
+            detailFields.forEach(f => {
+                const pct = itemOriginalPrice > 0 ? ((f.val / itemOriginalPrice) * 100).toFixed(1) + '%' : '0.0%';
+                const isGreen = f.name.includes('Diskon');
+                const valColor = isGreen ? 'var(--accent-green)' : 'var(--accent-pink)';
+                cardsHtml += `
+                    <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="color: var(--text-muted); font-size: 11.5px; margin-bottom: 4px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${f.name}">${f.name}</div>
+                            <div style="color: ${valColor}; font-weight: 700; font-size: 13.5px; text-align: left; margin-bottom: 2px;">
+                                ${formatRupiah(Math.round(f.val))}
+                            </div>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 10px; text-align: left;">${pct}</div>
+                    </div>
+                `;
+            });
+
             rowsHtml.push(`
                 <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 12px 8px;">${idx + 1}</td>
@@ -2669,60 +2741,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 </tr>
                 <tr id="detail-row-${idx}" class="detail-row" style="display: none; background: rgba(255, 255, 255, 0.015);">
                     <td colspan="11" style="padding: 15px 20px;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
-                            <div style="background: rgba(255,255,255,0.01); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-                                <strong style="color: var(--accent-cyan); display: block; margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">📦 Detail Produk & Modal</strong>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
-                                    <span style="color: var(--text-muted);">Harga Satuan:</span>
-                                    <strong>${formatRupiah(item.originalPrice || 0)}</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
-                                    <span style="color: var(--text-muted);">Total Harga Jual:</span>
-                                    <strong>${formatRupiah(item.subtotalBeforeDiscount || (item.originalPrice * item.qty))}</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
-                                    <span style="color: var(--text-muted);">HPP Satuan:</span>
-                                    <strong style="color: var(--accent-pink);">${formatRupiah(hppVal)}</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                                    <span style="color: var(--text-muted);">Total HPP:</span>
-                                    <strong style="color: var(--accent-pink);">${formatRupiah(item.qty * hppVal)}</strong>
-                                </div>
+                        <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #FFF; display: flex; align-items: center; gap: 6px; text-align: left;">
+                            <i class="fas fa-file-invoice-dollar text-green"></i> Rincian Pendapatan & Potongan Biaya
+                        </h4>
+                        
+                        <!-- Top Info Bar: Product & Summary -->
+                        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 6px; margin-bottom: 15px;">
+                            <div style="font-size: 12px; text-align: left;">
+                                Produk: <strong>${item.product}</strong> 
+                                <span style="color: var(--text-muted); margin: 0 6px;">|</span>
+                                Varian: <strong>${item.variation || '-'}</strong>
+                                <span style="color: var(--text-muted); margin: 0 6px;">|</span>
+                                SKU: <strong>${item.sku}</strong>
                             </div>
-                            <div style="background: rgba(255,255,255,0.01); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-                                <strong style="color: var(--accent-green); display: block; margin-bottom: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">💸 Rincian Biaya (Per Produk)</strong>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
-                                    <span style="color: var(--text-muted);">Biaya Admin Platform:</span>
-                                    <strong style="color: var(--accent-pink);">${itemAdmin > 0 ? '-' + formatRupiah(itemAdmin) : 'Rp 0'}</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
-                                    <span style="color: var(--text-muted);">Potongan Voucher:</span>
-                                    <strong style="color: var(--accent-pink);">${itemVoucher > 0 ? '-' + formatRupiah(itemVoucher) : 'Rp 0'}</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
-                                    <span style="color: var(--text-muted);">Biaya Iklan (Ads):</span>
-                                    <strong style="color: var(--accent-pink);">${itemAds > 0 ? '-' + formatRupiah(itemAds) : 'Rp 0'}</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px;">
-                                    <span style="color: var(--text-muted);">Komisi Afiliasi:</span>
-                                    <strong style="color: var(--accent-pink);">${itemAffiliate > 0 ? '-' + formatRupiah(itemAffiliate) : 'Rp 0'}</strong>
-                                </div>
+                            <div style="font-size: 12px; text-align: right;">
+                                Harga Jual: <strong>${formatRupiah(item.subtotalBeforeDiscount || (item.originalPrice * item.qty))}</strong>
+                                <span style="color: var(--text-muted); margin: 0 6px;">|</span>
+                                HPP Satuan: <strong style="color: var(--accent-pink);">${formatRupiah(hppVal)}</strong>
+                                <span style="color: var(--text-muted); margin: 0 6px;">|</span>
+                                Dana Cair Bersih: <strong style="color: var(--accent-green);">${isSettled ? formatRupiah(settlementAmt) : 'Rp 0'}</strong>
                             </div>
-                            <div style="background: rgba(255,255,255,0.01); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; gap: 6px;">
-                                <strong style="color: #FFF; display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">📈 Ringkasan Bersih</strong>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
-                                    <span style="color: var(--text-muted);">Dana Cair Bersih:</span>
-                                    <strong style="color: var(--accent-green);">${isSettled ? formatRupiah(settlementAmt) : 'Rp 0'}</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">
-                                    <span style="color: var(--text-muted);">Modal (HPP):</span>
-                                    <strong style="color: var(--accent-pink);">${formatRupiah(totalHpp)}</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; padding-top: 2px;">
-                                    <span style="color: #FFF;">Estimasi Laba Bersih:</span>
-                                    <span style="color: ${netProfit >= 0 ? 'var(--accent-green)' : 'var(--accent-pink)'};">${isSettled ? formatRupiah(Math.round(netProfit)) : '-'}</span>
-                                </div>
-                            </div>
+                        </div>
+
+                        <!-- 9 Breakdown Cards Grid -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                            ${cardsHtml}
                         </div>
                     </td>
                 </tr>
