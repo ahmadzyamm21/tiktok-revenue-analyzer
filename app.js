@@ -2516,8 +2516,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Apply filters
             if (filterStatus === 'settled' && !isSettled) return;
-            if (filterStatus === 'pending' && (isSettled || isCancelled)) return;
+            if (filterStatus === 'pending' && (isSettled || isCancelled || isReturnedOnly)) return;
             if (filterStatus === 'cancelled' && !isCancelled) return;
+            if (filterStatus === 'returned' && !isReturnedOnly) return;
 
             // Apply search query
             const matchSearch = !query || 
