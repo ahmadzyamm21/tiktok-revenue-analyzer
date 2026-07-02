@@ -2468,9 +2468,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('kpi-payouts-settled')) document.getElementById('kpi-payouts-settled').textContent = 'Rp 0';
             if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = '0 Order Berhasil Cair';
             if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = '0 Order';
-            if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = 'Total Produk Diretur';
+            if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = 'Total HPP Retur: Rp 0';
             if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = '0 Order';
-            if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Produk Dibatalkan';
+            if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total HPP Batal: Rp 0';
             return;
         }
 
@@ -2482,6 +2482,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let pendingCount = 0;
         let returnedCount = 0;
         let cancelledCount = 0;
+        let returnedHppSum = 0;
+        let cancelledHppSum = 0;
         let settledAmountSum = 0;
 
         const rowsHtml = [];
@@ -2533,21 +2535,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!matchSearch) return;
 
+            const skuInfo = hppSkuDb[item.sku];
+            const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+            const itemHpp = item.qty * hppVal;
+
             totalCount++;
             if (isSettled) {
                 settledCount++;
                 settledAmountSum += settlementAmt;
             } else if (isReturnedOnly) {
                 returnedCount++;
+                returnedHppSum += itemHpp;
             } else if (isCancelled) {
                 cancelledCount++;
+                cancelledHppSum += itemHpp;
             } else {
                 pendingCount++;
             }
 
-            const skuInfo = hppSkuDb[item.sku];
-            const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-            const totalHpp = isCancelled ? 0 : (item.qty * hppVal);
+            const totalHpp = (isCancelled || isReturnedOnly) ? 0 : itemHpp;
             const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
 
             const statusClass = isSettled ? 'status-pill success' : (isCancelled ? 'status-pill danger' : 'status-pill warning');
@@ -2588,9 +2594,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('kpi-payouts-settled')) document.getElementById('kpi-payouts-settled').textContent = formatRupiah(settledAmountSum);
         if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = `${settledCount} Order Berhasil Cair`;
         if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = `${returnedCount} Order`;
-        if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = 'Total Produk Diretur';
+        if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = `Total HPP Retur: ${formatRupiah(returnedHppSum)}`;
         if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = `${cancelledCount} Order`;
-        if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Produk Dibatalkan';
+        if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = `Total HPP Batal: ${formatRupiah(cancelledHppSum)}`;
     }
 
     if (searchPayouts) {
