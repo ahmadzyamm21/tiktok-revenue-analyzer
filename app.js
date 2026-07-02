@@ -281,6 +281,36 @@ document.addEventListener('DOMContentLoaded', () => {
             totalHppFromLogs += (log.hpp || 0);
         });
 
+        if (orderItemsDb && orderItemsDb.length > 0) {
+            let sumGross = 0;
+            const uniqueOrderIds = new Set();
+            orderItemsDb.forEach(item => {
+                if (uniqueOrderIds.has(item.orderId)) return;
+                
+                const payoutInfo = orderPayouts[item.orderId];
+                const statusLower = (item.status || '').toLowerCase();
+                const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
+                const isSettled = payoutInfo && payoutInfo.amount > 0;
+                const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-' &&
+                                         item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
+                const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
+                                       statusLower.includes('refund') || 
+                                       statusLower.includes('return') || 
+                                       (isCancelledOnly && item.trackingId) || 
+                                       (payoutInfo && payoutInfo.isReturned) ||
+                                       (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
+                                       (item.returnQty && item.returnQty > 0)) && !isSettled;
+                
+                if (isSettled || isReturnedOnly) {
+                    const fullAmt = payoutInfo ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
+                    sumGross += fullAmt;
+                    uniqueOrderIds.add(item.orderId);
+                }
+            });
+            totalGross = sumGross;
+            totalOrders = uniqueOrderIds.size;
+        }
+
         const totalNet = totalGross - totalRefunds - totalVouchers;
         const totalPayout = totalNet - totalAdminFees - totalAdsSpend + totalAdjustments;
         const targetPct = targetRevenue > 0 ? (totalNet / targetRevenue) * 100 : 0;
