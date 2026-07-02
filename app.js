@@ -2478,13 +2478,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = [
                 idx + 1,
                 item.date || '',
-                item.trackingId || '',
-                item.orderId,
+                `"${(item.trackingId || '').replace(/"/g, '""')}"`,
+                `"${(item.orderId || '').replace(/"/g, '""')}"`,
                 `"${(item.product || '').replace(/"/g, '""')}"`,
-                item.sku || '',
-                item.variation || '',
+                `"${(item.sku || '').replace(/"/g, '""')}"`,
+                `"${(item.variation || '').replace(/"/g, '""')}"`,
                 item.qty,
-                statusStr,
+                `"${statusStr}"`,
                 Math.round(settlementAmt),
                 totalHpp,
                 Math.round(netProfit)
