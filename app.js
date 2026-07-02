@@ -1338,7 +1338,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             : findColIdx(['pengembalian dana', 'refund', 'retur']),
                         adminFees: findColIdx(['total biaya', 'platform fee', 'biaya platform', 'admin fee'], ['ongkir', 'logistik', 'produk']),
                         ads: findColIdx(['iklan gmv max', 'ads cost', 'iklan gmv', 'ads share', 'belanja iklan']),
-                        affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi'])
+                        affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi']),
+                        associatedOrderId: findColIdx(['id pesanan terkait', 'associated order id', 'id pesanan referensi', 'reference order id'])
                     };
 
                     if (colMap.date === -1 || colMap.gross === -1 || colMap.orderId === -1) {
@@ -1357,11 +1358,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         const row = jsonData[r];
                         if (!row || row.length === 0) continue;
 
-                        const orderId = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : null;
+                        let orderId = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : null;
+                        const assocId = (colMap.associatedOrderId && colMap.associatedOrderId !== -1) ? (row[colMap.associatedOrderId] || '').toString().trim() : null;
+                        if (assocId) {
+                            orderId = assocId;
+                        }
                         if (!orderId) continue;
 
                         const typeVal = colMap.type !== -1 ? (row[colMap.type] || '').toString().toLowerCase().trim() : 'pesanan';
-                        const isOrderPayment = typeVal.includes('pesanan') || typeVal.includes('order') || typeVal.includes('payment') || typeVal.includes('gmv');
+                        const isOrderPayment = typeVal.includes('pesanan') || 
+                                               typeVal.includes('order') || 
+                                               typeVal.includes('payment') || 
+                                               typeVal.includes('gmv') || 
+                                               typeVal.includes('penggantian') || 
+                                               typeVal.includes('penyesuaian') || 
+                                               typeVal.includes('reimbursement') || 
+                                               typeVal.includes('adjustment') ||
+                                               !!assocId;
                         
                         if (!isOrderPayment) {
                             continue; // Discard non-order payments, ads, adjustments, etc.
@@ -1393,7 +1406,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const orderInDb = orderItemsDb.find(item => item.orderId === orderId);
 
                         // We only process if it is a May 2026 order
-                        const isMayOrder = (orderDateStr && orderDateStr.startsWith('2026-05')) || (orderInDb && orderInDb.date.startsWith('2026-05'));
+                        const isMayOrder = (orderDateStr && orderDateStr.startsWith('2026-05')) || (orderInDb && orderInDb.date && orderInDb.date.startsWith('2026-05'));
                         if (!isMayOrder) {
                             continue; // Skip orders outside May 2026
                         }
@@ -1446,9 +1459,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         if (!tempParsedOrderPayouts[orderId]) {
-                            tempParsedOrderPayouts[orderId] = { amount: 0, date: aggDate };
+                            tempParsedOrderPayouts[orderId] = { amount: 0, originalAmount: 0, date: aggDate };
                         }
                         tempParsedOrderPayouts[orderId].amount += settlementVal;
+                        if (settlementVal > 0 && typeVal === 'pesanan') {
+                            tempParsedOrderPayouts[orderId].originalAmount += settlementVal;
+                        }
 
                         dayData.ordersTotalWeight += 1;
                         if (adsCost > 0) dayData.adsShareSum += 1;
@@ -2195,7 +2211,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         qty: headers.findIndex(h => h.includes('jumlah') || h.includes('quantity') || h === 'qty'),
                         createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('created time') || h.includes('tanggal order') || h.includes('tanggal pesanan')),
                         trackingId: headers.findIndex(h => h.includes('resi') || h.includes('tracking id') || h.includes('no resi') || h.includes('resi id')),
-                        settlement: headers.findIndex(h => h.includes('settlement') || h.includes('penyelesaian') || h.includes('dana cair') || h.includes('payout'))
+                        settlement: headers.findIndex(h => h.includes('settlement') || h.includes('penyelesaian') || h.includes('dana cair') || h.includes('payout')),
+                        returnType: headers.findIndex(h => h.includes('cancelation/return type') || h.includes('tipe pembatalan/pengembalian') || h.includes('return type')),
+                        returnQty: headers.findIndex(h => h.includes('sku quantity of return') || h.includes('jumlah pengembalian sku') || h.includes('return qty'))
                     };
 
                     if (colMap.orderId === -1 || colMap.sku === -1) {
@@ -2229,6 +2247,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         const qtyVal = colMap.qty !== -1 ? parseInt(row[colMap.qty]) || 1 : 1;
                         const trackingIdVal = colMap.trackingId !== -1 ? (row[colMap.trackingId] || '').toString().trim() : '';
+                        const returnTypeVal = colMap.returnType !== -1 ? (row[colMap.returnType] || '').toString().toLowerCase().trim() : '';
+                        const returnQtyVal = colMap.returnQty !== -1 ? parseInt(row[colMap.returnQty]) || 0 : 0;
                         const rawDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
 
                         let dateStr = '';
@@ -2270,17 +2290,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             qty: qtyVal,
                             date: dateStr,
                             status: statusVal,
-                            trackingId: trackingIdVal
+                            trackingId: trackingIdVal,
+                            returnType: returnTypeVal,
+                            returnQty: returnQtyVal
                         });
 
-                        // Auto-populate payouts from settlement column in orders file
                         if (hasSettlementCol) {
                             const settlementVal = parseFloat(row[colMap.settlement]) || 0;
                             if (settlementVal > 0) {
                                 if (!tempParsedOrderPayouts[orderIdVal]) {
-                                    tempParsedOrderPayouts[orderIdVal] = { amount: 0, date: dateStr };
+                                    tempParsedOrderPayouts[orderIdVal] = { amount: 0, originalAmount: 0, date: dateStr };
                                 }
                                 tempParsedOrderPayouts[orderIdVal].amount += settlementVal;
+                                tempParsedOrderPayouts[orderIdVal].originalAmount += settlementVal;
                                 autoPayoutsCount++;
                             }
                         }
@@ -2367,14 +2389,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         orderItemsDb.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
-            const isSettled = !!payoutInfo;
-            const fullSettlementAmt = isSettled ? payoutInfo.amount : 0;
-            const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
-            const statusStr = isSettled ? 'Sudah Cair' : (item.status === 'Cancelled' ? 'Dibatalkan' : 'Belum Cair');
+            const statusLower = (item.status || '').toLowerCase();
+            const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
+            const isSettled = payoutInfo && payoutInfo.amount > 0;
+            const isReturnedOnly = (statusLower.includes('retur') || 
+                                   statusLower.includes('refund') || 
+                                   statusLower.includes('return') || 
+                                   (isCancelledOnly && item.trackingId) || 
+                                   (payoutInfo && payoutInfo.isReturned) ||
+                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
+                                   (item.returnQty && item.returnQty > 0)) && !isSettled;
+            const isCancelled = (isCancelledOnly || isReturnedOnly) && !isSettled;
+            const fullSettlementAmt = isSettled ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
+
+            const statusStr = isSettled ? 'Sudah Cair' : 
+                              (isReturnedOnly ? 'Retur' : 
+                              (isCancelledOnly ? 'Dibatalkan' : 'Belum Cair'));
 
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-            const totalHpp = item.status === 'Cancelled' ? 0 : (item.qty * hppVal);
+            const totalHpp = isCancelled ? 0 : (item.qty * hppVal);
             const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
 
             const row = [
@@ -2443,11 +2477,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         orderItemsDb.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
-            const isCancelled = (item.status || '').toLowerCase().includes('batal') || item.status === 'Cancelled';
+            const statusLower = (item.status || '').toLowerCase();
+            const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             const isSettled = payoutInfo && payoutInfo.amount > 0;
-            const fullSettlementAmt = isSettled ? payoutInfo.amount : 0;
+            const isReturnedOnly = (statusLower.includes('retur') || 
+                                   statusLower.includes('refund') || 
+                                   statusLower.includes('return') || 
+                                   (isCancelledOnly && item.trackingId) || 
+                                   (payoutInfo && payoutInfo.isReturned) ||
+                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
+                                   (item.returnQty && item.returnQty > 0)) && !isSettled;
+            const isCancelled = (isCancelledOnly || isReturnedOnly) && !isSettled;
+            const fullSettlementAmt = isSettled ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
             const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
-            const statusStr = isSettled ? 'Sudah Cair' : (isCancelled ? 'Dibatalkan' : 'Belum Cair');
+            const statusStr = isSettled ? 'Sudah Cair' : 
+                              (isReturnedOnly ? 'Retur' : 
+                              (isCancelledOnly ? 'Dibatalkan' : 'Belum Cair'));
 
             // Apply filters
             if (filterStatus === 'settled' && !isSettled) return;
