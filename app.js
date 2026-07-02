@@ -2213,7 +2213,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         trackingId: headers.findIndex(h => h.includes('resi') || h.includes('tracking id') || h.includes('no resi') || h.includes('resi id')),
                         settlement: headers.findIndex(h => h.includes('settlement') || h.includes('penyelesaian') || h.includes('dana cair') || h.includes('payout')),
                         returnType: headers.findIndex(h => h.includes('cancelation/return type') || h.includes('tipe pembatalan/pengembalian') || h.includes('return type')),
-                        returnQty: headers.findIndex(h => h.includes('sku quantity of return') || h.includes('jumlah pengembalian sku') || h.includes('return qty'))
+                        returnQty: headers.findIndex(h => h.includes('sku quantity of return') || h.includes('jumlah pengembalian sku') || h.includes('return qty')),
+                        shippedTime: headers.findIndex(h => h.includes('shipped time') || h.includes('waktu pengiriman') || h.includes('tanggal pengiriman') || h.includes('waktu dikirim'))
                     };
 
                     if (colMap.orderId === -1 || colMap.sku === -1) {
@@ -2249,6 +2250,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const trackingIdVal = colMap.trackingId !== -1 ? (row[colMap.trackingId] || '').toString().trim() : '';
                         const returnTypeVal = colMap.returnType !== -1 ? (row[colMap.returnType] || '').toString().toLowerCase().trim() : '';
                         const returnQtyVal = colMap.returnQty !== -1 ? parseInt(row[colMap.returnQty]) || 0 : 0;
+                        const shippedTimeVal = colMap.shippedTime !== -1 ? (row[colMap.shippedTime] || '').toString().trim() : '';
                         const rawDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
 
                         let dateStr = '';
@@ -2292,7 +2294,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             status: statusVal,
                             trackingId: trackingIdVal,
                             returnType: returnTypeVal,
-                            returnQty: returnQtyVal
+                            returnQty: returnQtyVal,
+                            shippedTime: shippedTimeVal
                         });
 
                         if (hasSettlementCol) {
@@ -2392,8 +2395,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             const isSettled = payoutInfo && payoutInfo.amount > 0;
-            const hasTrackingId = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
-            const isReturnedOnly = hasTrackingId && (statusLower.includes('retur') || 
+            const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-' &&
+                                     item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
+            const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
                                    (isCancelledOnly && item.trackingId) || 
@@ -2406,17 +2410,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 statusLower.includes('return') || 
                                 (payoutInfo && payoutInfo.isReturned) ||
                                 (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                (item.returnQty && item.returnQty > 0)) && !hasTrackingId;
+                                (item.returnQty && item.returnQty > 0)) && !hasValidShipment;
             const fullSettlementAmt = isSettled ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
             const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
 
             const statusStr = isSettled ? 'Sudah Cair' : 
-                              (isReturnedOnly ? 'Retur' : 
-                              (isCancelled ? 'Dibatalkan' : 'Belum Cair'));
+                               (isReturnedOnly ? 'Retur' : 
+                               (isCancelled ? 'Dibatalkan' : 'Belum Cair'));
 
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-            const totalHpp = isCancelled ? 0 : (item.qty * hppVal);
+            const totalHpp = (isCancelled || isReturnedOnly) ? 0 : (item.qty * hppVal);
             const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
 
             const row = [
@@ -2488,8 +2492,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             const isSettled = payoutInfo && payoutInfo.amount > 0;
-            const hasTrackingId = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
-            const isReturnedOnly = hasTrackingId && (statusLower.includes('retur') || 
+            const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-' &&
+                                     item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
+            const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
                                    (isCancelledOnly && item.trackingId) || 
@@ -2502,7 +2507,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 statusLower.includes('return') || 
                                 (payoutInfo && payoutInfo.isReturned) ||
                                 (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                (item.returnQty && item.returnQty > 0)) && !hasTrackingId;
+                                (item.returnQty && item.returnQty > 0)) && !hasValidShipment;
             const fullSettlementAmt = isSettled ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
             const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
             const statusStr = isSettled ? 'Sudah Cair' : 
