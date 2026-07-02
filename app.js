@@ -281,6 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
             totalHppFromLogs += (log.hpp || 0);
         });
 
+        const totalNet = totalGross - totalRefunds - totalVouchers;
+        const totalPayout = totalNet - totalAdminFees - totalAdsSpend + totalAdjustments;
+        const targetPct = targetRevenue > 0 ? (totalNet / targetRevenue) * 100 : 0;
+
+        let displayGross = totalGross;
+        let displayOrders = totalOrders;
+
         if (orderItemsDb && orderItemsDb.length > 0) {
             const orderIdCounts = {};
             orderItemsDb.forEach(item => {
@@ -318,14 +325,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     uniqueOrderIds.add(item.orderId);
                 }
             });
-            totalGross = sumGross;
-            totalOrders = uniqueOrderIds.size;
+            displayGross = sumGross;
+            displayOrders = uniqueOrderIds.size;
         }
 
-        const totalNet = totalGross - totalRefunds - totalVouchers;
-        const totalPayout = totalNet - totalAdminFees - totalAdsSpend + totalAdjustments;
-        const targetPct = targetRevenue > 0 ? (totalNet / targetRevenue) * 100 : 0;
-        const aov = totalOrders > 0 ? totalGross / totalOrders : 0;
+        const aov = displayOrders > 0 ? displayGross / displayOrders : 0;
 
         // Calculate needed daily average
         const today = new Date();
@@ -340,8 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set UI text content
         kpiTargetRev.textContent = formatRupiah(targetRevenue);
         kpiTargetPct.textContent = `Progress: ${targetPct.toFixed(1)}%`;
-        kpiGrossRev.textContent = formatRupiah(totalGross);
-        kpiOrderCount.textContent = `Total: ${totalOrders} Order`;
+        kpiGrossRev.textContent = formatRupiah(displayGross);
+        kpiOrderCount.textContent = `Total: ${displayOrders} Order`;
         kpiNetRev.textContent = formatRupiah(totalPayout);
         
         let subtext = `Omset Net: ${formatRupiah(totalNet)} | Admin: -${formatRupiah(totalAdminFees)} | Iklan: -${formatRupiah(totalAdsSpend)}`;
@@ -364,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     kpiNetProfit.style.color = 'var(--accent-green)';
                 }
                 
-                const marginPctVal = totalGross > 0 ? (netProfitVal / totalGross) * 100 : 0;
+                const marginPctVal = displayGross > 0 ? (netProfitVal / displayGross) * 100 : 0;
                 kpiNetProfitSubtext.textContent = `HPP: ${formatRupiah(activeHpp)} | Margin Bersih: ${marginPctVal.toFixed(1)}%`;
             } else {
                 cardNetProfit.style.display = 'none';
@@ -373,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         kpiAov.textContent = formatRupiah(aov);
 
-        const dailyAvgVal = revenueLogs.length > 0 ? totalGross / revenueLogs.length : 0;
+        const dailyAvgVal = revenueLogs.length > 0 ? displayGross / revenueLogs.length : 0;
         kpiDailyAvg.textContent = `Rata-rata Harian: ${formatRupiah(dailyAvgVal)}`;
 
         // Progress ring rendering
@@ -413,12 +417,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const pnlNetProfitText = document.getElementById('pnl-net-profit');
         const pnlNetProfitPctText = document.getElementById('pnl-net-profit-pct');
 
-        if (pnlGross) pnlGross.textContent = formatRupiah(totalGross);
+        if (pnlGross) pnlGross.textContent = formatRupiah(displayGross);
         
-        const pctDenom = totalGross > 0 ? totalGross : 1;
+        const pctDenom = displayGross > 0 ? displayGross : 1;
+        const displayVouchers = Math.max(0, displayGross - totalNet - totalRefunds);
         
-        if (pnlVoucher) pnlVoucher.textContent = `-${formatRupiah(totalVouchers)}`;
-        if (pnlVoucherPct) pnlVoucherPct.textContent = `${((totalVouchers / pctDenom) * 100).toFixed(1)}%`;
+        if (pnlVoucher) pnlVoucher.textContent = `-${formatRupiah(displayVouchers)}`;
+        if (pnlVoucherPct) pnlVoucherPct.textContent = `${((displayVouchers / pctDenom) * 100).toFixed(1)}%`;
         
         if (pnlRefund) pnlRefund.textContent = `-${formatRupiah(totalRefunds)}`;
         if (pnlRefundPct) pnlRefundPct.textContent = `${((totalRefunds / pctDenom) * 100).toFixed(1)}%`;
