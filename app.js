@@ -282,11 +282,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (orderItemsDb && orderItemsDb.length > 0) {
+            const orderIdCounts = {};
+            orderItemsDb.forEach(item => {
+                orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
+            });
+            
             let sumGross = 0;
             const uniqueOrderIds = new Set();
             orderItemsDb.forEach(item => {
-                if (uniqueOrderIds.has(item.orderId)) return;
-                
                 const payoutInfo = orderPayouts[item.orderId];
                 const statusLower = (item.status || '').toLowerCase();
                 const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
@@ -302,8 +305,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                        (item.returnQty && item.returnQty > 0)) && !isSettled;
                 
                 if (isSettled || isReturnedOnly) {
-                    const fullAmt = payoutInfo ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
-                    sumGross += fullAmt;
+                    let itemGross = 0;
+                    if (item.subtotalBeforeDiscount && item.subtotalBeforeDiscount > 0) {
+                        itemGross = item.subtotalBeforeDiscount;
+                    } else if (item.originalPrice && item.originalPrice > 0) {
+                        itemGross = item.originalPrice * item.qty;
+                    } else {
+                        const fullAmt = payoutInfo ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
+                        itemGross = fullAmt / (orderIdCounts[item.orderId] || 1);
+                    }
+                    sumGross += itemGross;
                     uniqueOrderIds.add(item.orderId);
                 }
             });
@@ -2244,7 +2255,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         settlement: headers.findIndex(h => h.includes('settlement') || h.includes('penyelesaian') || h.includes('dana cair') || h.includes('payout')),
                         returnType: headers.findIndex(h => h.includes('cancelation/return type') || h.includes('tipe pembatalan/pengembalian') || h.includes('return type')),
                         returnQty: headers.findIndex(h => h.includes('sku quantity of return') || h.includes('jumlah pengembalian sku') || h.includes('return qty')),
-                        shippedTime: headers.findIndex(h => h.includes('shipped time') || h.includes('waktu pengiriman') || h.includes('tanggal pengiriman') || h.includes('waktu dikirim'))
+                        shippedTime: headers.findIndex(h => h.includes('shipped time') || h.includes('waktu pengiriman') || h.includes('tanggal pengiriman') || h.includes('waktu dikirim')),
+                        originalPrice: headers.findIndex(h => h.includes('sku unit original price') || h.includes('harga asli produk') || h.includes('original price') || h.includes('harga awal') || h.includes('harga asli')),
+                        subtotalBeforeDiscount: headers.findIndex(h => h.includes('sku subtotal before discount') || h.includes('harga jual produk') || h.includes('subtotal sebelum diskon') || h.includes('subtotal before discount') || h.includes('harga sebelum diskon'))
                     };
 
                     if (colMap.orderId === -1 || colMap.sku === -1) {
@@ -2281,6 +2294,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const returnTypeVal = colMap.returnType !== -1 ? (row[colMap.returnType] || '').toString().toLowerCase().trim() : '';
                         const returnQtyVal = colMap.returnQty !== -1 ? parseInt(row[colMap.returnQty]) || 0 : 0;
                         const shippedTimeVal = colMap.shippedTime !== -1 ? (row[colMap.shippedTime] || '').toString().trim() : '';
+                        const originalPriceVal = colMap.originalPrice !== -1 ? parseFloat(row[colMap.originalPrice]) || 0 : 0;
+                        const subtotalBeforeDiscountVal = colMap.subtotalBeforeDiscount !== -1 ? parseFloat(row[colMap.subtotalBeforeDiscount]) || 0 : 0;
                         const rawDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
 
                         let dateStr = '';
@@ -2325,7 +2340,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             trackingId: trackingIdVal,
                             returnType: returnTypeVal,
                             returnQty: returnQtyVal,
-                            shippedTime: shippedTimeVal
+                            shippedTime: shippedTimeVal,
+                            originalPrice: originalPriceVal,
+                            subtotalBeforeDiscount: subtotalBeforeDiscountVal
                         });
 
                         if (hasSettlementCol) {
