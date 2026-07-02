@@ -2470,7 +2470,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = '0 Order';
             if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = 'Total HPP Retur: Rp 0';
             if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = '0 Order';
-            if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total HPP Batal: Rp 0';
+            if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Produk Dibatalkan';
             return;
         }
 
@@ -2483,7 +2483,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let returnedCount = 0;
         let cancelledCount = 0;
         let returnedHppSum = 0;
-        let cancelledHppSum = 0;
         let settledAmountSum = 0;
 
         const rowsHtml = [];
@@ -2548,7 +2547,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 returnedHppSum += itemHpp;
             } else if (isCancelled) {
                 cancelledCount++;
-                cancelledHppSum += itemHpp;
             } else {
                 pendingCount++;
             }
@@ -2596,7 +2594,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = `${returnedCount} Order`;
         if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = `Total HPP Retur: ${formatRupiah(returnedHppSum)}`;
         if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = `${cancelledCount} Order`;
-        if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = `Total HPP Batal: ${formatRupiah(cancelledHppSum)}`;
+        if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Produk Dibatalkan';
     }
 
     if (searchPayouts) {
