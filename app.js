@@ -1397,7 +1397,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         biayaKomisiSebelumDiskon: findColIdx(['biaya komisi sebelum diskon']),
                         diskonBelanjaIklan: findColIdx(['diskon (dari belanja iklan)']),
                         biayaLayananCashbackBonus: findColIdx(['biaya layanan cashback bonus']),
-                        subtotalSetelahDiskonPenjual: findColIdx(['subtotal setelah diskon penjual', 'subtotal after seller discount'])
+                        subtotalSetelahDiskonPenjual: findColIdx(['subtotal setelah diskon penjual', 'subtotal after seller discount']),
+                        
+                        // Newly added possible fee columns
+                        biayaLayananPreOrder: findColIdx(['biaya layanan pre-order']),
+                        biayaLayananMall: findColIdx(['biaya layanan mall']),
+                        biayaPembayaran: findColIdx(['biaya pembayaran']),
+                        diskonKomisiLainnya: findColIdx(['diskon komisi lainnya']),
+                        handlingFeeInstallment: findColIdx(['handling fee']),
+                        subsidiOngkir: findColIdx(['subsidi ongkir']),
+                        biayaProgramBebasOngkir: findColIdx(['biaya layanan program bebas ongkir', 'bebas ongkir']),
+                        biayaLayananKhususLive: findColIdx(['biaya layanan khusus live']),
+                        biayaAksesKeuntunganEksklusif: findColIdx(['biaya akses keuntungan eksklusif']),
+                        biayaProgramEams: findColIdx(['biaya layanan program eams']),
+                        biayaBrandsCrazyDeal: findColIdx(['biaya layanan brands crazy deal', 'flash sale']),
+                        biayaPayLater: findColIdx(['biaya program paylater']),
+                        biayaCampaignSource: findColIdx(['biaya sumber daya campaign']),
+                        biayaLayananKhususPlatform: findColIdx(['biaya layanan khusus platform']),
+                        biayaProgramLayananTerkelola: findColIdx(['program layanan terkelola']),
+                        biayaAsuransi: findColIdx(['biaya asuransi'])
                     };
 
                     if (colMap.date === -1 || colMap.gross === -1 || colMap.orderId === -1) {
@@ -1496,7 +1514,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         let grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
                         const settlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
                         const voucherVal = Math.abs(parseFloat(colMap.voucher !== -1 ? row[colMap.voucher] : 0) || 0);
-                        const refundVal = Math.abs(parseFloat(colMap.refund !== -1 ? row[colMap.refund] : 0) || 0);
+                        const refundVal = Math.abs(parseFloat(row[colMap.refund]) || 0);
                         const affCommission = Math.abs(parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
                         const adsCost = Math.abs(parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
                         const adminFeesVal = Math.abs(parseFloat(colMap.adminFees !== -1 ? row[colMap.adminFees] : 0) || 0);
@@ -1511,6 +1529,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         const biayaKomisiSebelumDiskonVal = Math.abs(parseFloat(colMap.biayaKomisiSebelumDiskon !== -1 ? row[colMap.biayaKomisiSebelumDiskon] : 0) || 0);
                         const diskonBelanjaIklanVal = Math.abs(parseFloat(colMap.diskonBelanjaIklan !== -1 ? row[colMap.diskonBelanjaIklan] : 0) || 0);
                         const biayaLayananCashbackBonusVal = Math.abs(parseFloat(colMap.biayaLayananCashbackBonus !== -1 ? row[colMap.biayaLayananCashbackBonus] : 0) || 0);
+                        const biayaLayananPreOrderVal = Math.abs(parseFloat(colMap.biayaLayananPreOrder !== -1 ? row[colMap.biayaLayananPreOrder] : 0) || 0);
+                        const biayaLayananMallVal = Math.abs(parseFloat(colMap.biayaLayananMall !== -1 ? row[colMap.biayaLayananMall] : 0) || 0);
+                        const biayaPembayaranVal = Math.abs(parseFloat(colMap.biayaPembayaran !== -1 ? row[colMap.biayaPembayaran] : 0) || 0);
+                        const diskonKomisiLainnyaVal = Math.abs(parseFloat(colMap.diskonKomisiLainnya !== -1 ? row[colMap.diskonKomisiLainnya] : 0) || 0);
+                        const handlingFeeInstallmentVal = Math.abs(parseFloat(colMap.handlingFeeInstallment !== -1 ? row[colMap.handlingFeeInstallment] : 0) || 0);
+                        const subsidiOngkirVal = Math.abs(parseFloat(colMap.subsidiOngkir !== -1 ? row[colMap.subsidiOngkir] : 0) || 0);
+                        const biayaProgramBebasOngkirVal = Math.abs(parseFloat(colMap.biayaProgramBebasOngkir !== -1 ? row[colMap.biayaProgramBebasOngkir] : 0) || 0);
+                        const biayaLayananKhususLiveVal = Math.abs(parseFloat(colMap.biayaLayananKhususLive !== -1 ? row[colMap.biayaLayananKhususLive] : 0) || 0);
+                        const biayaAksesKeuntunganEksklusifVal = Math.abs(parseFloat(colMap.biayaAksesKeuntunganEksklusif !== -1 ? row[colMap.biayaAksesKeuntunganEksklusif] : 0) || 0);
+                        const biayaProgramEamsVal = Math.abs(parseFloat(colMap.biayaProgramEams !== -1 ? row[colMap.biayaProgramEams] : 0) || 0);
+                        const biayaBrandsCrazyDealVal = Math.abs(parseFloat(colMap.biayaBrandsCrazyDeal !== -1 ? row[colMap.biayaBrandsCrazyDeal] : 0) || 0);
+                        const biayaPayLaterVal = Math.abs(parseFloat(colMap.biayaPayLater !== -1 ? row[colMap.biayaPayLater] : 0) || 0);
+                        const biayaCampaignSourceVal = Math.abs(parseFloat(colMap.biayaCampaignSource !== -1 ? row[colMap.biayaCampaignSource] : 0) || 0);
+                        const biayaLayananKhususPlatformVal = Math.abs(parseFloat(colMap.biayaLayananKhususPlatform !== -1 ? row[colMap.biayaLayananKhususPlatform] : 0) || 0);
+                        const biayaProgramLayananTerkelolaVal = Math.abs(parseFloat(colMap.biayaProgramLayananTerkelola !== -1 ? row[colMap.biayaProgramLayananTerkelola] : 0) || 0);
+                        const biayaAsuransiVal = Math.abs(parseFloat(colMap.biayaAsuransi !== -1 ? row[colMap.biayaAsuransi] : 0) || 0);
 
                         const grossHeader = headers[colMap.gross] || '';
                         if (grossHeader.includes('pendapatan') || grossHeader.includes('penyelesaian') || grossHeader.includes('payout')) {
@@ -1545,7 +1579,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                 biayaPemrosesanPesanan: 0,
                                 biayaKomisiSebelumDiskon: 0,
                                 diskonBelanjaIklan: 0,
-                                biayaLayananCashbackBonus: 0
+                                biayaLayananCashbackBonus: 0,
+                                subtotalSetelahDiskonPenjual: 0,
+                                biayaLayananPreOrder: 0,
+                                biayaLayananMall: 0,
+                                biayaPembayaran: 0,
+                                diskonKomisiLainnya: 0,
+                                handlingFeeInstallment: 0,
+                                subsidiOngkir: 0,
+                                biayaProgramBebasOngkir: 0,
+                                biayaLayananKhususLive: 0,
+                                biayaAksesKeuntunganEksklusif: 0,
+                                biayaProgramEams: 0,
+                                biayaBrandsCrazyDeal: 0,
+                                biayaPayLater: 0,
+                                biayaCampaignSource: 0,
+                                biayaLayananKhususPlatform: 0,
+                                biayaProgramLayananTerkelola: 0,
+                                biayaAsuransi: 0
                             };
                         }
                         tempParsedOrderPayouts[orderId].amount += settlementVal;
@@ -1569,6 +1620,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         const subtotalSetelahDiskonPenjualVal = colMap.subtotalSetelahDiskonPenjual !== -1 ? (parseFloat(row[colMap.subtotalSetelahDiskonPenjual]) || 0) : 0;
                         tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual = (tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual || 0) + subtotalSetelahDiskonPenjualVal;
+                        
+                        tempParsedOrderPayouts[orderId].biayaLayananPreOrder += biayaLayananPreOrderVal;
+                        tempParsedOrderPayouts[orderId].biayaLayananMall += biayaLayananMallVal;
+                        tempParsedOrderPayouts[orderId].biayaPembayaran += biayaPembayaranVal;
+                        tempParsedOrderPayouts[orderId].diskonKomisiLainnya += diskonKomisiLainnyaVal;
+                        tempParsedOrderPayouts[orderId].handlingFeeInstallment += handlingFeeInstallmentVal;
+                        tempParsedOrderPayouts[orderId].subsidiOngkir += subsidiOngkirVal;
+                        tempParsedOrderPayouts[orderId].biayaProgramBebasOngkir += biayaProgramBebasOngkirVal;
+                        tempParsedOrderPayouts[orderId].biayaLayananKhususLive += biayaLayananKhususLiveVal;
+                        tempParsedOrderPayouts[orderId].biayaAksesKeuntunganEksklusif += biayaAksesKeuntunganEksklusifVal;
+                        tempParsedOrderPayouts[orderId].biayaProgramEams += biayaProgramEamsVal;
+                        tempParsedOrderPayouts[orderId].biayaBrandsCrazyDeal += biayaBrandsCrazyDealVal;
+                        tempParsedOrderPayouts[orderId].biayaPayLater += biayaPayLaterVal;
+                        tempParsedOrderPayouts[orderId].biayaCampaignSource += biayaCampaignSourceVal;
+                        tempParsedOrderPayouts[orderId].biayaLayananKhususPlatform += biayaLayananKhususPlatformVal;
+                        tempParsedOrderPayouts[orderId].biayaProgramLayananTerkelola += biayaProgramLayananTerkelolaVal;
+                        tempParsedOrderPayouts[orderId].biayaAsuransi += biayaAsuransiVal;
 
                         dayData.ordersTotalWeight += 1;
                         if (adsCost > 0) dayData.adsShareSum += 1;
@@ -2695,34 +2763,64 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemBasePrice = itemBasePriceVal > 0 ? itemBasePriceVal : itemOriginalPrice;
             
             const detailFields = [
-                { name: 'Ongkir', val: (payoutInfo && payoutInfo.ongkir ? payoutInfo.ongkir : 0) / (orderIdCounts[item.orderId] || 1) },
-                { name: 'Komisi dinamis', val: (payoutInfo && payoutInfo.komisiDinamis ? payoutInfo.komisiDinamis : 0) / (orderIdCounts[item.orderId] || 1) },
-                { name: 'Komisi Afiliasi', val: (payoutInfo && payoutInfo.komisiAfiliasi ? payoutInfo.komisiAfiliasi : 0) / (orderIdCounts[item.orderId] || 1) },
-                { name: 'Biaya komisi platform', val: (payoutInfo && payoutInfo.biayaKomisiPlatform ? payoutInfo.biayaKomisiPlatform : 0) / (orderIdCounts[item.orderId] || 1) },
-                { name: 'Biaya layanan logistik', val: (payoutInfo && payoutInfo.biayaLayananLogistik ? payoutInfo.biayaLayananLogistik : 0) / (orderIdCounts[item.orderId] || 1) },
-                { name: 'Biaya pemrosesan pesanan', val: (payoutInfo && payoutInfo.biayaPemrosesanPesanan ? payoutInfo.biayaPemrosesanPesanan : 0) / (orderIdCounts[item.orderId] || 1) },
-                { name: 'Biaya komisi sebelum diskon', val: (payoutInfo && payoutInfo.biayaKomisiSebelumDiskon ? payoutInfo.biayaKomisiSebelumDiskon : 0) / (orderIdCounts[item.orderId] || 1) },
-                { name: 'Diskon (dari belanja iklan)', val: (payoutInfo && payoutInfo.diskonBelanjaIklan ? payoutInfo.diskonBelanjaIklan : 0) / (orderIdCounts[item.orderId] || 1) },
-                { name: 'Biaya layanan cashback bonus', val: (payoutInfo && payoutInfo.biayaLayananCashbackBonus ? payoutInfo.biayaLayananCashbackBonus : 0) / (orderIdCounts[item.orderId] || 1) }
+                { key: 'ongkir', name: 'Ongkir' },
+                { key: 'komisiDinamis', name: 'Komisi dinamis' },
+                { key: 'komisiAfiliasi', name: 'Komisi Afiliasi' },
+                { key: 'biayaKomisiPlatform', name: 'Biaya komisi platform' },
+                { key: 'biayaLayananLogistik', name: 'Biaya layanan logistik' },
+                { key: 'biayaPemrosesanPesanan', name: 'Biaya pemrosesan pesanan' },
+                { key: 'biayaKomisiSebelumDiskon', name: 'Biaya komisi sebelum diskon' },
+                { key: 'diskonBelanjaIklan', name: 'Diskon (dari belanja iklan)', isDiscount: true },
+                { key: 'biayaLayananCashbackBonus', name: 'Biaya layanan cashback bonus' },
+                
+                { key: 'biayaLayananPreOrder', name: 'Biaya layanan pre-order' },
+                { key: 'biayaLayananMall', name: 'Biaya layanan Mall' },
+                { key: 'biayaPembayaran', name: 'Biaya Pembayaran' },
+                { key: 'diskonKomisiLainnya', name: 'Diskon komisi lainnya', isDiscount: true },
+                { key: 'handlingFeeInstallment', name: 'Credit card installment - Handling fee' },
+                { key: 'subsidiOngkir', name: 'Subsidi ongkir', isDiscount: true },
+                { key: 'biayaProgramBebasOngkir', name: 'Biaya layanan Program Bebas Ongkir' },
+                { key: 'biayaLayananKhususLive', name: 'Biaya layanan Khusus LIVE' },
+                { key: 'biayaAksesKeuntunganEksklusif', name: 'Biaya akses keuntungan eksklusif' },
+                { key: 'biayaProgramEams', name: 'Biaya layanan Program EAMS' },
+                { key: 'biayaBrandsCrazyDeal', name: 'Biaya layanan Brands Crazy Deal/Flash Sale' },
+                { key: 'biayaPayLater', name: 'Biaya program PayLater' },
+                { key: 'biayaCampaignSource', name: 'Biaya sumber daya campaign' },
+                { key: 'biayaLayananKhususPlatform', name: 'Biaya layanan khusus platform' },
+                { key: 'biayaProgramLayananTerkelola', name: 'Program layanan terkelola (Biaya per pesanan)' },
+                { key: 'biayaAsuransi', name: 'Biaya asuransi' }
             ];
 
             let cardsHtml = '';
+            let activeCardsCount = 0;
             detailFields.forEach(f => {
-                const pct = itemBasePrice > 0 ? ((f.val / itemBasePrice) * 100).toFixed(1) + '%' : '0.0%';
-                const isGreen = f.name.includes('Diskon');
+                const val = (payoutInfo && payoutInfo[f.key] ? payoutInfo[f.key] : 0) / (orderIdCounts[item.orderId] || 1);
+                if (Math.round(val) === 0) return; // Skip zero values
+                
+                activeCardsCount++;
+                const pct = itemBasePrice > 0 ? ((val / itemBasePrice) * 100).toFixed(1) + '%' : '0.0%';
+                const isGreen = f.isDiscount;
                 const valColor = isGreen ? 'var(--accent-green)' : 'var(--accent-pink)';
                 cardsHtml += `
                     <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
                             <div style="color: var(--text-muted); font-size: 11.5px; margin-bottom: 4px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${f.name}">${f.name}</div>
                             <div style="color: ${valColor}; font-weight: 700; font-size: 13.5px; text-align: left; margin-bottom: 2px;">
-                                ${formatRupiah(Math.round(f.val))}
+                                ${formatRupiah(Math.round(val))}
                             </div>
                         </div>
                         <div style="color: var(--text-muted); font-size: 10px; text-align: left;">${pct}</div>
                     </div>
                 `;
             });
+            
+            if (activeCardsCount === 0) {
+                cardsHtml = `
+                    <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: var(--text-muted); font-size: 12.5px;">
+                        Tidak ada potongan biaya atau diskon khusus untuk pesanan ini.
+                    </div>
+                `;
+            }
 
             rowsHtml.push(`
                 <tr style="border-bottom: 1px solid var(--border-color);">
