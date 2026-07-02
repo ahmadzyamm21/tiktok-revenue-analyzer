@@ -1396,7 +1396,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         biayaPemrosesanPesanan: findColIdx(['biaya pemrosesan pesanan']),
                         biayaKomisiSebelumDiskon: findColIdx(['biaya komisi sebelum diskon']),
                         diskonBelanjaIklan: findColIdx(['diskon (dari belanja iklan)']),
-                        biayaLayananCashbackBonus: findColIdx(['biaya layanan cashback bonus'])
+                        biayaLayananCashbackBonus: findColIdx(['biaya layanan cashback bonus']),
+                        subtotalSetelahDiskonPenjual: findColIdx(['subtotal setelah diskon penjual', 'subtotal after seller discount'])
                     };
 
                     if (colMap.date === -1 || colMap.gross === -1 || colMap.orderId === -1) {
@@ -1565,6 +1566,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempParsedOrderPayouts[orderId].biayaKomisiSebelumDiskon += biayaKomisiSebelumDiskonVal;
                         tempParsedOrderPayouts[orderId].diskonBelanjaIklan += diskonBelanjaIklanVal;
                         tempParsedOrderPayouts[orderId].biayaLayananCashbackBonus += biayaLayananCashbackBonusVal;
+                        
+                        const subtotalSetelahDiskonPenjualVal = colMap.subtotalSetelahDiskonPenjual !== -1 ? (parseFloat(row[colMap.subtotalSetelahDiskonPenjual]) || 0) : 0;
+                        tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual = (tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual || 0) + subtotalSetelahDiskonPenjualVal;
 
                         dayData.ordersTotalWeight += 1;
                         if (adsCost > 0) dayData.adsShareSum += 1;
@@ -2687,6 +2691,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemRefund = (payoutInfo && payoutInfo.refund ? payoutInfo.refund : 0) / (orderIdCounts[item.orderId] || 1);
 
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
+            const itemBasePriceVal = (payoutInfo && payoutInfo.subtotalSetelahDiskonPenjual ? payoutInfo.subtotalSetelahDiskonPenjual : 0) / (orderIdCounts[item.orderId] || 1);
+            const itemBasePrice = itemBasePriceVal > 0 ? itemBasePriceVal : itemOriginalPrice;
             
             const detailFields = [
                 { name: 'Ongkir', val: (payoutInfo && payoutInfo.ongkir ? payoutInfo.ongkir : 0) / (orderIdCounts[item.orderId] || 1) },
@@ -2702,7 +2708,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let cardsHtml = '';
             detailFields.forEach(f => {
-                const pct = itemOriginalPrice > 0 ? ((f.val / itemOriginalPrice) * 100).toFixed(1) + '%' : '0.0%';
+                const pct = itemBasePrice > 0 ? ((f.val / itemBasePrice) * 100).toFixed(1) + '%' : '0.0%';
                 const isGreen = f.name.includes('Diskon');
                 const valColor = isGreen ? 'var(--accent-green)' : 'var(--accent-pink)';
                 cardsHtml += `
