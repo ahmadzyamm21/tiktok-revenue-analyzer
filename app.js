@@ -2467,8 +2467,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('kpi-payouts-total')) document.getElementById('kpi-payouts-total').textContent = '0 Order';
             if (document.getElementById('kpi-payouts-settled')) document.getElementById('kpi-payouts-settled').textContent = 'Rp 0';
             if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = '0 Order Berhasil Cair';
-            if (document.getElementById('kpi-payouts-pending')) document.getElementById('kpi-payouts-pending').textContent = '0 Order';
-            if (document.getElementById('kpi-payouts-pending-sub')) document.getElementById('kpi-payouts-pending-sub').textContent = 'Menunggu Penyelesaian TikTok';
+            if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = '0 Order';
+            if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = 'Total Produk Diretur';
             return;
         }
 
@@ -2478,6 +2478,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalCount = 0;
         let settledCount = 0;
         let pendingCount = 0;
+        let returnedCount = 0;
         let settledAmountSum = 0;
 
         const rowsHtml = [];
@@ -2533,6 +2534,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isSettled) {
                 settledCount++;
                 settledAmountSum += settlementAmt;
+            } else if (isReturnedOnly) {
+                returnedCount++;
             } else if (!isCancelled) {
                 pendingCount++;
             }
@@ -2579,8 +2582,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('kpi-payouts-total')) document.getElementById('kpi-payouts-total').textContent = orderItemsDb.length + ' Order';
         if (document.getElementById('kpi-payouts-settled')) document.getElementById('kpi-payouts-settled').textContent = formatRupiah(settledAmountSum);
         if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = `${settledCount} Order Berhasil Cair`;
-        if (document.getElementById('kpi-payouts-pending')) document.getElementById('kpi-payouts-pending').textContent = `${pendingCount} Order`;
-        if (document.getElementById('kpi-payouts-pending-sub')) document.getElementById('kpi-payouts-pending-sub').textContent = 'Menunggu Penyelesaian TikTok';
+        if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = `${returnedCount} Order`;
+        if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = 'Total Produk Diretur';
     }
 
     if (searchPayouts) {
