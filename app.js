@@ -326,8 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const statusLower = (item.status || '').toLowerCase();
                 const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
                 const isSettled = payoutInfo && payoutInfo.amount > 0;
-                const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-' &&
-                                         item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
+                const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
                 const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
                                        statusLower.includes('refund') || 
                                        statusLower.includes('return') || 
@@ -2634,8 +2633,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             const isSettled = payoutInfo && payoutInfo.amount > 0;
-            const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-' &&
-                                     item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
+            const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
@@ -2753,8 +2751,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             const isSettled = payoutInfo && payoutInfo.amount > 0;
-            const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-' &&
-                                     item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
+            const hasValidShipment = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
