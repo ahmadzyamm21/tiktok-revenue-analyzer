@@ -73,7 +73,10 @@
             <!-- Header -->
             <header class="app-header">
                 <div class="header-title-group">
-                    <h1 class="header-title">Analisis & Manajemen Omset</h1>
+                    <h1 class="header-title" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        Analisis & Manajemen Omset
+                        <span id="active-month-badge" style="font-size: 13px; padding: 4px 10px; border-radius: 12px; background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan); font-weight: 600; vertical-align: middle;">Mei 2026</span>
+                    </h1>
                     <p class="header-subtitle">Monitor target bulanan, kontribusi channel sales, diskon, dan retur toko Anda.</p>
                 </div>
                 <div class="header-actions">
@@ -616,7 +619,7 @@
                         <div class="kpi-content">
                             <span class="kpi-label">Pesanan Batal</span>
                             <span class="kpi-value text-orange" id="kpi-payouts-cancelled" style="color: var(--accent-orange) !important;">0 Order</span>
-                            <span class="kpi-subtext" id="kpi-payouts-cancelled-sub">Total Produk Dibatalkan</span>
+                            <span class="kpi-subtext" id="kpi-payouts-cancelled-sub">Total Pesanan Dibatalkan</span>
                         </div>
                     </div>
                 </div>
@@ -850,6 +853,11 @@
                 <label for="settings-monthly-hpp" style="display: block; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Estimasi Modal / HPP Bulanan (Rp)</label>
                 <input type="number" id="settings-monthly-hpp" value="0" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 14px; outline: none;">
             </div>
+
+            <div class="form-group mt-3" style="margin-top: 15px;">
+                <label for="settings-analysis-month" style="display: block; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Bulan Analisis</label>
+                <input type="month" id="settings-analysis-month" value="2026-05" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 14px; outline: none;">
+            </div>
             
             <div class="form-group mt-3" style="margin-top: 15px;">
                 <label style="display: block; font-size: 11px; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">Logo Toko</label>
@@ -897,6 +905,6 @@
     </div>
 
     <!-- Custom Script -->
-    <script src="app.js?v=20260702u"></script>
+    <script src="app.js?v=20260702_v3"></script>
 </body>
 </html>

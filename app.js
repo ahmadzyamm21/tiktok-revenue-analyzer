@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let withdrawalsList = JSON.parse(localStorage.getItem('tiktok_withdrawals')) || [];
     let orderItemsDb = JSON.parse(localStorage.getItem('tiktok_order_items')) || [];
     let orderPayouts = JSON.parse(localStorage.getItem('tiktok_order_payouts')) || {};
+    let analysisMonth = localStorage.getItem('tiktok_analysis_month') || '2026-05';
 
     let revenueTrendChart = null;
     let channelDonutChart = null;
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsShopName = document.getElementById('settings-shop-name');
     const settingsTargetRevenue = document.getElementById('settings-target-revenue');
     const settingsMonthlyHpp = document.getElementById('settings-monthly-hpp');
+    const settingsAnalysisMonth = document.getElementById('settings-analysis-month');
     const settingsShopLogoFile = document.getElementById('settings-shop-logo-file');
     const btnUploadLogoTrigger = document.getElementById('btn-upload-logo-trigger');
     const settingsLogoPreviewIcon = document.getElementById('settings-logo-preview-icon');
@@ -114,6 +116,20 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsShopName.value = shopName;
         settingsTargetRevenue.value = targetRevenue;
         settingsMonthlyHpp.value = monthlyHpp;
+        if (settingsAnalysisMonth) settingsAnalysisMonth.value = analysisMonth;
+
+        const activeMonthBadge = document.getElementById('active-month-badge');
+        if (activeMonthBadge) {
+            const parts = analysisMonth.split('-');
+            const yearStr = parts[0];
+            const monthStr = parts[1];
+            const monthsIndo = {
+                '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+                '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+                '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+            };
+            activeMonthBadge.textContent = `${monthsIndo[monthStr] || monthStr} ${yearStr}`;
+        }
 
         if (currentLogoBase64) {
             shopLogoContainer.innerHTML = `<img src="${currentLogoBase64}" style="width: 100%; height: 100%; object-fit: cover;">`;
@@ -212,6 +228,11 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('shop_name', newName);
             localStorage.setItem('tiktok_target_revenue', newTarget.toString());
             localStorage.setItem('tiktok_monthly_hpp', newHpp.toString());
+            
+            if (settingsAnalysisMonth) {
+                analysisMonth = settingsAnalysisMonth.value;
+                localStorage.setItem('tiktok_analysis_month', analysisMonth);
+            }
             if (currentLogoBase64) {
                 localStorage.setItem('shop_logo_base64', currentLogoBase64);
             }
@@ -271,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalHppFromLogs = 0;
 
         revenueLogs.forEach(log => {
+            if (!log.date || !log.date.startsWith(analysisMonth)) return;
             totalGross += log.gross;
             totalRefunds += log.refunds;
             totalVouchers += (log.vouchers || 0);
@@ -291,12 +313,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (orderItemsDb && orderItemsDb.length > 0) {
             const orderIdCounts = {};
             orderItemsDb.forEach(item => {
-                orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
+                if (item.date && item.date.startsWith(analysisMonth)) {
+                    orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
+                }
             });
             
             let sumGross = 0;
             const uniqueOrderIds = new Set();
             orderItemsDb.forEach(item => {
+                if (!item.date || !item.date.startsWith(analysisMonth)) return;
                 const payoutInfo = orderPayouts[item.orderId];
                 const statusLower = (item.status || '').toLowerCase();
                 const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
@@ -466,17 +491,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderDailyLogs() {
         logsTableBody.innerHTML = '';
 
-        if (revenueLogs.length === 0) {
+        const filteredLogs = [...revenueLogs].filter(log => log.date.startsWith(analysisMonth));
+        
+        if (filteredLogs.length === 0) {
             logsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center text-gray" style="padding: 15px;">Belum ada catatan transaksi harian. Silakan isi form di sebelah kiri.</td>
+                    <td colspan="7" class="text-center text-gray" style="padding: 15px;">Belum ada catatan transaksi harian untuk bulan analisis yang dipilih. Silakan isi form di sebelah kiri atau unggah file.</td>
                 </tr>
             `;
             return;
         }
 
         // Sort reverse chronological
-        const sortedLogs = [...revenueLogs].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const sortedLogs = filteredLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         sortedLogs.forEach(log => {
             const tr = document.createElement('tr');
@@ -860,7 +887,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (channelDonutChart) channelDonutChart.destroy();
 
             // Prepare chart data
-            const sortedLogs = [...revenueLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const filteredLogs = [...revenueLogs].filter(log => log.date.startsWith(analysisMonth));
+            const sortedLogs = filteredLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             const labels = sortedLogs.map(log => {
                 const d = new Date(log.date);
                 return !isNaN(d.getTime()) ? d.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }) : log.date;
@@ -920,7 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let liveTotal = 0;
             let videoTotal = 0;
 
-            revenueLogs.forEach(log => {
+            filteredLogs.forEach(log => {
                 const net = log.gross - log.refunds - (log.vouchers || 0);
                 adsTotal += net * (log.channels.ads / 100);
                 affTotal += net * (log.channels.affiliate / 100);
@@ -1065,7 +1093,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 let csvContent = "Tanggal,Omset Kotor,Nilai Retur/Refund,Diskon Voucher,Omset Bersih,Jumlah Order,Ads %,Affiliate %,Live Shopping %,Video Organic %\n";
                 
-                revenueLogs.forEach(log => {
+                const filteredLogs = [...revenueLogs].filter(log => log.date.startsWith(analysisMonth));
+                filteredLogs.forEach(log => {
                     const net = log.gross - log.refunds - (log.vouchers || 0);
                     csvContent += `${log.date},${log.gross},${log.refunds},${log.vouchers || 0},${net},${log.orders},${log.channels.ads},${log.channels.affiliate},${log.channels.live},${log.channels.video}\n`;
                 });
@@ -1074,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const url = URL.createObjectURL(blob);
                 const downloadAnchorNode = document.createElement('a');
                 downloadAnchorNode.setAttribute("href", url);
-                downloadAnchorNode.setAttribute("download", `riwayat_omset_toko_${Date.now()}.csv`);
+                downloadAnchorNode.setAttribute("download", `riwayat_omset_toko_${analysisMonth}_${Date.now()}.csv`);
                 document.body.appendChild(downloadAnchorNode);
                 downloadAnchorNode.click();
                 downloadAnchorNode.remove();
@@ -1114,11 +1143,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 populatePrintShopInfo();
 
                 // Calculate KPI Totals
-                let totalGross = 0;
-                let totalRefunds = 0;
-                let totalVouchers = 0;
-                let totalOrders = 0;
-                revenueLogs.forEach(log => {
+                const filteredLogs = [...revenueLogs].filter(log => log.date.startsWith(analysisMonth));
+                filteredLogs.forEach(log => {
                     totalGross += log.gross;
                     totalRefunds += log.refunds;
                     totalVouchers += (log.vouchers || 0);
@@ -1155,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add print summary of logs
                 const printTableBody = document.getElementById('print-table-body');
                 printTableBody.innerHTML = '';
-                const sortedLogs = [...revenueLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
+                const sortedLogs = [...filteredLogs].sort((a, b) => new Date(a.date) - new Date(b.date));
                 sortedLogs.forEach(log => {
                     const net = log.gross - log.refunds - (log.vouchers || 0);
                     const tr = document.createElement('tr');
@@ -1212,6 +1238,8 @@ document.addEventListener('DOMContentLoaded', () => {
         inputExcelFile.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             if (!files || files.length === 0) return;
+
+            inputExcelFile.value = ''; // Reset input to allow selecting the same file again
 
             tempParsedOrderPayouts = {};
             tempParsedLogs = [];
@@ -1379,9 +1407,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             : findColIdx(['jumlah penyelesaian', 'total pendapatan', 'pendapatan', 'gross']),
                         settlement: findColIdx(['jumlah penyelesaian pembayaran', 'jumlah penyelesaian', 'payout amount', 'settlement amount']),
                         voucher: findColIdx(['diskon penjual', 'seller discount', 'diskon voucher yang ditanggung penjual'], ['subtotal', 'pengembalian']),
-                        refund: findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) !== -1 
-                            ? findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) 
-                            : findColIdx(['pengembalian dana', 'refund', 'retur']),
+                        refund: findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual']) !== -1
+                            ? findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual'])
+                            : findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) !== -1 
+                                ? findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) 
+                                : findColIdx(['pengembalian dana', 'refund', 'retur']),
                         adminFees: findColIdx(['total biaya', 'platform fee', 'biaya platform', 'admin fee'], ['ongkir', 'logistik', 'produk']),
                         ads: findColIdx(['iklan gmv max', 'ads cost', 'iklan gmv', 'ads share', 'belanja iklan']),
                         affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi']),
@@ -1457,7 +1487,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         // Try to clean and parse the order date (waktu pemesanan)
-                        const rawOrderDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
+                        const rawOrderDate = (colMap.date && colMap.date !== -1) ? row[colMap.date] : null;
                         let orderDateStr = '';
                         if (rawOrderDate) {
                             if (rawOrderDate instanceof Date) {
@@ -1478,17 +1508,33 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
-                        // Look up in database to see if we have order date there
+                        // Look up in database to see if we have order details there
                         const orderInDb = orderItemsDb.find(item => item.orderId === orderId);
 
-                        // We only process if it is a May 2026 order
-                        const isMayOrder = (orderDateStr && orderDateStr.startsWith('2026-05')) || (orderInDb && orderInDb.date && orderInDb.date.startsWith('2026-05'));
-                        if (!isMayOrder) {
-                            continue; // Skip orders outside May 2026
+                        // If the order exists in the database, is cancelled/returned, and has no tracking ID (resi), 
+                        // it means it was cancelled before shipping. We skip it completely from the P&L report 
+                        // (gross, refunds, admin fees) so it doesn't skew the dashboard metrics.
+                        if (orderInDb) {
+                            const statusStr = String(orderInDb.status || '').toLowerCase();
+                            const isCancelled = statusStr.includes('batal') || 
+                                                statusStr.includes('cancel') ||
+                                                statusStr.includes('refund') ||
+                                                statusStr.includes('retur');
+                            const resiStr = String(orderInDb.trackingId || '').trim();
+                            const hasResi = resiStr !== '' && resiStr !== '-';
+                            if (isCancelled && !hasResi) {
+                                continue; // Skip pre-shipment cancellations
+                            }
                         }
 
-                        // Determine the correct aggregation date (must be the order date in May 2026)
-                        const aggDate = (orderDateStr && orderDateStr.startsWith('2026-05')) ? orderDateStr : (orderInDb ? orderInDb.date : null);
+                        // We only process if it is a matching analysis month order
+                        const isTargetMonthOrder = (orderDateStr && orderDateStr.startsWith(analysisMonth)) || (orderInDb && orderInDb.date && orderInDb.date.startsWith(analysisMonth));
+                        if (!isTargetMonthOrder) {
+                            continue; // Skip orders outside selected month
+                        }
+
+                        // Determine the correct aggregation date (must be the order date in selected month)
+                        const aggDate = (orderDateStr && orderDateStr.startsWith(analysisMonth)) ? orderDateStr : (orderInDb ? orderInDb.date : null);
                         if (!aggDate) continue;
 
                         if (!dailyAggregates[aggDate]) {
@@ -1829,13 +1875,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         🔍 Data Pencairan Ditemukan: <strong>${Object.keys(tempParsedOrderPayouts).length} Order ID</strong>
                     `;
 
-                    if (totalHppSum > 0) {
-                        previewHtml += `<br>📦 Total HPP (Modal Produk): <strong style="color: var(--accent-pink);">${formatRupiah(totalHppSum)}</strong>`;
-                        const estNetPayout = totalGrossVal - tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0) - tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0) - totalAdminFeesVal - totalAdsSpendVal;
-                        const estNetProfit = estNetPayout - totalHppSum;
-                        previewHtml += `<br>🚀 Estimasi Laba Bersih: <strong style="color: var(--accent-green);">${formatRupiah(estNetProfit)}</strong>`;
+                    if (orderItemsDb && orderItemsDb.length > 0) {
+                        if (totalHppSum > 0) {
+                            previewHtml += `<br>📦 Total HPP (Modal Produk): <strong style="color: var(--accent-pink);">${formatRupiah(totalHppSum)}</strong>`;
+                            const estNetPayout = totalGrossVal - tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0) - tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0) - totalAdminFeesVal - totalAdsSpendVal;
+                            const estNetProfit = estNetPayout - totalHppSum;
+                            previewHtml += `<br>🚀 Estimasi Laba Bersih: <strong style="color: var(--accent-green);">${formatRupiah(estNetProfit)}</strong>`;
+                        } else {
+                            previewHtml += `<br>⚠️ HPP bernilai Rp 0 (Harap isi database HPP produk di tab Database HPP).`;
+                        }
                     } else {
-                        previewHtml += `<br>⚠️ HPP belum dihitung (Unggah berkas Daftar Pesanan untuk mencocokkan HPP).`;
+                        previewHtml += `<br><span style="color: #ff9f43; font-weight: bold;">⚠️ PERINGATAN: Database Daftar Pesanan Kosong!</span><br>
+                        <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px; line-height: 1.4;">
+                            Mohon unggah file <strong>Daftar Pesanan (Order List)</strong> terlebih dahulu di tab <strong>Daftar Pesanan</strong> agar HPP dapat terhitung dan <strong>pesanan yang dibatalkan sebelum dikirim (resi kosong) dapat disaring keluar secara otomatis!</strong>
+                        </span>`;
                     }
 
                     if (tempParsedWithdrawals.length > 0) {
@@ -2213,20 +2266,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const uniqueItemsMap = {};
         if (orderItemsDb && orderItemsDb.length > 0) {
             orderItemsDb.forEach(o => {
-                const key = o.orderId + '_' + (o.product || '') + '_' + (o.sku || '') + '_' + (o.variation || '');
+                if (!o) return;
+                const key = (o.orderId || '') + '_' + (o.product || '') + '_' + (o.sku || '') + '_' + (o.variation || '');
                 uniqueItemsMap[key] = o;
             });
         }
-        tempParsedOrders.forEach(o => {
-            const key = o.orderId + '_' + (o.product || '') + '_' + (o.sku || '') + '_' + (o.variation || '');
-            uniqueItemsMap[key] = o;
-        });
+        if (tempParsedOrders && tempParsedOrders.length > 0) {
+            tempParsedOrders.forEach(o => {
+                if (!o) return;
+                const key = (o.orderId || '') + '_' + (o.product || '') + '_' + (o.sku || '') + '_' + (o.variation || '');
+                uniqueItemsMap[key] = o;
+            });
+        }
         
         // Group by orderId (only for completed orders)
         Object.values(uniqueItemsMap).forEach(o => {
-            const st = (o.status || '').toLowerCase();
-            if (st.includes('selesai') || st.includes('completed') || st === '' || st === 'completed') {
+            if (!o) return;
+            const st = String(o.status || '').toLowerCase();
+            if (st.includes('selesai') || st.includes('completed') || st === '') {
                 const oid = o.orderId;
+                if (!oid) return;
                 if (!ordersMap[oid]) {
                     ordersMap[oid] = [];
                 }
@@ -2336,6 +2395,8 @@ document.addEventListener('DOMContentLoaded', () => {
         inputOrderFile.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
+
+            inputOrderFile.value = ''; // Reset input to allow selecting the same file again
 
             orderFileStatus.textContent = file.name;
             showToast('Membaca file daftar pesanan (SKU)...', 'info');
@@ -2458,7 +2519,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
-                        if (!dateStr || !dateStr.startsWith('2026-05')) continue; // Skip orders outside May 2026
+                        if (!dateStr || !dateStr.startsWith(analysisMonth)) continue; // Skip orders outside the selected month
 
                         tempParsedOrders.push({
                             orderId: orderIdVal,
@@ -2673,11 +2734,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const query = searchPayouts ? searchPayouts.value.toLowerCase().trim() : '';
         const filterStatus = filterPayoutsStatus ? filterPayoutsStatus.value : 'all';
 
-        let totalCount = 0;
-        let settledCount = 0;
-        let pendingCount = 0;
-        let returnedCount = 0;
-        let cancelledCount = 0;
+        const totalOrderIds = new Set();
+        const settledOrderIds = new Set();
+        const returnedOrderIds = new Set();
+        const cancelledOrderIds = new Set();
         let returnedHppSum = 0;
         let settledAmountSum = 0;
 
@@ -2734,17 +2794,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
             const itemHpp = item.qty * hppVal;
 
-            totalCount++;
+            totalOrderIds.add(item.orderId);
             if (isSettled) {
-                settledCount++;
+                settledOrderIds.add(item.orderId);
                 settledAmountSum += settlementAmt;
             } else if (isReturnedOnly) {
-                returnedCount++;
+                returnedOrderIds.add(item.orderId);
                 returnedHppSum += itemHpp;
             } else if (isCancelled) {
-                cancelledCount++;
-            } else {
-                pendingCount++;
+                cancelledOrderIds.add(item.orderId);
             }
 
             const totalHpp = (isCancelled || isReturnedOnly) ? 0 : itemHpp;
@@ -2889,13 +2947,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Update KPI values
-        if (document.getElementById('kpi-payouts-total')) document.getElementById('kpi-payouts-total').textContent = orderItemsDb.length + ' Order';
+        if (document.getElementById('kpi-payouts-total')) document.getElementById('kpi-payouts-total').textContent = totalOrderIds.size + ' Order';
         if (document.getElementById('kpi-payouts-settled')) document.getElementById('kpi-payouts-settled').textContent = formatRupiah(settledAmountSum);
-        if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = `${settledCount} Order Berhasil Cair`;
-        if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = `${returnedCount} Order`;
+        if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = `${settledOrderIds.size} Order Berhasil Cair`;
+        if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = `${returnedOrderIds.size} Order`;
         if (document.getElementById('kpi-payouts-returned-sub')) document.getElementById('kpi-payouts-returned-sub').textContent = `Total HPP Retur: ${formatRupiah(returnedHppSum)}`;
-        if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = `${cancelledCount} Order`;
-        if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Produk Dibatalkan';
+        if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = `${cancelledOrderIds.size} Order`;
+        if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Pesanan Dibatalkan';
     }
 
     if (searchPayouts) {
