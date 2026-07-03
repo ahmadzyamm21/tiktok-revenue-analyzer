@@ -281,7 +281,113 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('tiktok_revenue_logs', JSON.stringify(revenueLogs));
     }
 
+    function rebuildRevenueLogs() {
+        if (!orderItemsDb || orderItemsDb.length === 0 || !orderPayouts || Object.keys(orderPayouts).length === 0) {
+            return;
+        }
+
+        const dailyAgg = {};
+        const orderIdCounts = {};
+        orderItemsDb.forEach(item => {
+            if (item.date) {
+                orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
+            }
+        });
+
+        orderItemsDb.forEach(item => {
+            if (!item.date) return;
+            const date = item.date;
+            const payoutInfo = orderPayouts[item.orderId];
+            const statusLower = (item.status || '').toLowerCase();
+            const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
+            const isSettled = payoutInfo && payoutInfo.amount > 0;
+            const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
+            
+            const isReturnedOnly = hasResi && (
+                statusLower.includes('retur') || 
+                statusLower.includes('refund') || 
+                statusLower.includes('return') || 
+                isCancelledOnly ||
+                (payoutInfo && payoutInfo.isReturned)
+            ) && !isSettled;
+
+            if (isSettled || isReturnedOnly) {
+                if (!dailyAgg[date]) {
+                    dailyAgg[date] = {
+                        gross: 0,
+                        orders: 0,
+                        refunds: 0,
+                        vouchers: 0,
+                        adminFees: 0,
+                        adsSpend: 0,
+                        adjustments: 0,
+                        hpp: 0,
+                        uniqueOrders: new Set(),
+                        orderIds: []
+                    };
+                }
+                const agg = dailyAgg[date];
+                
+                let itemGross = 0;
+                if (item.subtotalBeforeDiscount && item.subtotalBeforeDiscount > 0) {
+                    itemGross = item.subtotalBeforeDiscount;
+                } else if (item.originalPrice && item.originalPrice > 0) {
+                    itemGross = item.originalPrice * item.qty;
+                } else {
+                    const fullAmt = payoutInfo ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
+                    itemGross = fullAmt / (orderIdCounts[item.orderId] || 1);
+                }
+                agg.gross += itemGross;
+
+                // Only calculate HPP for completed orders
+                if (statusLower.includes('selesai') || statusLower.includes('completed')) {
+                    const skuInfo = hppSkuDb[item.sku];
+                    const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                    agg.hpp += (item.qty || 1) * hppVal;
+                }
+
+                if (!agg.uniqueOrders.has(item.orderId)) {
+                    agg.uniqueOrders.add(item.orderId);
+                    agg.orders += 1;
+                    agg.orderIds.push(item.orderId);
+
+                    if (payoutInfo) {
+                        agg.refunds += (payoutInfo.refund || 0);
+                        agg.vouchers += (payoutInfo.voucher || 0);
+                        agg.adminFees += (payoutInfo.adminFees || 0);
+                        agg.adsSpend += (payoutInfo.ads || 0);
+                        agg.adjustments += (payoutInfo.adjustments || 0);
+                    }
+                }
+            }
+        });
+
+        const rebuiltLogs = Object.keys(dailyAgg).map(dateKey => {
+            const agg = dailyAgg[dateKey];
+            return {
+                id: 'log_imp_' + dateKey.replace(/-/g, '') + '_' + Date.now(),
+                date: dateKey,
+                orders: agg.orders,
+                gross: agg.gross,
+                refunds: agg.refunds,
+                vouchers: agg.vouchers,
+                adminFees: agg.adminFees,
+                adsSpend: agg.adsSpend,
+                adjustments: agg.adjustments,
+                hpp: agg.hpp,
+                orderIds: agg.orderIds,
+                channels: { ads: 30, affiliate: 25, live: 25, video: 20 }
+            };
+        });
+
+        const manualLogs = revenueLogs.filter(l => !l.id.startsWith('log_imp_'));
+        revenueLogs = [...manualLogs, ...rebuiltLogs];
+        revenueLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+        saveLogsToStorage();
+    }
+
     function calculateMetrics() {
+        rebuildRevenueLogs();
         let totalGross = 0;
         let totalRefunds = 0;
         let totalVouchers = 0;
