@@ -1553,7 +1553,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ? findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual'])
                                 : findColIdx(['pengembalian dana', 'refund', 'retur']),
                         adminFees: findColIdx(['total biaya', 'platform fee', 'biaya platform', 'admin fee'], ['ongkir', 'logistik', 'produk']),
-                        ads: findColIdx(['iklan gmv max', 'ads cost', 'iklan gmv', 'ads share', 'belanja iklan']),
+                        ads: findColIdx(['biaya iklan gmv max', 'ads cost', 'biaya iklan gmv']),
                         affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi']),
                         associatedOrderId: findColIdx(['id pesanan terkait', 'associated order id', 'id pesanan referensi', 'reference order id']),
                         
