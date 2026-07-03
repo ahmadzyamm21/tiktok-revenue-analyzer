@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let withdrawalsList = JSON.parse(localStorage.getItem('tiktok_withdrawals')) || [];
     let orderItemsDb = JSON.parse(localStorage.getItem('tiktok_order_items')) || [];
     let orderPayouts = JSON.parse(localStorage.getItem('tiktok_order_payouts')) || {};
+    let dailyGmvAdsDb = JSON.parse(localStorage.getItem('tiktok_daily_gmv_ads')) || {};
     let analysisMonth = localStorage.getItem('tiktok_analysis_month') || '2026-05';
 
     let revenueTrendChart = null;
@@ -254,12 +255,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 hppSkuDb = {};
                 orderItemsDb = [];
                 orderPayouts = {};
+                dailyGmvAdsDb = {};
                 
                 localStorage.removeItem('tiktok_revenue_logs');
                 localStorage.removeItem('tiktok_withdrawals');
                 localStorage.removeItem('tiktok_sku_hpp');
                 localStorage.removeItem('tiktok_order_items');
                 localStorage.removeItem('tiktok_order_payouts');
+                localStorage.removeItem('tiktok_daily_gmv_ads');
                 
                 renderHppTable();
                 renderDailyLogs();
@@ -366,6 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rebuiltLogs = Object.keys(dailyAgg).map(dateKey => {
             const agg = dailyAgg[dateKey];
+            const gmvAds = dailyGmvAdsDb[dateKey] || 0;
             return {
                 id: 'log_imp_' + dateKey.replace(/-/g, '') + '_' + Date.now(),
                 date: dateKey,
@@ -374,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 refunds: agg.refunds,
                 vouchers: agg.vouchers,
                 adminFees: agg.adminFees,
-                adsSpend: agg.adsSpend,
+                adsSpend: agg.adsSpend + gmvAds,
                 adjustments: agg.adjustments,
                 hpp: agg.hpp,
                 orderIds: agg.orderIds,
@@ -992,8 +996,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const donutBorderColor = isLight ? '#FFFFFF' : '#0A0D14';
 
             // Destroy previous instances
-            if (revenueTrendChart) revenueTrendChart.destroy();
-            if (channelDonutChart) channelDonutChart.destroy();
+            if (typeof revenueTrendChart !== 'undefined' && revenueTrendChart) revenueTrendChart.destroy();
+            if (typeof channelDonutChart !== 'undefined' && channelDonutChart) channelDonutChart.destroy();
 
             // Prepare chart data
             const filteredLogs = [...revenueLogs].filter(log => log.date.startsWith(analysisMonth));
@@ -1252,6 +1256,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 populatePrintShopInfo();
 
                 // Calculate KPI Totals
+                let totalGross = 0;
+                let totalRefunds = 0;
+                let totalVouchers = 0;
+                let totalOrders = 0;
+
                 const filteredLogs = [...revenueLogs].filter(log => log.date.startsWith(analysisMonth));
                 filteredLogs.forEach(log => {
                     totalGross += log.gross;
@@ -1342,6 +1351,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let tempParsedLogs = [];
     let tempParsedWithdrawals = [];
+    let tempParsedGmvAds = {};
 
     if (inputExcelFile) {
         inputExcelFile.addEventListener('change', (e) => {
@@ -1353,6 +1363,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tempParsedOrderPayouts = {};
             tempParsedLogs = [];
             tempParsedWithdrawals = [];
+            tempParsedGmvAds = {};
 
             const fileNames = files.map(f => f.name).join(', ');
             excelFileStatus.textContent = files.length > 1 ? `${files.length} file dipilih` : files[0].name;
@@ -1885,12 +1896,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                             if (totalGross > 0) {
                                                 aggDates.forEach(d => {
                                                     const proportion = (dailyAggregates[d].gross || 0) / totalGross;
-                                                    dailyAggregates[d].adsSpend += Math.round(filteredGmvTotal * proportion);
+                                                    const amt = Math.round(filteredGmvTotal * proportion);
+                                                    dailyAggregates[d].adsSpend += amt;
+                                                    tempParsedGmvAds[d] = (tempParsedGmvAds[d] || 0) + amt;
                                                 });
                                             } else {
                                                 const perDay = Math.round(filteredGmvTotal / aggDates.length);
                                                 aggDates.forEach(d => {
                                                     dailyAggregates[d].adsSpend += perDay;
+                                                    tempParsedGmvAds[d] = (tempParsedGmvAds[d] || 0) + perDay;
                                                 });
                                             }
                                         }
@@ -2022,6 +2036,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 orderPayouts = { ...orderPayouts, ...tempParsedOrderPayouts };
                 localStorage.setItem('tiktok_order_payouts', JSON.stringify(orderPayouts));
 
+                dailyGmvAdsDb = { ...dailyGmvAdsDb, ...tempParsedGmvAds };
+                localStorage.setItem('tiktok_daily_gmv_ads', JSON.stringify(dailyGmvAdsDb));
+
                 if (tempParsedOrders.length > 0) {
                     const existingKeys = new Set(orderItemsDb.map(item => item.orderId + '_' + (item.product || '') + '_' + (item.sku || '') + '_' + (item.variation || '')));
                     const newItems = tempParsedOrders.filter(item => !existingKeys.has(item.orderId + '_' + (item.product || '') + '_' + (item.sku || '') + '_' + (item.variation || '')));
@@ -2046,6 +2063,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 excelFileStatus.textContent = 'Belum ada file terpilih';
                 tempParsedLogs = [];
                 tempParsedWithdrawals = [];
+                tempParsedGmvAds = {};
 
                 showToast('Seluruh data transaksi Excel berhasil diimpor!', 'success');
             } catch (err) {
