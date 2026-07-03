@@ -367,6 +367,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Ensure all dates with GMV ads are present in dailyAgg
+        Object.keys(dailyGmvAdsDb).forEach(dateKey => {
+            if (dailyGmvAdsDb[dateKey] > 0) {
+                if (!dailyAgg[dateKey]) {
+                    dailyAgg[dateKey] = {
+                        gross: 0,
+                        orders: 0,
+                        refunds: 0,
+                        vouchers: 0,
+                        adminFees: 0,
+                        adsSpend: 0,
+                        adjustments: 0,
+                        hpp: 0,
+                        uniqueOrders: new Set(),
+                        orderIds: []
+                    };
+                }
+            }
+        });
+
         const rebuiltLogs = Object.keys(dailyAgg).map(dateKey => {
             const agg = dailyAgg[dateKey];
             const gmvAds = dailyGmvAdsDb[dateKey] || 0;
@@ -1868,47 +1888,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                     }
                                 }
 
-                                // Distribute GMV ads spend to daily aggregates (only for matching month)
+                                // Save GMV ads spend to tempParsedGmvAds on their actual transaction dates
                                 if (gmvAdsTotal > 0) {
-                                    const aggDates = Object.keys(dailyAggregates);
-                                    if (aggDates.length > 0) {
-                                        // Determine the primary analysis month (e.g., '2026-05')
-                                        const monthCounts = {};
-                                        aggDates.forEach(d => {
-                                            const ym = d.substring(0, 7); // '2026-05'
-                                            monthCounts[ym] = (monthCounts[ym] || 0) + 1;
-                                        });
-                                        const primaryMonth = Object.keys(monthCounts).sort((a, b) => monthCounts[b] - monthCounts[a])[0];
-                                        
-                                        // Only sum GMV entries that match the primary analysis month
-                                        let filteredGmvTotal = 0;
-                                        Object.keys(gmvAdsByDate).forEach(dateKey => {
-                                            if (dateKey.substring(0, 7) === primaryMonth) {
-                                                filteredGmvTotal += gmvAdsByDate[dateKey];
-                                            }
-                                        });
-                                        
-                                        console.log(`[Keuangan Parser] GMV Pay Deduction: Total=${gmvAdsTotal.toLocaleString()}, Filtered (${primaryMonth})=${filteredGmvTotal.toLocaleString()}`);
-                                        
-                                        if (filteredGmvTotal > 0) {
-                                            // Distribute proportionally based on gross revenue per day
-                                            const totalGross = aggDates.reduce((s, d) => s + (dailyAggregates[d].gross || 0), 0);
-                                            if (totalGross > 0) {
-                                                aggDates.forEach(d => {
-                                                    const proportion = (dailyAggregates[d].gross || 0) / totalGross;
-                                                    const amt = Math.round(filteredGmvTotal * proportion);
-                                                    dailyAggregates[d].adsSpend += amt;
-                                                    tempParsedGmvAds[d] = (tempParsedGmvAds[d] || 0) + amt;
-                                                });
-                                            } else {
-                                                const perDay = Math.round(filteredGmvTotal / aggDates.length);
-                                                aggDates.forEach(d => {
-                                                    dailyAggregates[d].adsSpend += perDay;
-                                                    tempParsedGmvAds[d] = (tempParsedGmvAds[d] || 0) + perDay;
-                                                });
-                                            }
-                                        }
-                                    }
+                                    Object.keys(gmvAdsByDate).forEach(dateVal => {
+                                        tempParsedGmvAds[dateVal] = (tempParsedGmvAds[dateVal] || 0) + gmvAdsByDate[dateVal];
+                                    });
                                 }
                             }
                         }
