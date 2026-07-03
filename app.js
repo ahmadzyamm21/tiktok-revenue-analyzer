@@ -1516,10 +1516,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             : findColIdx(['jumlah penyelesaian', 'total pendapatan', 'pendapatan', 'gross']),
                         settlement: findColIdx(['jumlah penyelesaian pembayaran', 'jumlah penyelesaian', 'payout amount', 'settlement amount']),
                         voucher: findColIdx(['diskon penjual', 'seller discount', 'diskon voucher yang ditanggung penjual'], ['subtotal', 'pengembalian']),
-                        refund: findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual']) !== -1
-                            ? findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual'])
-                            : findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) !== -1 
-                                ? findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) 
+                        refund: findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) !== -1 
+                            ? findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) 
+                            : findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual']) !== -1
+                                ? findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual'])
                                 : findColIdx(['pengembalian dana', 'refund', 'retur']),
                         adminFees: findColIdx(['total biaya', 'platform fee', 'biaya platform', 'admin fee'], ['ongkir', 'logistik', 'produk']),
                         ads: findColIdx(['iklan gmv max', 'ads cost', 'iklan gmv', 'ads share', 'belanja iklan']),
