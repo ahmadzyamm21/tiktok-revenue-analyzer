@@ -1638,14 +1638,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
-                        // We only process if it is a matching analysis month order
-                        const isTargetMonthOrder = (orderDateStr && orderDateStr.startsWith(analysisMonth)) || (orderInDb && orderInDb.date && orderInDb.date.startsWith(analysisMonth));
-                        if (!isTargetMonthOrder) {
-                            continue; // Skip orders outside selected month
-                        }
-
-                        // Determine the correct aggregation date (must be the order date in selected month)
-                        const aggDate = (orderDateStr && orderDateStr.startsWith(analysisMonth)) ? orderDateStr : (orderInDb ? orderInDb.date : null);
+                        // Determine the correct aggregation date (group by order created date if available, else payment/transaction order date)
+                        const aggDate = orderInDb ? orderInDb.date : orderDateStr;
                         if (!aggDate) continue;
 
                         if (!dailyAggregates[aggDate]) {
@@ -2630,7 +2624,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
-                        if (!dateStr || !dateStr.startsWith(analysisMonth)) continue; // Skip orders outside the selected month
+                        if (!dateStr) continue; // Skip orders with no date
 
                         tempParsedOrders.push({
                             orderId: orderIdVal,
