@@ -3797,6 +3797,189 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ------------------------------------------
+    // Product Calculator Logic
+    // ------------------------------------------
+    const calcPlatformTemplate = document.getElementById('calc-platform-template');
+    const calcHpp = document.getElementById('calc-hpp');
+    const calcPacking = document.getElementById('calc-packing');
+    const calcPrice = document.getElementById('calc-price');
+    const calcAdminPct = document.getElementById('calc-admin-pct');
+    const calcAdminFlat = document.getElementById('calc-admin-flat');
+    const calcOngkirPct = document.getElementById('calc-ongkir-pct');
+    const calcCashbackPct = document.getElementById('calc-cashback-pct');
+    const calcVoucher = document.getElementById('calc-voucher');
+    const calcAdsFee = document.getElementById('calc-ads-fee');
+
+    const calcNetProfit = document.getElementById('calc-net-profit');
+    const calcProfitStatus = document.getElementById('calc-profit-status');
+    const calcMarginPctVal = document.getElementById('calc-margin-pct-val');
+    const calcMarginStatus = document.getElementById('calc-margin-status');
+    const calcSuggestedPrice = document.getElementById('calc-suggested-price');
+
+    const breakdownPrice = document.getElementById('breakdown-price');
+    const breakdownAdminPct = document.getElementById('breakdown-admin-pct');
+    const breakdownAdminVal = document.getElementById('breakdown-admin-val');
+    const breakdownAdminFlat = document.getElementById('breakdown-admin-flat');
+    const breakdownOngkirPct = document.getElementById('breakdown-ongkir-pct');
+    const breakdownOngkirVal = document.getElementById('breakdown-ongkir-val');
+    const breakdownCashbackPct = document.getElementById('breakdown-cashback-pct');
+    const breakdownCashbackVal = document.getElementById('breakdown-cashback-val');
+    const breakdownVoucherVal = document.getElementById('breakdown-voucher-val');
+    const breakdownAdsVal = document.getElementById('breakdown-ads-val');
+    const breakdownNetPayout = document.getElementById('breakdown-net-payout');
+    const breakdownHpp = document.getElementById('breakdown-hpp');
+    const breakdownPacking = document.getElementById('breakdown-packing');
+    const breakdownNetProfit = document.getElementById('breakdown-net-profit');
+
+    const calcProfitIconBox = document.getElementById('calc-profit-icon-box');
+    const calcMarginIconBox = document.getElementById('calc-margin-icon-box');
+    const calcBreakdownNetProfitBox = document.getElementById('calc-breakdown-net-profit-box');
+
+    function updateProductCalculator() {
+        if (!calcHpp || !calcPrice) return;
+
+        const hpp = parseFloat(calcHpp.value) || 0;
+        const packing = parseFloat(calcPacking.value) || 0;
+        const price = parseFloat(calcPrice.value) || 0;
+        const adminPct = parseFloat(calcAdminPct.value) || 0;
+        const adminFlat = parseFloat(calcAdminFlat.value) || 0;
+        const ongkirPct = parseFloat(calcOngkirPct.value) || 0;
+        const cashbackPct = parseFloat(calcCashbackPct.value) || 0;
+        const voucher = parseFloat(calcVoucher.value) || 0;
+        const adsFee = parseFloat(calcAdsFee.value) || 0;
+
+        // Calculate values
+        const adminVal = price * (adminPct / 100);
+        const ongkirVal = price * (ongkirPct / 100);
+        const cashbackVal = price * (cashbackPct / 100);
+        
+        const totalFees = adminVal + adminFlat + ongkirVal + cashbackVal + voucher + adsFee;
+        const netPayout = price - totalFees;
+        const totalCost = hpp + packing;
+        const netProfit = netPayout - totalCost;
+        const marginPct = price > 0 ? (netProfit / price) * 100 : 0;
+
+        // Update UI
+        if (breakdownPrice) breakdownPrice.textContent = formatRupiah(price);
+        if (breakdownAdminPct) breakdownAdminPct.textContent = adminPct.toFixed(1);
+        if (breakdownAdminVal) breakdownAdminVal.textContent = formatRupiah(adminVal);
+        if (breakdownAdminFlat) breakdownAdminFlat.textContent = formatRupiah(adminFlat);
+        if (breakdownOngkirPct) breakdownOngkirPct.textContent = ongkirPct.toFixed(1);
+        if (breakdownOngkirVal) breakdownOngkirVal.textContent = formatRupiah(ongkirVal);
+        if (breakdownCashbackPct) breakdownCashbackPct.textContent = cashbackPct.toFixed(1);
+        if (breakdownCashbackVal) breakdownCashbackVal.textContent = formatRupiah(cashbackVal);
+        if (breakdownVoucherVal) breakdownVoucherVal.textContent = formatRupiah(voucher);
+        if (breakdownAdsVal) breakdownAdsVal.textContent = formatRupiah(adsFee);
+        if (breakdownNetPayout) breakdownNetPayout.textContent = formatRupiah(netPayout);
+        if (breakdownHpp) breakdownHpp.textContent = formatRupiah(hpp);
+        if (breakdownPacking) breakdownPacking.textContent = formatRupiah(packing);
+        if (breakdownNetProfit) breakdownNetProfit.textContent = formatRupiah(netProfit);
+
+        if (calcNetProfit) calcNetProfit.textContent = formatRupiah(netProfit);
+        if (calcMarginPctVal) calcMarginPctVal.textContent = marginPct.toFixed(1) + '%';
+
+        // Profit card state
+        if (calcProfitStatus && calcProfitIconBox) {
+            if (netProfit > 0) {
+                calcProfitStatus.textContent = 'Menguntungkan';
+                calcNetProfit.style.color = 'var(--accent-green)';
+                calcProfitIconBox.style.background = 'rgba(0, 255, 135, 0.1)';
+                calcProfitIconBox.style.color = 'var(--accent-green)';
+            } else if (netProfit === 0) {
+                calcProfitStatus.textContent = 'Balik Modal';
+                calcNetProfit.style.color = '#FFF';
+                calcProfitIconBox.style.background = 'rgba(255, 255, 255, 0.1)';
+                calcProfitIconBox.style.color = '#FFF';
+            } else {
+                calcProfitStatus.textContent = 'Rugi (Boncos)';
+                calcNetProfit.style.color = 'var(--accent-pink)';
+                calcProfitIconBox.style.background = 'rgba(254, 44, 85, 0.1)';
+                calcProfitIconBox.style.color = 'var(--accent-pink)';
+            }
+        }
+
+        // Margin card state
+        if (calcMarginStatus && calcMarginIconBox) {
+            if (marginPct >= 20) {
+                calcMarginStatus.textContent = 'Laba Sehat (> 20%)';
+                calcMarginPctVal.style.color = 'var(--accent-cyan)';
+                calcMarginIconBox.style.background = 'rgba(37, 244, 238, 0.1)';
+                calcMarginIconBox.style.color = 'var(--accent-cyan)';
+            } else if (marginPct > 0) {
+                calcMarginStatus.textContent = 'Laba Tipis (Tingkatkan harga)';
+                calcMarginPctVal.style.color = 'var(--accent-orange)';
+                calcMarginIconBox.style.background = 'rgba(255, 170, 0, 0.1)';
+                calcMarginIconBox.style.color = 'var(--accent-orange)';
+            } else {
+                calcMarginStatus.textContent = 'Margin Negatif';
+                calcMarginPctVal.style.color = 'var(--accent-pink)';
+                calcMarginIconBox.style.background = 'rgba(254, 44, 85, 0.1)';
+                calcMarginIconBox.style.color = 'var(--accent-pink)';
+            }
+        }
+
+        if (calcBreakdownNetProfitBox) {
+            if (netProfit >= 0) {
+                calcBreakdownNetProfitBox.style.color = 'var(--accent-green)';
+            } else {
+                calcBreakdownNetProfitBox.style.color = 'var(--accent-pink)';
+            }
+        }
+
+        // Calculate Recommended Price for 30% net margin
+        const targetMargin = 0.30;
+        const totalPct = (adminPct + ongkirPct + cashbackPct) / 100;
+        const totalFixed = adminFlat + voucher + adsFee + hpp + packing;
+        
+        let suggestedPrice = 0;
+        const denominator = 1 - totalPct - targetMargin;
+        if (denominator > 0) {
+            suggestedPrice = totalFixed / denominator;
+        }
+
+        if (calcSuggestedPrice) {
+            calcSuggestedPrice.textContent = suggestedPrice > 0 ? formatRupiah(suggestedPrice) : 'Tidak dapat dihitung (Potongan terlalu tinggi)';
+        }
+    }
+
+    if (calcPlatformTemplate) {
+        calcPlatformTemplate.addEventListener('change', () => {
+            const val = calcPlatformTemplate.value;
+            if (val === 'tiktok-std') {
+                if (calcAdminPct) calcAdminPct.value = '6.0';
+                if (calcAdminFlat) calcAdminFlat.value = '1000';
+                if (calcOngkirPct) calcOngkirPct.value = '3.0';
+                if (calcCashbackPct) calcCashbackPct.value = '0.0';
+            } else if (val === 'shopee-star') {
+                if (calcAdminPct) calcAdminPct.value = '6.5';
+                if (calcAdminFlat) calcAdminFlat.value = '1000';
+                if (calcOngkirPct) calcOngkirPct.value = '4.0';
+                if (calcCashbackPct) calcCashbackPct.value = '1.4';
+            } else if (val === 'shopee-nonstar') {
+                if (calcAdminPct) calcAdminPct.value = '5.0';
+                if (calcAdminFlat) calcAdminFlat.value = '1000';
+                if (calcOngkirPct) calcOngkirPct.value = '4.0';
+                if (calcCashbackPct) calcCashbackPct.value = '0.0';
+            }
+            updateProductCalculator();
+        });
+    }
+
+    // Add event listeners for instant updates
+    const inputsToWatch = [calcHpp, calcPacking, calcPrice, calcAdminPct, calcAdminFlat, calcOngkirPct, calcCashbackPct, calcVoucher, calcAdsFee];
+    inputsToWatch.forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => {
+                if (calcPlatformTemplate) calcPlatformTemplate.value = 'custom';
+                updateProductCalculator();
+            });
+        }
+    });
+
+    // Run once on load to initialize values
+    updateProductCalculator();
+
+    // ------------------------------------------
     // Initial calls
     // ------------------------------------------
     loadShopSettings();

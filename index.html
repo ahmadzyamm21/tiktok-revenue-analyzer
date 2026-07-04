@@ -52,6 +52,9 @@
                 <a href="#" class="menu-item" data-tab="tab-hpp-db">
                     <i class="fas fa-boxes"></i> Database HPP SKU
                 </a>
+                <a href="#" class="menu-item" data-tab="tab-calculator">
+                    <i class="fas fa-calculator"></i> Kalkulator Produk
+                </a>
                 <a href="#" class="menu-item" data-tab="tab-payouts">
                     <i class="fas fa-file-invoice-dollar"></i> Laporan Pencairan (Resi)
                 </a>
@@ -831,6 +834,190 @@
                                         <!-- Dynamic SKU rows -->
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4.5: KALKULATOR PRODUK & BIAYA MARKETPLACE -->
+            <section id="tab-calculator" class="tab-content">
+                <div class="simulator-layout">
+                    <!-- Left: Form inputs -->
+                    <div class="simulator-controls card" style="padding: 20px;">
+                        <h3 style="margin-top: 0; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-calculator text-cyan"></i> Simulasi Biaya & Laba Produk
+                        </h3>
+                        <p class="section-desc" style="margin-bottom: 20px;">Masukkan komponen harga modal dan persentase potongan biaya marketplace untuk melihat estimasi keuntungan bersih.</p>
+                        
+                        <form id="calc-product-form" class="sim-inputs" style="display: flex; flex-direction: column; gap: 15px;">
+                            <!-- Template Selection -->
+                            <div class="form-group">
+                                <label for="calc-platform-template">Template Marketplace</label>
+                                <select id="calc-platform-template" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none; cursor: pointer;">
+                                    <option value="custom">-- Kustom (Isi Sendiri) --</option>
+                                    <option value="tiktok-std">TikTok Shop (Admin 6% + Gratis Ongkir 3%)</option>
+                                    <option value="shopee-star">Shopee Star (Admin 6.5% + Gratis Ongkir Ekstra 4% + Cashback Ekstra 1.4%)</option>
+                                    <option value="shopee-nonstar">Shopee Non-Star (Admin 5% + Gratis Ongkir 4%)</option>
+                                </select>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <!-- HPP / Modal -->
+                                <div class="form-group">
+                                    <label for="calc-hpp">Harga Modal / HPP (Rp)</label>
+                                    <input type="number" id="calc-hpp" placeholder="40000" value="40000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                                <!-- Packing Cost -->
+                                <div class="form-group">
+                                    <label for="calc-packing">Biaya Packing & Operasional (Rp)</label>
+                                    <input type="number" id="calc-packing" placeholder="2500" value="2500" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                            </div>
+
+                            <!-- Target Selling Price -->
+                            <div class="form-group">
+                                <label for="calc-price">Harga Jual Rencana ke Customer (Rp)</label>
+                                <input type="number" id="calc-price" placeholder="75000" value="75000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                            </div>
+
+                            <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 5px 0;"></div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <!-- Biaya Admin % -->
+                                <div class="form-group">
+                                    <label for="calc-admin-pct">Biaya Admin Platform (%)</label>
+                                    <input type="number" id="calc-admin-pct" placeholder="6" value="6.0" step="0.1" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                                <!-- Flat fee -->
+                                <div class="form-group">
+                                    <label for="calc-admin-flat">Biaya Admin Flat per Order (Rp)</label>
+                                    <input type="number" id="calc-admin-flat" placeholder="1000" value="1000" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <!-- Program Gratis Ongkir % -->
+                                <div class="form-group">
+                                    <label for="calc-ongkir-pct">Biaya Program Gratis Ongkir (%)</label>
+                                    <input type="number" id="calc-ongkir-pct" placeholder="3" value="3.0" step="0.1" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                                <!-- Extra program / cashback % -->
+                                <div class="form-group">
+                                    <label for="calc-cashback-pct">Biaya Program Cashback (%)</label>
+                                    <input type="number" id="calc-cashback-pct" placeholder="0" value="0.0" step="0.1" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <!-- Voucher Toko -->
+                                <div class="form-group">
+                                    <label for="calc-voucher">Voucher Toko yang Dipasang (Rp)</label>
+                                    <input type="number" id="calc-voucher" placeholder="0" value="0" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                                <!-- Marketing Ads / unit -->
+                                <div class="form-group">
+                                    <label for="calc-ads-fee">Estimasi Budget Iklan per Unit (Rp)</label>
+                                    <input type="number" id="calc-ads-fee" placeholder="0" value="0" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right: Results -->
+                    <div class="simulator-results" style="display: flex; flex-direction: column; gap: 20px;">
+                        <!-- KPI Cards for Profit & Margin -->
+                        <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="kpi-card card">
+                                <div class="kpi-icon-container" style="background: rgba(0, 255, 135, 0.1); color: var(--accent-green);" id="calc-profit-icon-box">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <span class="kpi-label">Laba Bersih per Unit</span>
+                                    <span class="kpi-value" id="calc-net-profit" style="color: var(--accent-green);">Rp 0</span>
+                                    <span class="kpi-subtext" id="calc-profit-status">Menguntungkan</span>
+                                </div>
+                            </div>
+                            <div class="kpi-card card">
+                                <div class="kpi-icon-container" style="background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan);" id="calc-margin-icon-box">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <span class="kpi-label">Margin Keuntungan Bersih</span>
+                                    <span class="kpi-value" id="calc-margin-pct-val" style="color: var(--accent-cyan);">0.0%</span>
+                                    <span class="kpi-subtext" id="calc-margin-status">Sehat (&gt; 20%)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed breakdown -->
+                        <div class="card" style="flex: 1; padding: 20px;">
+                            <h3 style="margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-receipt text-cyan"></i> Rincian Aliran Dana & Potongan
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13.5px;">
+                                <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                    <span>Harga Jual ke Pembeli</span>
+                                    <span style="font-weight: 600;" id="breakdown-price">Rp 0</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
+                                    <span>- Potongan Admin Platform (<span id="breakdown-admin-pct">0</span>%)</span>
+                                    <span>- <span id="breakdown-admin-val">Rp 0</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
+                                    <span>- Potongan Admin Flat</span>
+                                    <span>- <span id="breakdown-admin-flat">Rp 0</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
+                                    <span>- Potongan Gratis Ongkir (<span id="breakdown-ongkir-pct">0</span>%)</span>
+                                    <span>- <span id="breakdown-ongkir-val">Rp 0</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
+                                    <span>- Potongan Cashback Ekstra (<span id="breakdown-cashback-pct">0</span>%)</span>
+                                    <span>- <span id="breakdown-cashback-val">Rp 0</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
+                                    <span>- Potongan Voucher Toko</span>
+                                    <span>- <span id="breakdown-voucher-val">Rp 0</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--accent-pink); padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                    <span>- Estimasi Budget Iklan per Unit</span>
+                                    <span>- <span id="breakdown-ads-val">Rp 0</span></span>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; font-weight: 600; padding: 6px 0; color: #FFF; background: rgba(255,255,255,0.02); border-radius: 4px; padding-left: 5px; padding-right: 5px;">
+                                    <span>Dana Cair Bersih dari Marketplace (Net Payout)</span>
+                                    <span id="breakdown-net-payout">Rp 0</span>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+                                    <span>- Harga Modal / HPP</span>
+                                    <span>- <span id="breakdown-hpp">Rp 0</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--text-muted); padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <span>- Biaya Packing & Operasional</span>
+                                    <span>- <span id="breakdown-packing">Rp 0</span></span>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 15px; color: var(--accent-green); padding-top: 8px;" id="calc-breakdown-net-profit-box">
+                                    <span>Estimasi Laba Bersih Akhir</span>
+                                    <span id="breakdown-net-profit">Rp 0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommendations card -->
+                        <div class="card" style="padding: 20px; background: rgba(37, 244, 238, 0.02); border: 1px solid rgba(37, 244, 238, 0.1);">
+                            <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 14.5px; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-lightbulb"></i> Rekomendasi Harga Jual Aman
+                            </h3>
+                            <div style="font-size: 12.5px; line-height: 1.5; color: var(--text-muted);">
+                                Untuk mencapai target margin keuntungan bersih **30% (Laba Sehat)**, Anda direkomendasikan menjual produk ini dengan harga:
+                                <div style="font-size: 18px; font-weight: 700; color: #FFF; margin: 8px 0; font-family: 'Outfit', sans-serif;" id="calc-suggested-price">
+                                    Rp 0
+                                </div>
+                                *Perhitungan di atas sudah memproyeksikan seluruh persentase potongan biaya admin, program, dan voucher yang Anda set di atas.*
                             </div>
                         </div>
                     </div>
