@@ -3356,7 +3356,27 @@ document.addEventListener('DOMContentLoaded', () => {
                                 (item.returnQty && item.returnQty > 0)) && !hasValidShipment;
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
-            const fullSettlementAmt = isSettled ? (payoutInfo ? (payoutInfo.originalAmount || payoutInfo.amount) : itemOriginalPrice) : 0;
+            
+            let fullSettlementAmt = 0;
+            if (isSettled) {
+                if (payoutInfo) {
+                    if (payoutInfo.originalAmount > 0) {
+                        fullSettlementAmt = payoutInfo.originalAmount;
+                    } else if (payoutInfo.amount > 0) {
+                        fullSettlementAmt = payoutInfo.amount;
+                    } else {
+                        // Banding Menang fallback: hitung estimasi dana bersih (Harga - Potongan biaya secara lokal)
+                        const localAdmin = (payoutInfo && payoutInfo.adminFees ? payoutInfo.adminFees : 0) / (orderIdCounts[item.orderId] || 1);
+                        const localVoucher = (payoutInfo && payoutInfo.voucher ? payoutInfo.voucher : 0) / (orderIdCounts[item.orderId] || 1);
+                        const localAds = (payoutInfo && payoutInfo.ads ? payoutInfo.ads : 0) / (orderIdCounts[item.orderId] || 1);
+                        const localAffiliate = (payoutInfo && payoutInfo.affiliate ? payoutInfo.affiliate : 0) / (orderIdCounts[item.orderId] || 1);
+                        const estimatedPayout = itemOriginalPrice - localAdmin - localVoucher - localAds - localAffiliate;
+                        fullSettlementAmt = estimatedPayout > 0 ? estimatedPayout : itemOriginalPrice;
+                    }
+                } else {
+                    fullSettlementAmt = itemOriginalPrice;
+                }
+            }
             const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
             
             let statusStr = 'Belum Cair';
