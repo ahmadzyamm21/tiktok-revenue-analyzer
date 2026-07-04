@@ -46,6 +46,9 @@
                 <a href="#" class="menu-item" data-tab="tab-bcg">
                     <i class="fas fa-th-large"></i> Analisis BCG Produk
                 </a>
+                <a href="#" class="menu-item" data-tab="tab-bestsellers">
+                    <i class="fas fa-crown"></i> Produk Terlaris
+                </a>
                 <a href="#" class="menu-item" data-tab="tab-hpp-db">
                     <i class="fas fa-boxes"></i> Database HPP SKU
                 </a>
@@ -642,6 +645,98 @@
                             <p class="section-desc" style="margin-bottom: 15px;">Daftar produk dengan kebocoran konversi (Cash Cows) dan produk mati (Dogs) beserta solusinya.</p>
                             <div id="bcg-list-cows-dogs" style="max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 5px;">
                                 <!-- Populated via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3.5: PRODUK TERLARIS -->
+            <section id="tab-bestsellers" class="tab-content">
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan);">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Omset Bestseller</span>
+                            <span class="kpi-value" id="best-total-gmv">Rp 0</span>
+                            <span class="kpi-subtext">Dari produk-produk terlaris</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(0, 255, 135, 0.1); color: var(--accent-green);">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Total Unit Terjual</span>
+                            <span class="kpi-value" id="best-total-qty">0 Pcs</span>
+                            <span class="kpi-subtext">Volume produk terlaris</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(255, 170, 0, 0.1); color: var(--accent-orange);">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Porsi Kontribusi Toko</span>
+                            <span class="kpi-value" id="best-total-share">0.0%</span>
+                            <span class="kpi-subtext">Share terhadap total omset</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card card">
+                        <div class="kpi-icon-container" style="background: rgba(254, 44, 85, 0.1); color: var(--accent-pink);">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <span class="kpi-label">Jumlah SKU Bestseller</span>
+                            <span class="kpi-value" id="best-sku-count">0 SKU</span>
+                            <span class="kpi-subtext">Produk dengan performa prima</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="simulator-layout" style="margin-top: 20px;">
+                    <!-- Table Card -->
+                    <div class="card" style="flex: 2; padding: 20px;">
+                        <h3 style="margin-top: 0; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-list-ol text-cyan"></i> Peringkat Penjualan Produk Terlaris
+                        </h3>
+                        <p class="section-desc" style="margin-bottom: 15px;">Daftar SKU terlaris diurutkan berdasarkan omset kontribusi terbesar.</p>
+                        <div class="table-responsive">
+                            <table class="premium-table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px; text-align: center;">No</th>
+                                        <th style="text-align: left;">Seller SKU / Nama Produk</th>
+                                        <th style="text-align: right; width: 80px;">Terjual</th>
+                                        <th style="text-align: right; width: 120px;">Omset (GMV)</th>
+                                        <th style="text-align: right; width: 80px;">Share (%)</th>
+                                        <th style="text-align: right; width: 80px;">Stok</th>
+                                        <th style="text-align: right; width: 100px;">Estimasi Sisa</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bestsellers-table-body">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-gray" style="padding: 30px;">
+                                            Silakan unggah berkas Kinerja Produk di menu <strong>Analisis BCG Produk</strong> atau berkas pesanan di menu utama untuk memuat data terlaris.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Channel Optimization Card -->
+                    <div class="card" style="flex: 1.2; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                        <h3 style="margin-top: 0; margin-bottom: 5px; color: var(--accent-orange); display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-rocket"></i> Panduan Saluran Penjualan Bestseller
+                        </h3>
+                        <p class="section-desc" style="margin-bottom: 5px;">Taktik optimalisasi traffic & konversi khusus untuk produk top seller Anda di TikTok Shop.</p>
+                        <div id="bestsellers-channel-strategies" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; max-height: 480px; padding-right: 5px;">
+                            <div class="text-center text-gray" style="padding: 20px;">
+                                Unggah berkas data produk terlebih dahulu untuk memuat rekomendasi saluran penjualan.
                             </div>
                         </div>
                     </div>

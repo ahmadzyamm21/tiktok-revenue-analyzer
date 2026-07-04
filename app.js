@@ -2249,6 +2249,280 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function renderBestsellers() {
+        const tableBody = document.getElementById('bestsellers-table-body');
+        const totalGmvEl = document.getElementById('best-total-gmv');
+        const totalQtyEl = document.getElementById('best-total-qty');
+        const totalShareEl = document.getElementById('best-total-share');
+        const skuCountEl = document.getElementById('best-sku-count');
+        const strategiesContainer = document.getElementById('bestsellers-channel-strategies');
+
+        if (!tableBody) return;
+
+        let sourceData = [];
+
+        // 1. Try to compile from bcgProductData
+        if (bcgProductData && bcgProductData.length > 0) {
+            bcgProductData.forEach(p => {
+                if (p.gmv > 0 || p.sold > 0) {
+                    sourceData.push({
+                        sku: p.sku || p.name.substring(0, 15).toUpperCase(), // Fallback SKU
+                        name: p.name,
+                        sold: p.sold || 0,
+                        gmv: p.gmv || 0,
+                        cvr: p.cvr || 0,
+                        ctr: p.ctr || 0,
+                        traffic: p.traffic || 0
+                    });
+                }
+            });
+        }
+
+        // 2. If empty, fallback to orderItemsDb
+        if (sourceData.length === 0 && orderItemsDb && orderItemsDb.length > 0) {
+            const skuMap = {};
+            
+            // Sum sales from orders
+            orderItemsDb.forEach(item => {
+                if (!item.sku) return;
+                const statusLower = (item.status || '').toLowerCase();
+                const isCancelled = statusLower.includes('batal') || statusLower.includes('cancel');
+                if (isCancelled) return;
+
+                if (!skuMap[item.sku]) {
+                    skuMap[item.sku] = { sku: item.sku, name: item.product || item.sku, sold: 0, gmv: 0 };
+                }
+                const qty = parseInt(item.qty) || 1;
+                skuMap[item.sku].sold += qty;
+                
+                // Estimate GMV
+                let gmv = 0;
+                if (item.subtotalBeforeDiscount) {
+                    gmv = item.subtotalBeforeDiscount;
+                } else if (item.originalPrice) {
+                    gmv = item.originalPrice * qty;
+                } else {
+                    const hppVal = hppSkuDb[item.sku] ? hppSkuDb[item.sku].hpp : 0;
+                    gmv = (hppVal || 50000) * 1.5 * qty; 
+                }
+                skuMap[item.sku].gmv += gmv;
+            });
+            sourceData = Object.values(skuMap);
+        }
+
+        if (sourceData.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-gray" style="padding: 30px;">
+                        Silakan unggah berkas Kinerja Produk di menu <strong>Analisis BCG Produk</strong> atau berkas pesanan di menu utama untuk memuat data terlaris.
+                    </td>
+                </tr>
+            `;
+            if (strategiesContainer) {
+                strategiesContainer.innerHTML = `
+                    <div class="text-center text-gray" style="padding: 20px;">
+                        Unggah berkas data produk terlebih dahulu untuk memuat rekomendasi saluran penjualan.
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        // Sort by GMV descending
+        sourceData.sort((a, b) => b.gmv - a.gmv);
+
+        // Sum overall total GMV from all orders / logs for share calculation
+        let overallShopGmv = sourceData.reduce((sum, p) => sum + p.gmv, 0);
+        
+        // Sum bestseller metrics (top 10 products)
+        const topBestsellers = sourceData.slice(0, 10);
+        const bestsellerGmvTotal = topBestsellers.reduce((sum, p) => sum + p.gmv, 0);
+        const bestsellerQtyTotal = topBestsellers.reduce((sum, p) => sum + p.sold, 0);
+        const bestsellerSharePct = overallShopGmv > 0 ? (bestsellerGmvTotal / overallShopGmv) * 100 : 0;
+
+        // Render KPIs
+        if (totalGmvEl) totalGmvEl.textContent = formatRupiah(bestsellerGmvTotal);
+        if (totalQtyEl) totalQtyEl.textContent = bestsellerQtyTotal.toLocaleString('id-ID') + ' Pcs';
+        if (totalShareEl) totalShareEl.textContent = bestsellerSharePct.toFixed(1) + '%';
+        if (skuCountEl) skuCountEl.textContent = topBestsellers.length + ' SKU';
+
+        // Calculate sales velocity map for restock forecast
+        const velocityMap = {};
+        if (orderItemsDb && orderItemsDb.length > 0) {
+            let maxDateTime = 0;
+            orderItemsDb.forEach(item => {
+                if (item.date) {
+                    const t = new Date(item.date).getTime();
+                    if (t > maxDateTime) maxDateTime = t;
+                }
+            });
+            if (maxDateTime > 0) {
+                const thirtyDaysAgo = maxDateTime - (30 * 24 * 60 * 60 * 1000);
+                orderItemsDb.forEach(item => {
+                    if (!item.sku || !item.date) return;
+                    const statusLower = (item.status || '').toLowerCase();
+                    const isCancelled = statusLower.includes('batal') || statusLower.includes('cancel');
+                    if (isCancelled) return;
+
+                    const t = new Date(item.date).getTime();
+                    if (t >= thirtyDaysAgo && t <= maxDateTime) {
+                        if (!velocityMap[item.sku]) {
+                            velocityMap[item.sku] = 0;
+                        }
+                        velocityMap[item.sku] += (parseInt(item.qty) || 1);
+                    }
+                });
+                for (const sku in velocityMap) {
+                    velocityMap[sku] = velocityMap[sku] / 30;
+                }
+            }
+        }
+
+        // Render Table Rows
+        tableBody.innerHTML = '';
+        topBestsellers.forEach((p, idx) => {
+            // Find corresponding SKU in HPP database for stock and name
+            let matchedSku = hppSkuDb[p.sku];
+            if (!matchedSku) {
+                // Try fuzzy lookup by name
+                matchedSku = Object.values(hppSkuDb).find(s => s.product === p.name);
+            }
+
+            const stock = matchedSku ? matchedSku.stock : undefined;
+            const velocity = (matchedSku && velocityMap[matchedSku.sku]) ? velocityMap[matchedSku.sku] : (velocityMap[p.sku] || 0);
+
+            let daysRemaining = Infinity;
+            if (stock !== undefined && velocity > 0) {
+                daysRemaining = stock / velocity;
+            }
+
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid var(--border-color)';
+
+            // No
+            const tdNo = document.createElement('td');
+            tdNo.textContent = idx + 1;
+            tdNo.style.textAlign = 'center';
+            tdNo.style.fontWeight = 'bold';
+            tdNo.style.color = idx === 0 ? 'var(--accent-orange)' : (idx === 1 ? 'var(--accent-cyan)' : 'var(--text-muted)');
+            tr.appendChild(tdNo);
+
+            // Product Details
+            const tdDetails = document.createElement('td');
+            const shortSku = matchedSku ? matchedSku.sku : p.sku;
+            tdDetails.innerHTML = `
+                <div style="font-weight: 600; color: #FFF; line-height: 1.3;">${p.name}</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px; font-family: monospace;">SKU: ${shortSku}</div>
+            `;
+            tdDetails.style.textAlign = 'left';
+            tdDetails.style.padding = '10px 8px';
+            tr.appendChild(tdDetails);
+
+            // Sold
+            const tdSold = document.createElement('td');
+            tdSold.textContent = p.sold.toLocaleString('id-ID');
+            tdSold.style.textAlign = 'right';
+            tdSold.style.fontWeight = '500';
+            tr.appendChild(tdSold);
+
+            // GMV
+            const tdGmv = document.createElement('td');
+            tdGmv.textContent = formatRupiah(p.gmv);
+            tdGmv.style.textAlign = 'right';
+            tdGmv.style.fontWeight = '600';
+            tdGmv.style.color = 'var(--accent-green)';
+            tr.appendChild(tdGmv);
+
+            // Share %
+            const tdShare = document.createElement('td');
+            const share = overallShopGmv > 0 ? (p.gmv / overallShopGmv) * 100 : 0;
+            tdShare.textContent = share.toFixed(1) + '%';
+            tdShare.style.textAlign = 'right';
+            tdShare.style.color = 'var(--text-muted)';
+            tr.appendChild(tdShare);
+
+            // Stock
+            const tdStock = document.createElement('td');
+            tdStock.textContent = stock !== undefined ? stock.toLocaleString('id-ID') : '-';
+            tdStock.style.textAlign = 'right';
+            tdStock.style.fontWeight = '600';
+            if (stock === 0) {
+                tdStock.style.color = 'var(--accent-pink)';
+            }
+            tr.appendChild(tdStock);
+
+            // Days remaining
+            const tdDays = document.createElement('td');
+            if (stock === undefined) {
+                tdDays.innerHTML = '<span style="color: var(--text-muted);">-</span>';
+            } else if (stock === 0) {
+                tdDays.innerHTML = '<span class="status-pill danger" style="padding: 2px 6px; border-radius: 4px; font-size:10px; background: rgba(254, 44, 85, 0.1); color: var(--accent-pink);">Habis</span>';
+            } else if (daysRemaining === Infinity) {
+                tdDays.innerHTML = '<span style="color: var(--accent-green);">Aman (∞)</span>';
+            } else if (daysRemaining <= 3) {
+                tdDays.innerHTML = `<span class="status-pill danger" style="padding: 2px 6px; border-radius: 4px; font-size:10px; background: rgba(254, 44, 85, 0.1); color: var(--accent-pink); font-weight:600;">${daysRemaining.toFixed(1)} Hari</span>`;
+            } else if (daysRemaining <= 7) {
+                tdDays.innerHTML = `<span class="status-pill warning" style="padding: 2px 6px; border-radius: 4px; font-size:10px; background: rgba(255, 170, 0, 0.1); color: var(--accent-orange); font-weight:600;">${daysRemaining.toFixed(1)} Hari</span>`;
+            } else {
+                tdDays.innerHTML = `<span style="color: var(--accent-green); font-weight:600;">${daysRemaining.toFixed(0)} Hari</span>`;
+            }
+            tdDays.style.textAlign = 'right';
+            tr.appendChild(tdDays);
+
+            tableBody.appendChild(tr);
+        });
+
+        // Render Channel Strategies for the No. 1 Bestseller
+        if (strategiesContainer && topBestsellers.length > 0) {
+            const topProd = topBestsellers[0];
+            strategiesContainer.innerHTML = `
+                <!-- Affiliate -->
+                <div style="background: rgba(37, 244, 238, 0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 13px;">
+                    <div style="font-weight: 700; color: var(--accent-cyan); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; text-transform: uppercase; font-size: 11.5px;">
+                        <i class="fas fa-users-cog"></i> 1. Saluran Affiliate
+                    </div>
+                    <div style="color: #FFF; font-weight: 600; line-height: 1.3; margin-bottom: 4px;">Pasang Komisi Terbuka 10-12%</div>
+                    <div style="color: var(--text-muted); font-size: 11.5px; line-height: 1.4; text-align: left;">
+                        Produk <strong>${topProd.name}</strong> terbukti sangat diminati. Berikan komisi menarik bagi kreator afiliasi, dan kirimkan sampel gratis ke kreator berkinerja tinggi di kategori parenting/kids fashion untuk melipatgandakan penjualan tanpa modal iklan.
+                    </div>
+                </div>
+
+                <!-- Ads -->
+                <div style="background: rgba(254, 44, 85, 0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 13px;">
+                    <div style="font-weight: 700; color: var(--accent-pink); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; text-transform: uppercase; font-size: 11.5px;">
+                        <i class="fas fa-ad"></i> 2. Saluran TikTok Ads
+                    </div>
+                    <div style="color: #FFF; font-weight: 600; line-height: 1.3; margin-bottom: 4px;">Shopping Ads Kata Kunci Spesifik</div>
+                    <div style="color: var(--text-muted); font-size: 11.5px; line-height: 1.4; text-align: left;">
+                        Jalankan Product Shopping Ads dengan menargetkan kata kunci pencarian populer (seperti <em>"helm anak sni"</em>, <em>"helm anak karakter"</em>). Konversi produk ini sudah matang, sehingga risiko boncos sangat rendah.
+                    </div>
+                </div>
+
+                <!-- Live -->
+                <div style="background: rgba(0, 255, 135, 0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 13px;">
+                    <div style="font-weight: 700; color: var(--accent-green); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; text-transform: uppercase; font-size: 11.5px;">
+                        <i class="fas fa-video"></i> 3. Saluran Live Shopping
+                    </div>
+                    <div style="color: #FFF; font-weight: 600; line-height: 1.3; margin-bottom: 4px;">Jadikan Produk Hook Utama</div>
+                    <div style="color: var(--text-muted); font-size: 11.5px; line-height: 1.4; text-align: left;">
+                        Sematkan produk ini di keranjang kuning nomor 1 selama live streaming. Lakukan demo keunggulan produk (misal: mengetuk helm untuk demo kekuatan SNI) secara berkala dan berikan voucher live-eksklusif.
+                    </div>
+                </div>
+
+                <!-- Video -->
+                <div style="background: rgba(255, 170, 0, 0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 13px;">
+                    <div style="font-weight: 700; color: var(--accent-orange); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; text-transform: uppercase; font-size: 11.5px;">
+                        <i class="fas fa-play"></i> 4. Konten Video Organik
+                    </div>
+                    <div style="color: #FFF; font-weight: 600; line-height: 1.3; margin-bottom: 4px;">Video Komedi / Edukasi Safety</div>
+                    <div style="color: var(--text-muted); font-size: 11.5px; line-height: 1.4; text-align: left;">
+                        Unggah video singkat edukasi keselamatan anak berkendara bersama orang tua, lalu tautkan keranjang kuning ke produk terlaris Anda ini untuk mendatangkan traffic organik secara gratis.
+                    </div>
+                </div>
+            `;
+        }
+    }
+
     function renderHppTable() {
         if (!hppTableBody) return;
         hppTableBody.innerHTML = '';
@@ -2350,6 +2624,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (typeof renderStockAlerts === 'function') renderStockAlerts();
+        if (typeof renderBestsellers === 'function') renderBestsellers();
     }
 
     if (hppSkuForm) {
@@ -3412,6 +3687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (bcgListCowsDogs) bcgListCowsDogs.innerHTML = cowsDogsHtml;
+        if (typeof renderBestsellers === 'function') renderBestsellers();
     }
 
     if (inputBcgFile) {
