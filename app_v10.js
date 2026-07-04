@@ -3870,11 +3870,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!calcTabsDb || calcTabsDb.length === 0) {
             calcTabsDb = [
                 {
-                    id: 'tab-' + Date.now(),
-                    name: 'Produk Utama',
+                    id: 'tab-1',
+                    name: '1. gtzone anak',
                     hpp: 40000,
                     price: 75000,
                     voucher: 5000,
+                    adminPct: 9.25,
+                    dynamicCommissionPct: 7.50,
+                    growthXtraPct: 3.50,
+                    sapPct: 9.20,
+                    affiliatePct: 5.50,
+                    serviceFee: 1250,
+                    logisticFee: 3000
+                },
+                {
+                    id: 'tab-2',
+                    name: '2. jm kop',
+                    hpp: 45000,
+                    price: 80000,
+                    voucher: 4000,
+                    adminPct: 9.25,
+                    dynamicCommissionPct: 7.50,
+                    growthXtraPct: 3.50,
+                    sapPct: 9.20,
+                    affiliatePct: 5.50,
+                    serviceFee: 1250,
+                    logisticFee: 3000
+                },
+                {
+                    id: 'tab-3',
+                    name: '3. bclp',
+                    hpp: 50000,
+                    price: 90000,
+                    voucher: 6000,
                     adminPct: 9.25,
                     dynamicCommissionPct: 7.50,
                     growthXtraPct: 3.50,

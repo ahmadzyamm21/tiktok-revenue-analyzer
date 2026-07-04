@@ -844,21 +844,13 @@
             <section id="tab-calculator" class="tab-content">
                 <div class="simulator-layout">
                     <!-- Left: Form inputs -->
-                    <div class="simulator-controls card" style="padding: 20px;">
+                    <div class="simulator-controls card" style="padding: 20px; display: flex; flex-direction: column;">
                         <h3 style="margin-top: 0; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;">
                             <i class="fas fa-calculator text-cyan"></i> Simulasi Biaya & Laba Produk
                         </h3>
                         <p class="section-desc" style="margin-bottom: 20px;">Masukkan komponen harga modal dan persentase potongan biaya marketplace untuk melihat estimasi keuntungan bersih.</p>
                         
-                        <!-- Product Tabs Container -->
-                        <div id="calc-tabs-container" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center;">
-                            <!-- Dynamic tabs will be inserted here -->
-                            <button type="button" id="btn-add-calc-tab" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px dashed rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s;">
-                                <i class="fas fa-plus"></i> Tambah Produk
-                            </button>
-                        </div>
-                        
-                        <form id="calc-product-form" class="sim-inputs" style="display: flex; flex-direction: column; gap: 15px;">
+                        <form id="calc-product-form" class="sim-inputs" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
 
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -927,6 +919,15 @@
                                 </div>
                             </div>
                         </form>
+
+                        <!-- Product Tabs Container at the bottom -->
+                        <div style="height: 1px; background: rgba(255,255,255,0.05); margin-bottom: 15px;"></div>
+                        <div id="calc-tabs-container" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                            <!-- Dynamic tabs will be inserted here -->
+                            <button type="button" id="btn-add-calc-tab" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px dashed rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s;">
+                                <i class="fas fa-plus"></i> Tambah Produk
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Right: Results -->
