@@ -1783,6 +1783,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 amount: 0,
                                 originalAmount: 0,
                                 isAppealWon: false,
+                                associatedOrderId: '',
                                 date: aggDate,
                                 voucher: 0,
                                 refund: 0,
@@ -1828,6 +1829,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                                typeVal.includes('appeal');
                         if (isAppealWonRow) {
                             tempParsedOrderPayouts[orderId].isAppealWon = true;
+                        }
+                        if (assocId) {
+                            tempParsedOrderPayouts[orderId].associatedOrderId = (row[colMap.orderId] || '').toString().trim();
                         }
                         tempParsedOrderPayouts[orderId].voucher += voucherVal;
                         tempParsedOrderPayouts[orderId].refund += refundVal;
@@ -3114,7 +3118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const settlementVal = parseFloat(row[colMap.settlement]) || 0;
                             if (settlementVal > 0) {
                                 if (!tempParsedOrderPayouts[orderIdVal]) {
-                                    tempParsedOrderPayouts[orderIdVal] = { amount: 0, originalAmount: 0, date: dateStr };
+                                    tempParsedOrderPayouts[orderIdVal] = { amount: 0, originalAmount: 0, associatedOrderId: '', date: dateStr };
                                 }
                                 tempParsedOrderPayouts[orderIdVal].amount += settlementVal;
                                 tempParsedOrderPayouts[orderIdVal].originalAmount += settlementVal;
@@ -3195,7 +3199,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let csvContent = "\uFEFF"; // UTF-8 BOM for Excel compatibility
-        csvContent += "No,Tanggal Pemesanan,No. Resi (Tracking ID),ID Pesanan,Nama Produk,SKU,Variasi,Qty,Status,Dana Cair,HPP,Laba Bersih\n";
+        csvContent += "No,Tanggal Pemesanan,No. Resi (Tracking ID),ID Pesanan,ID Terkait,Nama Produk,SKU,Variasi,Qty,Status,Dana Cair,HPP,Laba Bersih\n";
+
+        let returnResolutions = {};
+        try {
+            returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
+        } catch (e) {
+            returnResolutions = {};
+        }
 
         const orderIdCounts = {};
         orderItemsDb.forEach(item => {
@@ -3206,7 +3217,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const payoutInfo = orderPayouts[item.orderId];
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
-            const isSettled = payoutInfo && payoutInfo.amount > 0;
+            
+            const resolution = returnResolutions[item.orderId] || (payoutInfo && payoutInfo.isAppealWon ? 'menang' : 'pending');
+            const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
+            
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
@@ -3224,23 +3238,53 @@ document.addEventListener('DOMContentLoaded', () => {
                                 (payoutInfo && payoutInfo.isReturned) ||
                                 (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                 (item.returnQty && item.returnQty > 0)) && !hasValidShipment;
-            const fullSettlementAmt = isSettled ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
+            
+            const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
+            
+            let fullSettlementAmt = 0;
+            if (isSettled) {
+                if (payoutInfo) {
+                    if (payoutInfo.originalAmount > 0) {
+                        fullSettlementAmt = payoutInfo.originalAmount;
+                    } else if (payoutInfo.amount > 0) {
+                        fullSettlementAmt = payoutInfo.amount;
+                    } else {
+                        const localAdmin = (payoutInfo.adminFees ? payoutInfo.adminFees : 0) / (orderIdCounts[item.orderId] || 1);
+                        const localVoucher = (payoutInfo.voucher ? payoutInfo.voucher : 0) / (orderIdCounts[item.orderId] || 1);
+                        const localAds = (payoutInfo.ads ? payoutInfo.ads : 0) / (orderIdCounts[item.orderId] || 1);
+                        const localAffiliate = (payoutInfo.affiliate ? payoutInfo.affiliate : 0) / (orderIdCounts[item.orderId] || 1);
+                        const estimatedPayout = itemOriginalPrice - localAdmin - localVoucher - localAds - localAffiliate;
+                        fullSettlementAmt = estimatedPayout > 0 ? estimatedPayout : itemOriginalPrice;
+                    }
+                } else {
+                    fullSettlementAmt = itemOriginalPrice;
+                }
+            }
             const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
 
-            const statusStr = isSettled ? 'Sudah Cair' : 
-                               (isReturnedOnly ? 'Retur' : 
-                               (isCancelled ? 'Dibatalkan' : 'Belum Cair'));
+            let statusStr = 'Belum Cair';
+            if (isSettled) {
+                statusStr = resolution === 'menang' ? 'Banding Menang' : 'Sudah Cair';
+            } else if (isReturnedOnly) {
+                if (resolution === 'kembali') statusStr = 'Barang Kembali';
+                else if (resolution === 'rugi') statusStr = 'Rugi HPP';
+                else statusStr = 'Retur (Pending)';
+            } else if (isCancelled) {
+                statusStr = 'Dibatalkan';
+            }
 
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-            const totalHpp = (isCancelled || isReturnedOnly) ? 0 : (item.qty * hppVal);
-            const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
+            const totalHpp = (isCancelled || (isReturnedOnly && resolution !== 'rugi')) ? 0 : (item.qty * hppVal);
+            const netProfit = isSettled ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -(item.qty * hppVal) : 0);
 
+            const assocIdStr = payoutInfo && payoutInfo.associatedOrderId ? payoutInfo.associatedOrderId : '';
             const row = [
                 idx + 1,
                 item.date || '',
                 `"${(item.trackingId || '').replace(/"/g, '""')}"`,
                 `"${(item.orderId || '').replace(/"/g, '""')}"`,
+                `"${assocIdStr.replace(/"/g, '""')}"`,
                 `"${(item.product || '').replace(/"/g, '""')}"`,
                 `"${(item.sku || '').replace(/"/g, '""')}"`,
                 `"${(item.variation || '').replace(/"/g, '""')}"`,
@@ -3516,6 +3560,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="padding: 12px 8px;">${item.date || '-'}</td>
                     <td style="padding: 12px 8px;"><span class="text-cyan font-mono" style="font-size: 11px;">${item.trackingId || '-'}</span></td>
                     <td style="padding: 12px 8px;"><span class="text-muted font-mono" style="font-size: 11px;">${item.orderId}</span></td>
+                    <td style="padding: 12px 8px;"><span class="text-muted font-mono" style="font-size: 11px;">${(payoutInfo && payoutInfo.associatedOrderId) ? payoutInfo.associatedOrderId : '-'}</span></td>
                     <td style="padding: 12px 8px;">
                         <div style="font-weight: 500; font-size: 13px; color: #FFF; text-align: left;">${item.product}</div>
                         <div style="font-size: 11px; color: var(--text-muted); text-align: left;">${item.sku} | ${item.variation || '-'}</div>
@@ -3532,7 +3577,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                 </tr>
                 <tr id="detail-row-${idx}" class="detail-row" style="display: none; background: rgba(255, 255, 255, 0.015);">
-                    <td colspan="11" style="padding: 15px 20px;">
+                    <td colspan="12" style="padding: 15px 20px;">
                         <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #FFF; display: flex; align-items: center; gap: 6px; text-align: left;">
                             <i class="fas fa-file-invoice-dollar text-green"></i> Rincian Pendapatan & Potongan Biaya
                         </h4>
@@ -3594,7 +3639,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rowsHtml.length === 0) {
             payoutsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="11" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                    <td colspan="12" style="text-align: center; padding: 30px; color: var(--text-muted);">
                         Tidak ada transaksi yang cocok dengan pencarian / filter Anda.
                     </td>
                 </tr>
