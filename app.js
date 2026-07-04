@@ -3427,7 +3427,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemAffiliate = (payoutInfo && payoutInfo.affiliate ? payoutInfo.affiliate : 0) / (orderIdCounts[item.orderId] || 1);
             const itemRefund = (payoutInfo && payoutInfo.refund ? payoutInfo.refund : 0) / (orderIdCounts[item.orderId] || 1);
 
-            const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             const itemBasePriceVal = (payoutInfo && payoutInfo.subtotalSetelahDiskonPenjual ? payoutInfo.subtotalSetelahDiskonPenjual : 0) / (orderIdCounts[item.orderId] || 1);
             const itemBasePrice = itemBasePriceVal > 0 ? itemBasePriceVal : itemOriginalPrice;
             
