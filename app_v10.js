@@ -3797,16 +3797,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ------------------------------------------
+    // ------------------------------------------
     // Product Calculator Logic
     // ------------------------------------------
     const calcHpp = document.getElementById('calc-hpp');
     const calcPrice = document.getElementById('calc-price');
-    const calcAdminPct = document.getElementById('calc-admin-pct');
-    const calcAdminFlat = document.getElementById('calc-admin-flat');
-    const calcOngkirPct = document.getElementById('calc-ongkir-pct');
-    const calcCashbackPct = document.getElementById('calc-cashback-pct');
     const calcVoucher = document.getElementById('calc-voucher');
-    const calcAdsFee = document.getElementById('calc-ads-fee');
+
+    const calcAdminPct = document.getElementById('calc-admin-pct');
+    const calcDynamicCommissionPct = document.getElementById('calc-dynamic-commission-pct');
+    const calcGrowthXtraPct = document.getElementById('calc-growth-xtra-pct');
+    const calcSapPct = document.getElementById('calc-sap-pct');
+    const calcAffiliatePct = document.getElementById('calc-affiliate-pct');
+
+    const calcServiceFee = document.getElementById('calc-service-fee');
+    const calcLogisticFee = document.getElementById('calc-logistic-fee');
 
     const calcNetProfit = document.getElementById('calc-net-profit');
     const calcProfitStatus = document.getElementById('calc-profit-status');
@@ -3815,15 +3820,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const calcSuggestedPrice = document.getElementById('calc-suggested-price');
 
     const breakdownPrice = document.getElementById('breakdown-price');
+    const breakdownVoucherVal = document.getElementById('breakdown-voucher-val');
+    const breakdownBuyerPrice = document.getElementById('breakdown-buyer-price');
+
     const breakdownAdminPct = document.getElementById('breakdown-admin-pct');
     const breakdownAdminVal = document.getElementById('breakdown-admin-val');
-    const breakdownAdminFlat = document.getElementById('breakdown-admin-flat');
-    const breakdownOngkirPct = document.getElementById('breakdown-ongkir-pct');
-    const breakdownOngkirVal = document.getElementById('breakdown-ongkir-val');
-    const breakdownCashbackPct = document.getElementById('breakdown-cashback-pct');
-    const breakdownCashbackVal = document.getElementById('breakdown-cashback-val');
-    const breakdownVoucherVal = document.getElementById('breakdown-voucher-val');
-    const breakdownAdsVal = document.getElementById('breakdown-ads-val');
+    const breakdownCommissionPct = document.getElementById('breakdown-commission-pct');
+    const breakdownCommissionVal = document.getElementById('breakdown-commission-val');
+    const breakdownGrowthPct = document.getElementById('breakdown-growth-pct');
+    const breakdownGrowthVal = document.getElementById('breakdown-growth-val');
+    const breakdownSapPct = document.getElementById('breakdown-sap-pct');
+    const breakdownSapVal = document.getElementById('breakdown-sap-val');
+    const breakdownAffiliatePct = document.getElementById('breakdown-affiliate-pct');
+    const breakdownAffiliateVal = document.getElementById('breakdown-affiliate-val');
+
+    const breakdownServiceVal = document.getElementById('breakdown-service-val');
+    const breakdownLogisticVal = document.getElementById('breakdown-logistic-val');
+
     const breakdownNetPayout = document.getElementById('breakdown-net-payout');
     const breakdownHpp = document.getElementById('breakdown-hpp');
     const breakdownNetProfit = document.getElementById('breakdown-net-profit');
@@ -3837,35 +3850,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hpp = parseFloat(calcHpp.value) || 0;
         const price = parseFloat(calcPrice.value) || 0;
-        const adminPct = parseFloat(calcAdminPct.value) || 0;
-        const adminFlat = parseFloat(calcAdminFlat.value) || 0;
-        const ongkirPct = parseFloat(calcOngkirPct.value) || 0;
-        const cashbackPct = parseFloat(calcCashbackPct.value) || 0;
         const voucher = parseFloat(calcVoucher.value) || 0;
-        const adsFee = parseFloat(calcAdsFee.value) || 0;
 
-        // Calculate values
-        const adminVal = price * (adminPct / 100);
-        const ongkirVal = price * (ongkirPct / 100);
-        const cashbackVal = price * (cashbackPct / 100);
-        
-        const totalFees = adminVal + adminFlat + ongkirVal + cashbackVal + voucher + adsFee;
-        const netPayout = price - totalFees;
+        const adminPct = parseFloat(calcAdminPct.value) || 0;
+        const dynamicCommissionPct = parseFloat(calcDynamicCommissionPct.value) || 0;
+        const growthXtraPct = parseFloat(calcGrowthXtraPct.value) || 0;
+        const sapPct = parseFloat(calcSapPct.value) || 0;
+        const affiliatePct = parseFloat(calcAffiliatePct.value) || 0;
+
+        const serviceFee = parseFloat(calcServiceFee.value) || 0;
+        const logisticFee = parseFloat(calcLogisticFee.value) || 0;
+
+        // Calculate values according to the formula:
+        // Harga Beli = Harga Jual - Voucher
+        const buyerPrice = price - voucher;
+
+        // Percentage fees are calculated relative to Harga Beli (buyerPrice)
+        const adminVal = buyerPrice * (adminPct / 100);
+        const dynamicCommissionVal = buyerPrice * (dynamicCommissionPct / 100);
+        const growthXtraVal = buyerPrice * (growthXtraPct / 100);
+        const sapVal = buyerPrice * (sapPct / 100);
+        const affiliateVal = buyerPrice * (affiliatePct / 100);
+
+        // Sum fees
+        const totalFees = adminVal + dynamicCommissionVal + growthXtraVal + sapVal + affiliateVal + serviceFee + logisticFee;
+        const netPayout = buyerPrice - totalFees;
         const totalCost = hpp;
         const netProfit = netPayout - totalCost;
         const marginPct = price > 0 ? (netProfit / price) * 100 : 0;
 
         // Update UI
         if (breakdownPrice) breakdownPrice.textContent = formatRupiah(price);
-        if (breakdownAdminPct) breakdownAdminPct.textContent = adminPct.toFixed(1);
-        if (breakdownAdminVal) breakdownAdminVal.textContent = formatRupiah(adminVal);
-        if (breakdownAdminFlat) breakdownAdminFlat.textContent = formatRupiah(adminFlat);
-        if (breakdownOngkirPct) breakdownOngkirPct.textContent = ongkirPct.toFixed(1);
-        if (breakdownOngkirVal) breakdownOngkirVal.textContent = formatRupiah(ongkirVal);
-        if (breakdownCashbackPct) breakdownCashbackPct.textContent = cashbackPct.toFixed(1);
-        if (breakdownCashbackVal) breakdownCashbackVal.textContent = formatRupiah(cashbackVal);
         if (breakdownVoucherVal) breakdownVoucherVal.textContent = formatRupiah(voucher);
-        if (breakdownAdsVal) breakdownAdsVal.textContent = formatRupiah(adsFee);
+        if (breakdownBuyerPrice) breakdownBuyerPrice.textContent = formatRupiah(buyerPrice);
+
+        if (breakdownAdminPct) breakdownAdminPct.textContent = adminPct.toFixed(2);
+        if (breakdownAdminVal) breakdownAdminVal.textContent = formatRupiah(adminVal);
+        if (breakdownCommissionPct) breakdownCommissionPct.textContent = dynamicCommissionPct.toFixed(2);
+        if (breakdownCommissionVal) breakdownCommissionVal.textContent = formatRupiah(dynamicCommissionVal);
+        if (breakdownGrowthPct) breakdownGrowthPct.textContent = growthXtraPct.toFixed(2);
+        if (breakdownGrowthVal) breakdownGrowthVal.textContent = formatRupiah(growthXtraVal);
+        if (breakdownSapPct) breakdownSapPct.textContent = sapPct.toFixed(2);
+        if (breakdownSapVal) breakdownSapVal.textContent = formatRupiah(sapVal);
+        if (breakdownAffiliatePct) breakdownAffiliatePct.textContent = affiliatePct.toFixed(2);
+        if (breakdownAffiliateVal) breakdownAffiliateVal.textContent = formatRupiah(affiliateVal);
+
+        if (breakdownServiceVal) breakdownServiceVal.textContent = formatRupiah(serviceFee);
+        if (breakdownLogisticVal) breakdownLogisticVal.textContent = formatRupiah(logisticFee);
+
         if (breakdownNetPayout) breakdownNetPayout.textContent = formatRupiah(netPayout);
         if (breakdownHpp) breakdownHpp.textContent = formatRupiah(hpp);
         if (breakdownNetProfit) breakdownNetProfit.textContent = formatRupiah(netProfit);
@@ -3921,15 +3953,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Calculate Recommended Price for 30% net margin
+        // Calculate Recommended Price for 30% Net Margin on Harga Beli
+        // Laba = HB * (1 - TotalPct) - Fixed - HPP
+        // HB = (Fixed + HPP) / (0.70 - TotalPct)
+        // Rec Harga Jual = HB + Voucher
         const targetMargin = 0.30;
-        const totalPct = (adminPct + ongkirPct + cashbackPct) / 100;
-        const totalFixed = adminFlat + voucher + adsFee + hpp;
+        const totalPct = (adminPct + dynamicCommissionPct + growthXtraPct + sapPct + affiliatePct) / 100;
+        const totalFixed = serviceFee + logisticFee + hpp;
         
         let suggestedPrice = 0;
         const denominator = 1 - totalPct - targetMargin;
         if (denominator > 0) {
-            suggestedPrice = totalFixed / denominator;
+            const suggestedBuyerPrice = totalFixed / denominator;
+            suggestedPrice = suggestedBuyerPrice + voucher;
         }
 
         if (calcSuggestedPrice) {
@@ -3938,7 +3974,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Add event listeners for instant updates
-    const inputsToWatch = [calcHpp, calcPrice, calcAdminPct, calcAdminFlat, calcOngkirPct, calcCashbackPct, calcVoucher, calcAdsFee];
+    const inputsToWatch = [
+        calcHpp, calcPrice, calcVoucher, 
+        calcAdminPct, calcDynamicCommissionPct, calcGrowthXtraPct, calcSapPct, calcAffiliatePct,
+        calcServiceFee, calcLogisticFee
+    ];
     inputsToWatch.forEach(input => {
         if (input) {
             input.addEventListener('input', () => {

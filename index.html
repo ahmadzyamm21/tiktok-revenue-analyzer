@@ -853,16 +853,23 @@
                         <form id="calc-product-form" class="sim-inputs" style="display: flex; flex-direction: column; gap: 15px;">
 
 
-                            <!-- HPP / Modal -->
-                            <div class="form-group">
-                                <label for="calc-hpp">Harga Modal / HPP (Rp)</label>
-                                <input type="number" id="calc-hpp" placeholder="40000" value="40000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <!-- HPP / Modal -->
+                                <div class="form-group">
+                                    <label for="calc-hpp">Harga Modal / HPP (Rp)</label>
+                                    <input type="number" id="calc-hpp" placeholder="40000" value="40000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                                <!-- Target Selling Price -->
+                                <div class="form-group">
+                                    <label for="calc-price">Harga Jual Rencana (Rp)</label>
+                                    <input type="number" id="calc-price" placeholder="75000" value="75000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
                             </div>
 
-                            <!-- Target Selling Price -->
+                            <!-- Voucher Toko -->
                             <div class="form-group">
-                                <label for="calc-price">Harga Jual Rencana ke Customer (Rp)</label>
-                                <input type="number" id="calc-price" placeholder="75000" value="75000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                <label for="calc-voucher">Voucher Toko yang Dipasang (Rp)</label>
+                                <input type="number" id="calc-voucher" placeholder="5000" value="5000" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
                             </div>
 
                             <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 5px 0;"></div>
@@ -871,38 +878,44 @@
                                 <!-- Biaya Admin % -->
                                 <div class="form-group">
                                     <label for="calc-admin-pct">Biaya Admin Platform (%)</label>
-                                    <input type="number" id="calc-admin-pct" placeholder="6" value="6.0" step="0.1" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                    <input type="number" id="calc-admin-pct" placeholder="9.25" value="9.25" step="0.01" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
                                 </div>
-                                <!-- Flat fee -->
+                                <!-- Komisi Dinamis % -->
                                 <div class="form-group">
-                                    <label for="calc-admin-flat">Biaya Admin Flat per Order (Rp)</label>
-                                    <input type="number" id="calc-admin-flat" placeholder="1000" value="1000" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
-                                </div>
-                            </div>
-
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <!-- Program Gratis Ongkir % -->
-                                <div class="form-group">
-                                    <label for="calc-ongkir-pct">Biaya Program Gratis Ongkir (%)</label>
-                                    <input type="number" id="calc-ongkir-pct" placeholder="3" value="3.0" step="0.1" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
-                                </div>
-                                <!-- Extra program / cashback % -->
-                                <div class="form-group">
-                                    <label for="calc-cashback-pct">Biaya Program Cashback (%)</label>
-                                    <input type="number" id="calc-cashback-pct" placeholder="0" value="0.0" step="0.1" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                    <label for="calc-dynamic-commission-pct">Komisi Dinamis (%)</label>
+                                    <input type="number" id="calc-dynamic-commission-pct" placeholder="7.50" value="7.50" step="0.01" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
                                 </div>
                             </div>
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <!-- Voucher Toko -->
+                                <!-- Growth Xtra % -->
                                 <div class="form-group">
-                                    <label for="calc-voucher">Voucher Toko yang Dipasang (Rp)</label>
-                                    <input type="number" id="calc-voucher" placeholder="0" value="0" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                    <label for="calc-growth-xtra-pct">Growth Xtra (%)</label>
+                                    <input type="number" id="calc-growth-xtra-pct" placeholder="3.50" value="3.50" step="0.01" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
                                 </div>
-                                <!-- Marketing Ads / unit -->
+                                <!-- SAP % -->
                                 <div class="form-group">
-                                    <label for="calc-ads-fee">Estimasi Budget Iklan per Unit (Rp)</label>
-                                    <input type="number" id="calc-ads-fee" placeholder="0" value="0" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                    <label for="calc-sap-pct">SAP (%)</label>
+                                    <input type="number" id="calc-sap-pct" placeholder="9.20" value="9.20" step="0.01" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                            </div>
+
+                            <!-- Affiliate % -->
+                            <div class="form-group">
+                                <label for="calc-affiliate-pct">Affiliate (%)</label>
+                                <input type="number" id="calc-affiliate-pct" placeholder="5.50" value="5.50" step="0.01" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <!-- Biaya Layanan -->
+                                <div class="form-group">
+                                    <label for="calc-service-fee">Biaya Layanan (Rp)</label>
+                                    <input type="number" id="calc-service-fee" placeholder="1250" value="1250" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                </div>
+                                <!-- Fee Logistic -->
+                                <div class="form-group">
+                                    <label for="calc-logistic-fee">Fee Logistic (Rp)</label>
+                                    <input type="number" id="calc-logistic-fee" placeholder="3000" value="3000" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
                                 </div>
                             </div>
                         </form>
@@ -941,8 +954,16 @@
                             </h3>
                             <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13.5px;">
                                 <div style="display: flex; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-                                    <span>Harga Jual ke Pembeli</span>
+                                    <span>Harga Jual ke Customer</span>
                                     <span style="font-weight: 600;" id="breakdown-price">Rp 0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
+                                    <span>- Potongan Voucher Toko</span>
+                                    <span>- <span id="breakdown-voucher-val">Rp 0</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-weight: 600; padding: 6px 0; color: #FFF; background: rgba(255,255,255,0.02); border-radius: 4px; padding-left: 5px; padding-right: 5px;">
+                                    <span>Harga Beli (Checkout Pembeli)</span>
+                                    <span id="breakdown-buyer-price">Rp 0</span>
                                 </div>
                                 
                                 <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
@@ -950,24 +971,28 @@
                                     <span>- <span id="breakdown-admin-val">Rp 0</span></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
-                                    <span>- Potongan Admin Flat</span>
-                                    <span>- <span id="breakdown-admin-flat">Rp 0</span></span>
+                                    <span>- Potongan Komisi Dinamis (<span id="breakdown-commission-pct">0</span>%)</span>
+                                    <span>- <span id="breakdown-commission-val">Rp 0</span></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
-                                    <span>- Potongan Gratis Ongkir (<span id="breakdown-ongkir-pct">0</span>%)</span>
-                                    <span>- <span id="breakdown-ongkir-val">Rp 0</span></span>
+                                    <span>- Potongan Growth Xtra (<span id="breakdown-growth-pct">0</span>%)</span>
+                                    <span>- <span id="breakdown-growth-val">Rp 0</span></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
-                                    <span>- Potongan Cashback Ekstra (<span id="breakdown-cashback-pct">0</span>%)</span>
-                                    <span>- <span id="breakdown-cashback-val">Rp 0</span></span>
+                                    <span>- Potongan SAP (<span id="breakdown-sap-pct">0</span>%)</span>
+                                    <span>- <span id="breakdown-sap-val">Rp 0</span></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
-                                    <span>- Potongan Voucher Toko</span>
-                                    <span>- <span id="breakdown-voucher-val">Rp 0</span></span>
+                                    <span>- Potongan Affiliate (<span id="breakdown-affiliate-pct">0</span>%)</span>
+                                    <span>- <span id="breakdown-affiliate-val">Rp 0</span></span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; color: var(--accent-pink);">
+                                    <span>- Potongan Biaya Layanan</span>
+                                    <span>- <span id="breakdown-service-val">Rp 0</span></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; color: var(--accent-pink); padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.03);">
-                                    <span>- Estimasi Budget Iklan per Unit</span>
-                                    <span>- <span id="breakdown-ads-val">Rp 0</span></span>
+                                    <span>- Potongan Fee Logistic</span>
+                                    <span>- <span id="breakdown-logistic-val">Rp 0</span></span>
                                 </div>
 
                                 <div style="display: flex; justify-content: space-between; font-weight: 600; padding: 6px 0; color: #FFF; background: rgba(255,255,255,0.02); border-radius: 4px; padding-left: 5px; padding-right: 5px;">
