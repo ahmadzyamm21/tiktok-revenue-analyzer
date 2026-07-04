@@ -3800,7 +3800,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Product Calculator Logic
     // ------------------------------------------
     const calcHpp = document.getElementById('calc-hpp');
-    const calcPacking = document.getElementById('calc-packing');
     const calcPrice = document.getElementById('calc-price');
     const calcAdminPct = document.getElementById('calc-admin-pct');
     const calcAdminFlat = document.getElementById('calc-admin-flat');
@@ -3827,7 +3826,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const breakdownAdsVal = document.getElementById('breakdown-ads-val');
     const breakdownNetPayout = document.getElementById('breakdown-net-payout');
     const breakdownHpp = document.getElementById('breakdown-hpp');
-    const breakdownPacking = document.getElementById('breakdown-packing');
     const breakdownNetProfit = document.getElementById('breakdown-net-profit');
 
     const calcProfitIconBox = document.getElementById('calc-profit-icon-box');
@@ -3838,7 +3836,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!calcHpp || !calcPrice) return;
 
         const hpp = parseFloat(calcHpp.value) || 0;
-        const packing = parseFloat(calcPacking.value) || 0;
         const price = parseFloat(calcPrice.value) || 0;
         const adminPct = parseFloat(calcAdminPct.value) || 0;
         const adminFlat = parseFloat(calcAdminFlat.value) || 0;
@@ -3854,7 +3851,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const totalFees = adminVal + adminFlat + ongkirVal + cashbackVal + voucher + adsFee;
         const netPayout = price - totalFees;
-        const totalCost = hpp + packing;
+        const totalCost = hpp;
         const netProfit = netPayout - totalCost;
         const marginPct = price > 0 ? (netProfit / price) * 100 : 0;
 
@@ -3871,7 +3868,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (breakdownAdsVal) breakdownAdsVal.textContent = formatRupiah(adsFee);
         if (breakdownNetPayout) breakdownNetPayout.textContent = formatRupiah(netPayout);
         if (breakdownHpp) breakdownHpp.textContent = formatRupiah(hpp);
-        if (breakdownPacking) breakdownPacking.textContent = formatRupiah(packing);
         if (breakdownNetProfit) breakdownNetProfit.textContent = formatRupiah(netProfit);
 
         if (calcNetProfit) calcNetProfit.textContent = formatRupiah(netProfit);
@@ -3928,7 +3924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate Recommended Price for 30% net margin
         const targetMargin = 0.30;
         const totalPct = (adminPct + ongkirPct + cashbackPct) / 100;
-        const totalFixed = adminFlat + voucher + adsFee + hpp + packing;
+        const totalFixed = adminFlat + voucher + adsFee + hpp;
         
         let suggestedPrice = 0;
         const denominator = 1 - totalPct - targetMargin;
@@ -3942,7 +3938,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Add event listeners for instant updates
-    const inputsToWatch = [calcHpp, calcPacking, calcPrice, calcAdminPct, calcAdminFlat, calcOngkirPct, calcCashbackPct, calcVoucher, calcAdsFee];
+    const inputsToWatch = [calcHpp, calcPrice, calcAdminPct, calcAdminFlat, calcOngkirPct, calcCashbackPct, calcVoucher, calcAdsFee];
     inputsToWatch.forEach(input => {
         if (input) {
             input.addEventListener('input', () => {

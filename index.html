@@ -853,17 +853,10 @@
                         <form id="calc-product-form" class="sim-inputs" style="display: flex; flex-direction: column; gap: 15px;">
 
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <!-- HPP / Modal -->
-                                <div class="form-group">
-                                    <label for="calc-hpp">Harga Modal / HPP (Rp)</label>
-                                    <input type="number" id="calc-hpp" placeholder="40000" value="40000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
-                                </div>
-                                <!-- Packing Cost -->
-                                <div class="form-group">
-                                    <label for="calc-packing">Biaya Packing & Operasional (Rp)</label>
-                                    <input type="number" id="calc-packing" placeholder="2500" value="2500" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
-                                </div>
+                            <!-- HPP / Modal -->
+                            <div class="form-group">
+                                <label for="calc-hpp">Harga Modal / HPP (Rp)</label>
+                                <input type="number" id="calc-hpp" placeholder="40000" value="40000" min="0" required style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
                             </div>
 
                             <!-- Target Selling Price -->
@@ -982,13 +975,9 @@
                                     <span id="breakdown-net-payout">Rp 0</span>
                                 </div>
 
-                                <div style="display: flex; justify-content: space-between; color: var(--text-muted);">
+                                <div style="display: flex; justify-content: space-between; color: var(--text-muted); padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05);">
                                     <span>- Harga Modal / HPP</span>
                                     <span>- <span id="breakdown-hpp">Rp 0</span></span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; color: var(--text-muted); padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                    <span>- Biaya Packing & Operasional</span>
-                                    <span>- <span id="breakdown-packing">Rp 0</span></span>
                                 </div>
 
                                 <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 15px; color: var(--accent-green); padding-top: 8px;" id="calc-breakdown-net-profit-box">
