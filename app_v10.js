@@ -3819,6 +3819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const calcMarginStatus = document.getElementById('calc-margin-status');
     const calcSuggestedPrice = document.getElementById('calc-suggested-price');
 
+    const calcBuyerPriceHelper = document.getElementById('calc-buyer-price-helper');
     const breakdownPrice = document.getElementById('breakdown-price');
     const breakdownVoucherVal = document.getElementById('breakdown-voucher-val');
     const breakdownBuyerPrice = document.getElementById('breakdown-buyer-price');
@@ -4184,6 +4185,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const marginPct = price > 0 ? (netProfit / price) * 100 : 0;
 
         // Update UI
+        if (calcBuyerPriceHelper) {
+            calcBuyerPriceHelper.textContent = `Harga Jual - Voucher = ${formatRupiah(buyerPrice)}`;
+        }
         if (breakdownPrice) breakdownPrice.textContent = formatRupiah(price);
         if (breakdownVoucherVal) breakdownVoucherVal.textContent = formatRupiah(voucher);
         if (breakdownBuyerPrice) breakdownBuyerPrice.textContent = formatRupiah(buyerPrice);

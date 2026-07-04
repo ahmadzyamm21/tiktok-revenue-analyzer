@@ -870,6 +870,9 @@
                             <div class="form-group">
                                 <label for="calc-voucher">Voucher Toko yang Dipasang (Rp)</label>
                                 <input type="number" id="calc-voucher" placeholder="5000" value="5000" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                                <div id="calc-buyer-price-helper" style="font-size: 11px; color: var(--accent-cyan); margin-top: 4px; font-weight: 500;">
+                                    Harga Jual - Voucher = Rp 0
+                                </div>
                             </div>
 
                             <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 5px 0;"></div>
@@ -971,7 +974,7 @@
                                     <span>- <span id="breakdown-voucher-val">Rp 0</span></span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; font-weight: 600; padding: 6px 0; color: #FFF; background: rgba(255,255,255,0.02); border-radius: 4px; padding-left: 5px; padding-right: 5px;">
-                                    <span>Harga Beli (Checkout Pembeli)</span>
+                                    <span>Harga Beli (Harga Jual - Voucher)</span>
                                     <span id="breakdown-buyer-price">Rp 0</span>
                                 </div>
                                 
