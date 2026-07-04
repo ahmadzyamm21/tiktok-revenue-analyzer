@@ -3950,11 +3950,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (calcAdminFlat) calcAdminFlat.value = '1000';
                 if (calcOngkirPct) calcOngkirPct.value = '3.0';
                 if (calcCashbackPct) calcCashbackPct.value = '0.0';
-            } else if (val === 'shopee-nonstar') {
-                if (calcAdminPct) calcAdminPct.value = '5.0';
-                if (calcAdminFlat) calcAdminFlat.value = '1000';
-                if (calcOngkirPct) calcOngkirPct.value = '4.0';
-                if (calcCashbackPct) calcCashbackPct.value = '0.0';
             }
             updateProductCalculator();
         });
