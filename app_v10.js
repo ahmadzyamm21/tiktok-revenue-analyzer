@@ -3845,6 +3845,262 @@ document.addEventListener('DOMContentLoaded', () => {
     const calcMarginIconBox = document.getElementById('calc-margin-icon-box');
     const calcBreakdownNetProfitBox = document.getElementById('calc-breakdown-net-profit-box');
 
+    const calcTabsContainer = document.getElementById('calc-tabs-container');
+    const btnAddCalcTab = document.getElementById('btn-add-calc-tab');
+
+    // Load tabs database
+    let calcTabsDb = [];
+    let activeCalcTabId = '';
+
+    function loadCalcTabsDb() {
+        try {
+            const savedTabs = localStorage.getItem('calc_product_tabs');
+            const savedActiveId = localStorage.getItem('active_calc_tab_id');
+            if (savedTabs) {
+                calcTabsDb = JSON.parse(savedTabs);
+            }
+            if (savedActiveId && calcTabsDb.some(t => t.id === savedActiveId)) {
+                activeCalcTabId = savedActiveId;
+            }
+        } catch (e) {
+            console.error("Error loading calculator tabs:", e);
+        }
+
+        // Initialize default tab if empty
+        if (!calcTabsDb || calcTabsDb.length === 0) {
+            calcTabsDb = [
+                {
+                    id: 'tab-' + Date.now(),
+                    name: 'Produk Utama',
+                    hpp: 40000,
+                    price: 75000,
+                    voucher: 5000,
+                    adminPct: 9.25,
+                    dynamicCommissionPct: 7.50,
+                    growthXtraPct: 3.50,
+                    sapPct: 9.20,
+                    affiliatePct: 5.50,
+                    serviceFee: 1250,
+                    logisticFee: 3000
+                }
+            ];
+            activeCalcTabId = calcTabsDb[0].id;
+            saveCalcTabsDb();
+        }
+
+        if (!activeCalcTabId) {
+            activeCalcTabId = calcTabsDb[0].id;
+        }
+    }
+
+    function saveCalcTabsDb() {
+        localStorage.setItem('calc_product_tabs', JSON.stringify(calcTabsDb));
+        localStorage.setItem('active_calc_tab_id', activeCalcTabId);
+    }
+
+    // Switch to tab
+    function switchCalcTab(tabId) {
+        // Save current active tab's values first if elements exist
+        const currentActive = calcTabsDb.find(t => t.id === activeCalcTabId);
+        if (currentActive) {
+            if (calcHpp) currentActive.hpp = parseFloat(calcHpp.value) || 0;
+            if (calcPrice) currentActive.price = parseFloat(calcPrice.value) || 0;
+            if (calcVoucher) currentActive.voucher = parseFloat(calcVoucher.value) || 0;
+            if (calcAdminPct) currentActive.adminPct = parseFloat(calcAdminPct.value) || 0;
+            if (calcDynamicCommissionPct) currentActive.dynamicCommissionPct = parseFloat(calcDynamicCommissionPct.value) || 0;
+            if (calcGrowthXtraPct) currentActive.growthXtraPct = parseFloat(calcGrowthXtraPct.value) || 0;
+            if (calcSapPct) currentActive.sapPct = parseFloat(calcSapPct.value) || 0;
+            if (calcAffiliatePct) currentActive.affiliatePct = parseFloat(calcAffiliatePct.value) || 0;
+            if (calcServiceFee) currentActive.serviceFee = parseFloat(calcServiceFee.value) || 0;
+            if (calcLogisticFee) currentActive.logisticFee = parseFloat(calcLogisticFee.value) || 0;
+        }
+
+        activeCalcTabId = tabId;
+        saveCalcTabsDb();
+
+        // Load new active tab values into form inputs
+        const newActive = calcTabsDb.find(t => t.id === activeCalcTabId);
+        if (newActive) {
+            if (calcHpp) calcHpp.value = newActive.hpp;
+            if (calcPrice) calcPrice.value = newActive.price;
+            if (calcVoucher) calcVoucher.value = newActive.voucher;
+            if (calcAdminPct) calcAdminPct.value = newActive.adminPct;
+            if (calcDynamicCommissionPct) calcDynamicCommissionPct.value = newActive.dynamicCommissionPct;
+            if (calcGrowthXtraPct) calcGrowthXtraPct.value = newActive.growthXtraPct;
+            if (calcSapPct) calcSapPct.value = newActive.sapPct;
+            if (calcAffiliatePct) calcAffiliatePct.value = newActive.affiliatePct;
+            if (calcServiceFee) calcServiceFee.value = newActive.serviceFee;
+            if (calcLogisticFee) calcLogisticFee.value = newActive.logisticFee;
+        }
+
+        renderCalcTabs();
+        updateProductCalculator();
+    }
+
+    // Render tabs list
+    function renderCalcTabs() {
+        if (!calcTabsContainer) return;
+        
+        // Remove existing tab elements (buttons that are not btnAddCalcTab)
+        const tabButtons = calcTabsContainer.querySelectorAll('.calc-tab-btn');
+        tabButtons.forEach(btn => btn.remove());
+
+        calcTabsDb.forEach(tab => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'calc-tab-btn';
+            
+            // Basic styling for the tab button
+            const isActive = tab.id === activeCalcTabId;
+            btn.style.fontSize = '12px';
+            btn.style.padding = '6px 14px';
+            btn.style.borderRadius = '20px';
+            btn.style.border = '1px solid';
+            btn.style.cursor = 'pointer';
+            btn.style.display = 'inline-flex';
+            btn.style.alignItems = 'center';
+            btn.style.gap = '8px';
+            btn.style.transition = 'all 0.2s';
+            
+            if (isActive) {
+                btn.style.background = 'var(--accent-cyan)';
+                btn.style.borderColor = 'var(--accent-cyan)';
+                btn.style.color = '#000';
+                btn.style.fontWeight = '600';
+            } else {
+                btn.style.background = 'rgba(255,255,255,0.05)';
+                btn.style.borderColor = 'transparent';
+                btn.style.color = 'rgba(255,255,255,0.8)';
+                
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.background = 'rgba(255,255,255,0.1)';
+                });
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.background = 'rgba(255,255,255,0.05)';
+                });
+            }
+
+            // Name span
+            const spanName = document.createElement('span');
+            spanName.textContent = tab.name;
+            spanName.style.cursor = 'pointer';
+            btn.appendChild(spanName);
+
+            // Double click to rename
+            btn.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                const newName = prompt(`Ubah nama produk:`, tab.name);
+                if (newName && newName.trim()) {
+                    tab.name = newName.trim();
+                    saveCalcTabsDb();
+                    renderCalcTabs();
+                }
+            });
+
+            // Delete button inside tab
+            if (calcTabsDb.length > 1) {
+                const btnDel = document.createElement('span');
+                btnDel.innerHTML = '&times;';
+                btnDel.style.fontSize = '14px';
+                btnDel.style.fontWeight = 'bold';
+                btnDel.style.cursor = 'pointer';
+                btnDel.style.opacity = '0.5';
+                btnDel.style.transition = 'opacity 0.2s';
+                btnDel.style.padding = '0 2px';
+                
+                btnDel.addEventListener('mouseenter', () => {
+                    btnDel.style.opacity = '1';
+                    btnDel.style.color = 'var(--accent-pink)';
+                });
+                btnDel.addEventListener('mouseleave', () => {
+                    btnDel.style.opacity = '0.5';
+                    btnDel.style.color = 'inherit';
+                });
+
+                btnDel.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Apakah Anda yakin ingin menghapus tab kalkulator untuk produk: "${tab.name}"?`)) {
+                        // Delete
+                        const index = calcTabsDb.findIndex(t => t.id === tab.id);
+                        calcTabsDb.splice(index, 1);
+                        
+                        if (tab.id === activeCalcTabId) {
+                            activeCalcTabId = calcTabsDb[0].id;
+                        }
+                        
+                        saveCalcTabsDb();
+                        
+                        // Switch active
+                        const nextActive = calcTabsDb.find(t => t.id === activeCalcTabId);
+                        if (nextActive) {
+                            if (calcHpp) calcHpp.value = nextActive.hpp;
+                            if (calcPrice) calcPrice.value = nextActive.price;
+                            if (calcVoucher) calcVoucher.value = nextActive.voucher;
+                            if (calcAdminPct) calcAdminPct.value = nextActive.adminPct;
+                            if (calcDynamicCommissionPct) calcDynamicCommissionPct.value = nextActive.dynamicCommissionPct;
+                            if (calcGrowthXtraPct) calcGrowthXtraPct.value = nextActive.growthXtraPct;
+                            if (calcSapPct) calcSapPct.value = nextActive.sapPct;
+                            if (calcAffiliatePct) calcAffiliatePct.value = nextActive.affiliatePct;
+                            if (calcServiceFee) calcServiceFee.value = nextActive.serviceFee;
+                            if (calcLogisticFee) calcLogisticFee.value = nextActive.logisticFee;
+                        }
+
+                        renderCalcTabs();
+                        updateProductCalculator();
+                        showToast('Tab produk berhasil dihapus.', 'success');
+                    }
+                });
+
+                btn.appendChild(btnDel);
+            }
+
+            // Click tab to switch
+            btn.addEventListener('click', () => {
+                if (tab.id !== activeCalcTabId) {
+                    switchCalcTab(tab.id);
+                }
+            });
+
+            // Insert before the "+ Tambah Produk" button
+            if (btnAddCalcTab) {
+                calcTabsContainer.insertBefore(btn, btnAddCalcTab);
+            } else {
+                calcTabsContainer.appendChild(btn);
+            }
+        });
+    }
+
+    // Add Tab handler
+    if (btnAddCalcTab) {
+        btnAddCalcTab.addEventListener('click', () => {
+            const name = prompt('Masukkan nama produk baru untuk kalkulator:');
+            if (name && name.trim()) {
+                const newId = 'tab-' + Date.now();
+                const newTab = {
+                    id: newId,
+                    name: name.trim(),
+                    hpp: 40000,
+                    price: 75000,
+                    voucher: 5000,
+                    adminPct: 9.25,
+                    dynamicCommissionPct: 7.50,
+                    growthXtraPct: 3.50,
+                    sapPct: 9.20,
+                    affiliatePct: 5.50,
+                    serviceFee: 1250,
+                    logisticFee: 3000
+                };
+                
+                // Add to list
+                calcTabsDb.push(newTab);
+                
+                // Switch
+                switchCalcTab(newId);
+                showToast(`Tab untuk "${name.trim()}" berhasil ditambahkan. Double-click tab untuk mengubah nama.`, 'success');
+            }
+        });
+    }
+
     function updateProductCalculator() {
         if (!calcHpp || !calcPrice) return;
 
@@ -3860,6 +4116,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const serviceFee = parseFloat(calcServiceFee.value) || 0;
         const logisticFee = parseFloat(calcLogisticFee.value) || 0;
+
+        // Save current active tab's values dynamically to the db object
+        const activeTab = calcTabsDb.find(t => t.id === activeCalcTabId);
+        if (activeTab) {
+            activeTab.hpp = hpp;
+            activeTab.price = price;
+            activeTab.voucher = voucher;
+            activeTab.adminPct = adminPct;
+            activeTab.dynamicCommissionPct = dynamicCommissionPct;
+            activeTab.growthXtraPct = growthXtraPct;
+            activeTab.sapPct = sapPct;
+            activeTab.affiliatePct = affiliatePct;
+            activeTab.serviceFee = serviceFee;
+            activeTab.logisticFee = logisticFee;
+            saveCalcTabsDb();
+        }
 
         // Calculate values according to the formula:
         // Harga Beli = Harga Jual - Voucher
@@ -3988,7 +4260,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Run once on load to initialize values
-    updateProductCalculator();
+    loadCalcTabsDb();
+    switchCalcTab(activeCalcTabId);
 
     // ------------------------------------------
     // Initial calls
