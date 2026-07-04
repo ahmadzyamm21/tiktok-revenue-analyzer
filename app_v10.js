@@ -3812,6 +3812,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const calcServiceFee = document.getElementById('calc-service-fee');
     const calcLogisticFee = document.getElementById('calc-logistic-fee');
+    const calcAdsFee = document.getElementById('calc-ads-fee');
 
     const calcCampaignPct = document.getElementById('calc-campaign-pct');
     const calcPlatformPct = document.getElementById('calc-platform-pct');
@@ -3898,6 +3899,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     growthXtraPct: 3.50,
                     sapPct: 9.20,
                     affiliatePct: 5.50,
+                    adsFee: 0,
                     serviceFee: 1250,
                     logisticFee: 3000
                 }
@@ -3906,11 +3908,12 @@ document.addEventListener('DOMContentLoaded', () => {
             saveCalcTabsDb();
         }
 
-        // Migrate old tabs that don't have campaign fields
+        // Migrate old tabs that don't have new fields
         calcTabsDb.forEach(t => {
             if (t.campaignPct === undefined) t.campaignPct = 0;
             if (t.platformPct === undefined) t.platformPct = 90;
             if (t.sellerPct === undefined) t.sellerPct = 10;
+            if (t.adsFee === undefined) t.adsFee = 0;
         });
 
         if (!activeCalcTabId || !calcTabsDb.some(t => t.id === activeCalcTabId)) {
@@ -3938,6 +3941,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (calcAffiliatePct) currentActive.affiliatePct = parseFloat(calcAffiliatePct.value) || 0;
             if (calcServiceFee) currentActive.serviceFee = parseFloat(calcServiceFee.value) || 0;
             if (calcLogisticFee) currentActive.logisticFee = parseFloat(calcLogisticFee.value) || 0;
+            if (calcAdsFee) currentActive.adsFee = parseFloat(calcAdsFee.value) || 0;
             if (calcCampaignPct) currentActive.campaignPct = parseFloat(calcCampaignPct.value) || 0;
             if (calcPlatformPct) currentActive.platformPct = parseFloat(calcPlatformPct.value) || 0;
             if (calcSellerPct) currentActive.sellerPct = parseFloat(calcSellerPct.value) || 0;
@@ -3959,6 +3963,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (calcAffiliatePct) calcAffiliatePct.value = newActive.affiliatePct;
             if (calcServiceFee) calcServiceFee.value = newActive.serviceFee;
             if (calcLogisticFee) calcLogisticFee.value = newActive.logisticFee;
+            if (calcAdsFee) calcAdsFee.value = newActive.adsFee || 0;
             if (calcCampaignPct) calcCampaignPct.value = newActive.campaignPct || 0;
             if (calcPlatformPct) calcPlatformPct.value = newActive.platformPct || 90;
             if (calcSellerPct) calcSellerPct.value = newActive.sellerPct || 10;
@@ -4214,6 +4219,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const serviceFee = parseFloat(calcServiceFee.value) || 0;
         const logisticFee = parseFloat(calcLogisticFee.value) || 0;
+        const adsFee = parseFloat(calcAdsFee ? calcAdsFee.value : 0) || 0;
 
         // Save current active tab's values dynamically to the db object
         const activeTab = calcTabsDb.find(t => t.id === activeCalcTabId);
@@ -4229,6 +4235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeTab.growthXtraPct = growthXtraPct;
             activeTab.sapPct = sapPct;
             activeTab.affiliatePct = affiliatePct;
+            activeTab.adsFee = adsFee;
             activeTab.serviceFee = serviceFee;
             activeTab.logisticFee = logisticFee;
             saveCalcTabsDb();
@@ -4261,7 +4268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const affiliateVal = buyerPrice * (affiliatePct / 100);
 
         // Sum fees
-        const totalFees = adminVal + dynamicCommissionVal + growthXtraVal + sapVal + affiliateVal + serviceFee + logisticFee;
+        const totalFees = adminVal + dynamicCommissionVal + growthXtraVal + sapVal + affiliateVal + adsFee + serviceFee + logisticFee;
         const netPayout = buyerPrice - totalFees;
         const totalCost = hpp;
         const netProfit = netPayout - totalCost;
@@ -4373,7 +4380,7 @@ document.addEventListener('DOMContentLoaded', () => {
         calcHpp, calcPrice, calcVoucher, 
         calcCampaignPct, calcPlatformPct, calcSellerPct,
         calcAdminPct, calcDynamicCommissionPct, calcGrowthXtraPct, calcSapPct, calcAffiliatePct,
-        calcServiceFee, calcLogisticFee
+        calcAdsFee, calcServiceFee, calcLogisticFee
     ];
     inputsToWatch.forEach(input => {
         if (input) {
