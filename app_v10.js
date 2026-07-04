@@ -1651,6 +1651,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                                typeVal.includes('penyesuaian') || 
                                                typeVal.includes('reimbursement') || 
                                                typeVal.includes('adjustment') ||
+                                               typeVal.includes('kompensasi') ||
+                                               typeVal.includes('compensation') ||
+                                               typeVal.includes('banding') ||
+                                               typeVal.includes('appeal') ||
                                                !!assocId;
                         
                         if (!isOrderPayment) {
@@ -1778,6 +1782,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             tempParsedOrderPayouts[orderId] = {
                                 amount: 0,
                                 originalAmount: 0,
+                                isAppealWon: false,
                                 date: aggDate,
                                 voucher: 0,
                                 refund: 0,
@@ -1815,6 +1820,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempParsedOrderPayouts[orderId].amount += settlementVal;
                         if (settlementVal > 0 && typeVal === 'pesanan') {
                             tempParsedOrderPayouts[orderId].originalAmount += settlementVal;
+                        }
+                        
+                        const isAppealWonRow = typeVal.includes('kompensasi') || 
+                                               typeVal.includes('compensation') || 
+                                               typeVal.includes('banding') || 
+                                               typeVal.includes('appeal');
+                        if (isAppealWonRow) {
+                            tempParsedOrderPayouts[orderId].isAppealWon = true;
                         }
                         tempParsedOrderPayouts[orderId].voucher += voucherVal;
                         tempParsedOrderPayouts[orderId].refund += refundVal;
