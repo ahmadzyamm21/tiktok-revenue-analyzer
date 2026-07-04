@@ -3210,12 +3210,36 @@ document.addEventListener('DOMContentLoaded', () => {
             returnResolutions = {};
         }
 
+        const displayItems = [...orderItemsDb];
+        const existingOrderIds = new Set(orderItemsDb.map(item => item.orderId));
+        Object.keys(orderPayouts).forEach(payoutOrderId => {
+            if (!existingOrderIds.has(payoutOrderId) && payoutOrderId !== 'null' && payoutOrderId !== '') {
+                const payoutInfo = orderPayouts[payoutOrderId];
+                let productName = "Pesanan Keuangan (Tanpa Detail Pesanan)";
+                if (payoutInfo.isAppealWon) {
+                    productName = "Kompensasi Banding (Laporan Keuangan)";
+                } else if (payoutInfo.refund > 0) {
+                    productName = "Transaksi Refund (Laporan Keuangan)";
+                }
+                displayItems.push({
+                    orderId: payoutOrderId,
+                    trackingId: "-",
+                    product: productName,
+                    sku: "-",
+                    variation: "-",
+                    qty: 1,
+                    date: payoutInfo.date || "-",
+                    status: payoutInfo.isAppealWon ? "Selesai" : (payoutInfo.refund > 0 ? "Retur" : "Selesai")
+                });
+            }
+        });
+
         const orderIdCounts = {};
-        orderItemsDb.forEach(item => {
+        displayItems.forEach(item => {
             orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
         });
 
-        orderItemsDb.forEach((item, idx) => {
+        displayItems.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
@@ -3331,10 +3355,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPayoutsTable() {
         if (!payoutsTableBody) return;
         
-        if (orderItemsDb.length === 0) {
+        if (orderItemsDb.length === 0 && Object.keys(orderPayouts).length === 0) {
             payoutsTableBody.innerHTML = `
                 <tr>
-                    <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <td colspan="12" style="text-align: center; padding: 40px; color: var(--text-muted);">
                         <i class="fas fa-cloud-upload-alt" style="font-size: 28px; margin-bottom: 10px; display: block; color: var(--accent-cyan);"></i>
                         Silakan unggah berkas Keuangan & Daftar Pesanan di tab <strong>Catatan Harian</strong> terlebih dahulu.
                     </td>
@@ -3370,17 +3394,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rowsHtml = [];
 
+        const displayItems = [...orderItemsDb];
+        const existingOrderIds = new Set(orderItemsDb.map(item => item.orderId));
+        Object.keys(orderPayouts).forEach(payoutOrderId => {
+            if (!existingOrderIds.has(payoutOrderId) && payoutOrderId !== 'null' && payoutOrderId !== '') {
+                const payoutInfo = orderPayouts[payoutOrderId];
+                let productName = "Pesanan Keuangan (Tanpa Detail Pesanan)";
+                if (payoutInfo.isAppealWon) {
+                    productName = "Kompensasi Banding (Laporan Keuangan)";
+                } else if (payoutInfo.refund > 0) {
+                    productName = "Transaksi Refund (Laporan Keuangan)";
+                }
+                displayItems.push({
+                    orderId: payoutOrderId,
+                    trackingId: "-",
+                    product: productName,
+                    sku: "-",
+                    variation: "-",
+                    qty: 1,
+                    date: payoutInfo.date || "-",
+                    status: payoutInfo.isAppealWon ? "Selesai" : (payoutInfo.refund > 0 ? "Retur" : "Selesai")
+                });
+            }
+        });
+
         const orderIdCounts = {};
-        orderItemsDb.forEach(item => {
+        displayItems.forEach(item => {
             orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
         });
 
-        orderItemsDb.forEach((item, idx) => {
+        displayItems.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             
-            const resolution = returnResolutions[item.orderId] || 'pending';
+            const resolution = returnResolutions[item.orderId] || (payoutInfo && payoutInfo.isAppealWon ? 'menang' : 'pending');
             const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
