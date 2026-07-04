@@ -1567,7 +1567,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Column mapping function (highly precise for TikTok Shop reports)
                     const colMap = {
-                        orderId: findColIdx(['id pesanan', 'order id', 'id pesanan/penyesuaian']),
+                        orderId: findColIdx(['id pesanan/penyesuaian', 'id pesanan', 'order id'], ['terkait', 'associated', 'referensi', 'reference']),
                         type: findColIdx(['jenis transaksi', 'transaction type', 'tipe', 'status']),
                         date: findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) !== -1 
                             ? findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) 
