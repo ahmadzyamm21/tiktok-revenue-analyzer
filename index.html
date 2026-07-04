@@ -877,6 +877,32 @@
 
                             <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 5px 0;"></div>
 
+                            <!-- Campaign Co-Funded Section -->
+                            <div style="background: rgba(255,165,0,0.03); border: 1px solid rgba(255,165,0,0.1); border-radius: 10px; padding: 12px 14px;">
+                                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #FFA500; margin-bottom: 10px;">
+                                    <i class="fas fa-tags"></i> Biaya Campaign (Co-Funded)
+                                </label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="calc-campaign-pct" style="font-size: 11px;">Campaign (%)</label>
+                                        <input type="number" id="calc-campaign-pct" placeholder="0" value="0" step="0.01" min="0" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 8px; font-family: inherit; font-size: 12px; outline: none;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="calc-platform-pct" style="font-size: 11px;">Ditanggung Platform (%)</label>
+                                        <input type="number" id="calc-platform-pct" placeholder="90" value="90" step="1" min="0" max="100" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 8px; font-family: inherit; font-size: 12px; outline: none;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="calc-seller-pct" style="font-size: 11px;">Ditanggung Seller (%)</label>
+                                        <input type="number" id="calc-seller-pct" placeholder="10" value="10" step="1" min="0" max="100" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 8px; font-family: inherit; font-size: 12px; outline: none;">
+                                    </div>
+                                </div>
+                                <div id="calc-campaign-helper" style="font-size: 11px; color: #FFA500; margin-top: 8px; font-weight: 500; line-height: 1.6;">
+                                    Diskon Campaign: Rp 0 | Platform: Rp 0 | <strong>Seller: Rp 0</strong>
+                                </div>
+                            </div>
+
+                            <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 5px 0;"></div>
+
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                 <!-- Biaya Admin % -->
                                 <div class="form-group">

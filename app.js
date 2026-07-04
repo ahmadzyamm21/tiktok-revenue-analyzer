@@ -3813,6 +3813,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const calcServiceFee = document.getElementById('calc-service-fee');
     const calcLogisticFee = document.getElementById('calc-logistic-fee');
 
+    const calcCampaignPct = document.getElementById('calc-campaign-pct');
+    const calcPlatformPct = document.getElementById('calc-platform-pct');
+    const calcSellerPct = document.getElementById('calc-seller-pct');
+    const calcCampaignHelper = document.getElementById('calc-campaign-helper');
+
     const calcNetProfit = document.getElementById('calc-net-profit');
     const calcProfitStatus = document.getElementById('calc-profit-status');
     const calcMarginPctVal = document.getElementById('calc-margin-pct-val');
@@ -3885,6 +3890,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     hpp: 0,
                     price: 0,
                     voucher: 0,
+                    campaignPct: 0,
+                    platformPct: 90,
+                    sellerPct: 10,
                     adminPct: 9.25,
                     dynamicCommissionPct: 7.50,
                     growthXtraPct: 3.50,
@@ -3897,6 +3905,13 @@ document.addEventListener('DOMContentLoaded', () => {
             activeCalcTabId = calcTabsDb[0].id;
             saveCalcTabsDb();
         }
+
+        // Migrate old tabs that don't have campaign fields
+        calcTabsDb.forEach(t => {
+            if (t.campaignPct === undefined) t.campaignPct = 0;
+            if (t.platformPct === undefined) t.platformPct = 90;
+            if (t.sellerPct === undefined) t.sellerPct = 10;
+        });
 
         if (!activeCalcTabId || !calcTabsDb.some(t => t.id === activeCalcTabId)) {
             activeCalcTabId = calcTabsDb[0] ? calcTabsDb[0].id : '';
@@ -3923,6 +3938,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (calcAffiliatePct) currentActive.affiliatePct = parseFloat(calcAffiliatePct.value) || 0;
             if (calcServiceFee) currentActive.serviceFee = parseFloat(calcServiceFee.value) || 0;
             if (calcLogisticFee) currentActive.logisticFee = parseFloat(calcLogisticFee.value) || 0;
+            if (calcCampaignPct) currentActive.campaignPct = parseFloat(calcCampaignPct.value) || 0;
+            if (calcPlatformPct) currentActive.platformPct = parseFloat(calcPlatformPct.value) || 0;
+            if (calcSellerPct) currentActive.sellerPct = parseFloat(calcSellerPct.value) || 0;
         }
 
         activeCalcTabId = tabId;
@@ -3941,6 +3959,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (calcAffiliatePct) calcAffiliatePct.value = newActive.affiliatePct;
             if (calcServiceFee) calcServiceFee.value = newActive.serviceFee;
             if (calcLogisticFee) calcLogisticFee.value = newActive.logisticFee;
+            if (calcCampaignPct) calcCampaignPct.value = newActive.campaignPct || 0;
+            if (calcPlatformPct) calcPlatformPct.value = newActive.platformPct || 90;
+            if (calcSellerPct) calcSellerPct.value = newActive.sellerPct || 10;
         }
 
         renderCalcTabs();
@@ -4181,6 +4202,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const price = parseFloat(calcPrice.value) || 0;
         const voucher = parseFloat(calcVoucher.value) || 0;
 
+        const campaignPct = parseFloat(calcCampaignPct ? calcCampaignPct.value : 0) || 0;
+        const platformPct = parseFloat(calcPlatformPct ? calcPlatformPct.value : 90) || 0;
+        const sellerPct = parseFloat(calcSellerPct ? calcSellerPct.value : 10) || 0;
+
         const adminPct = parseFloat(calcAdminPct.value) || 0;
         const dynamicCommissionPct = parseFloat(calcDynamicCommissionPct.value) || 0;
         const growthXtraPct = parseFloat(calcGrowthXtraPct.value) || 0;
@@ -4196,6 +4221,9 @@ document.addEventListener('DOMContentLoaded', () => {
             activeTab.hpp = hpp;
             activeTab.price = price;
             activeTab.voucher = voucher;
+            activeTab.campaignPct = campaignPct;
+            activeTab.platformPct = platformPct;
+            activeTab.sellerPct = sellerPct;
             activeTab.adminPct = adminPct;
             activeTab.dynamicCommissionPct = dynamicCommissionPct;
             activeTab.growthXtraPct = growthXtraPct;
@@ -4206,9 +4234,24 @@ document.addEventListener('DOMContentLoaded', () => {
             saveCalcTabsDb();
         }
 
+        // Campaign co-funded calculation:
+        // Total diskon campaign = Harga Jual × Campaign %
+        // Platform menanggung = Total diskon × Platform %
+        // Seller menanggung = Total diskon × Seller %
+        const campaignDiscountTotal = price * (campaignPct / 100);
+        const campaignPlatformCost = campaignDiscountTotal * (platformPct / 100);
+        const campaignSellerCost = campaignDiscountTotal * (sellerPct / 100);
+
+        // Update campaign helper text
+        if (calcCampaignHelper) {
+            calcCampaignHelper.innerHTML = `Diskon Campaign: ${formatRupiah(campaignDiscountTotal)} | Platform: ${formatRupiah(campaignPlatformCost)} | <strong>Seller: ${formatRupiah(campaignSellerCost)}</strong>`;
+        }
+
         // Calculate values according to the formula:
-        // Harga Beli = Harga Jual - Voucher
-        const buyerPrice = price - voucher;
+        // Voucher Total = Voucher Toko + Biaya Campaign Seller
+        const voucherTotal = voucher + campaignSellerCost;
+        // Harga Beli = Harga Jual - Voucher Total
+        const buyerPrice = price - voucherTotal;
 
         // Percentage fees are calculated relative to Harga Beli (buyerPrice)
         const adminVal = buyerPrice * (adminPct / 100);
@@ -4226,10 +4269,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update UI
         if (calcBuyerPriceHelper) {
-            calcBuyerPriceHelper.textContent = `Harga Jual - Voucher = ${formatRupiah(buyerPrice)}`;
+            if (campaignSellerCost > 0) {
+                calcBuyerPriceHelper.innerHTML = `Harga Jual - Voucher (${formatRupiah(voucher)}) - Campaign Seller (${formatRupiah(campaignSellerCost)}) = <strong>${formatRupiah(buyerPrice)}</strong>`;
+            } else {
+                calcBuyerPriceHelper.textContent = `Harga Jual - Voucher = ${formatRupiah(buyerPrice)}`;
+            }
         }
         if (breakdownPrice) breakdownPrice.textContent = formatRupiah(price);
-        if (breakdownVoucherVal) breakdownVoucherVal.textContent = formatRupiah(voucher);
+        if (breakdownVoucherVal) breakdownVoucherVal.textContent = formatRupiah(voucherTotal);
         if (breakdownBuyerPrice) breakdownBuyerPrice.textContent = formatRupiah(buyerPrice);
 
         if (breakdownAdminPct) breakdownAdminPct.textContent = adminPct.toFixed(2);
@@ -4304,7 +4351,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Calculate Recommended Price for 30% Net Margin on Harga Beli
         // Laba = HB * (1 - TotalPct) - Fixed - HPP
         // HB = (Fixed + HPP) / (0.70 - TotalPct)
-        // Rec Harga Jual = HB + Voucher
+        // Rec Harga Jual = HB + Voucher Total (termasuk campaign seller cost)
         const targetMargin = 0.30;
         const totalPct = (adminPct + dynamicCommissionPct + growthXtraPct + sapPct + affiliatePct) / 100;
         const totalFixed = serviceFee + logisticFee + hpp;
@@ -4313,7 +4360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const denominator = 1 - totalPct - targetMargin;
         if (denominator > 0) {
             const suggestedBuyerPrice = totalFixed / denominator;
-            suggestedPrice = suggestedBuyerPrice + voucher;
+            suggestedPrice = suggestedBuyerPrice + voucherTotal;
         }
 
         if (calcSuggestedPrice) {
@@ -4324,6 +4371,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add event listeners for instant updates
     const inputsToWatch = [
         calcHpp, calcPrice, calcVoucher, 
+        calcCampaignPct, calcPlatformPct, calcSellerPct,
         calcAdminPct, calcDynamicCommissionPct, calcGrowthXtraPct, calcSapPct, calcAffiliatePct,
         calcServiceFee, calcLogisticFee
     ];
