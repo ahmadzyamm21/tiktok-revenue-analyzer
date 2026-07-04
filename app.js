@@ -3076,6 +3076,304 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ------------------------------------------
+    // BCG Analysis Logic
+    // ------------------------------------------
+    let bcgProductData = [];
+
+    const inputBcgFile = document.getElementById('input-bcg-file');
+    const bcgFileStatus = document.getElementById('bcg-file-status');
+    const bcgThresholdTraffic = document.getElementById('bcg-threshold-traffic');
+    const bcgThresholdCvr = document.getElementById('bcg-threshold-cvr');
+    const btnApplyBcgThresholds = document.getElementById('btn-apply-bcg-thresholds');
+    const bcgResultsArea = document.getElementById('bcg-results-area');
+
+    const bcgCountStar = document.getElementById('bcg-count-star');
+    const bcgGmvStar = document.getElementById('bcg-gmv-star');
+    const bcgCountQmark = document.getElementById('bcg-count-qmark');
+    const bcgGmvQmark = document.getElementById('bcg-gmv-qmark');
+    const bcgCountCow = document.getElementById('bcg-count-cow');
+    const bcgGmvCow = document.getElementById('bcg-gmv-cow');
+    const bcgCountDog = document.getElementById('bcg-count-dog');
+    const bcgGmvDog = document.getElementById('bcg-gmv-dog');
+
+    const bcgSummaryTableBody = document.getElementById('bcg-summary-table-body');
+    const bcgListStarsQmarks = document.getElementById('bcg-list-stars-qmarks');
+    const bcgListCowsDogs = document.getElementById('bcg-list-cows-dogs');
+
+    function runBcgAnalysis() {
+        if (bcgProductData.length === 0) return;
+
+        const thresholdTraffic = parseFloat(bcgThresholdTraffic.value) || 1000;
+        const thresholdCvr = parseFloat(bcgThresholdCvr.value) || 1.5;
+
+        const stars = [];
+        const qmarks = [];
+        const cows = [];
+        const dogs = [];
+
+        bcgProductData.forEach(p => {
+            if (p.traffic >= thresholdTraffic && p.cvr >= thresholdCvr) {
+                stars.push(p);
+            } else if (p.traffic < thresholdTraffic && p.cvr >= thresholdCvr) {
+                qmarks.push(p);
+            } else if (p.traffic >= thresholdTraffic && p.cvr < thresholdCvr) {
+                cows.push(p);
+            } else {
+                dogs.push(p);
+            }
+        });
+
+        const sortGmv = (a, b) => b.gmv - a.gmv;
+        stars.sort(sortGmv);
+        qmarks.sort(sortGmv);
+        cows.sort(sortGmv);
+        dogs.sort(sortGmv);
+
+        const sumGmv = arr => arr.reduce((sum, p) => sum + p.gmv, 0);
+        const gmvStar = sumGmv(stars);
+        const gmvQmark = sumGmv(qmarks);
+        const gmvCow = sumGmv(cows);
+        const gmvDog = sumGmv(dogs);
+        const totalGmv = gmvStar + gmvQmark + gmvCow + gmvDog;
+
+        // Update KPI
+        if (bcgCountStar) bcgCountStar.textContent = stars.length;
+        if (bcgGmvStar) bcgGmvStar.textContent = 'GMV: ' + formatRupiah(gmvStar);
+        
+        if (bcgCountQmark) bcgCountQmark.textContent = qmarks.length;
+        if (bcgGmvQmark) bcgGmvQmark.textContent = 'GMV: ' + formatRupiah(gmvQmark);
+
+        if (bcgCountCow) bcgCountCow.textContent = cows.length;
+        if (bcgGmvCow) bcgGmvCow.textContent = 'GMV: ' + formatRupiah(gmvCow);
+
+        if (bcgCountDog) bcgCountDog.textContent = dogs.length;
+        if (bcgGmvDog) bcgGmvDog.textContent = 'GMV: ' + formatRupiah(gmvDog);
+
+        // Render Summary Table
+        if (bcgSummaryTableBody) {
+            bcgSummaryTableBody.innerHTML = `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="font-weight: 600; color: var(--accent-cyan); padding: 12px 8px; text-align: left;">🌟 Star (Bestseller)</td>
+                    <td style="text-align: center; padding: 12px 8px;">${stars.length}</td>
+                    <td style="text-align: right; font-weight: 600; padding: 12px 8px;">${formatRupiah(gmvStar)}</td>
+                    <td style="text-align: right; color: var(--text-muted); padding: 12px 8px;">${totalGmv > 0 ? ((gmvStar / totalGmv) * 100).toFixed(1) + '%' : '0.0%'}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="font-weight: 600; color: var(--accent-orange); padding: 12px 8px; text-align: left;">❓ Question Mark (Potensial)</td>
+                    <td style="text-align: center; padding: 12px 8px;">${qmarks.length}</td>
+                    <td style="text-align: right; font-weight: 600; padding: 12px 8px;">${formatRupiah(gmvQmark)}</td>
+                    <td style="text-align: right; color: var(--text-muted); padding: 12px 8px;">${totalGmv > 0 ? ((gmvQmark / totalGmv) * 100).toFixed(1) + '%' : '0.0%'}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="font-weight: 600; color: var(--accent-green); padding: 12px 8px; text-align: left;">🐮 Cash Cow / Traffic Magnet</td>
+                    <td style="text-align: center; padding: 12px 8px;">${cows.length}</td>
+                    <td style="text-align: right; font-weight: 600; padding: 12px 8px;">${formatRupiah(gmvCow)}</td>
+                    <td style="text-align: right; color: var(--text-muted); padding: 12px 8px;">${totalGmv > 0 ? ((gmvCow / totalGmv) * 100).toFixed(1) + '%' : '0.0%'}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="font-weight: 600; color: var(--accent-pink); padding: 12px 8px; text-align: left;">🐕 Dog (Slow Moving)</td>
+                    <td style="text-align: center; padding: 12px 8px;">${dogs.length}</td>
+                    <td style="text-align: right; font-weight: 600; padding: 12px 8px;">${formatRupiah(gmvDog)}</td>
+                    <td style="text-align: right; color: var(--text-muted); padding: 12px 8px;">${totalGmv > 0 ? ((gmvDog / totalGmv) * 100).toFixed(1) + '%' : '0.0%'}</td>
+                </tr>
+            `;
+        }
+
+        // Render Lists
+        let starsQmarksHtml = '';
+        if (stars.length === 0 && qmarks.length === 0) {
+            starsQmarksHtml = '<div style="color: var(--text-muted); padding: 15px; text-align: center;">Tidak ada produk Star atau Question Mark.</div>';
+        } else {
+            if (stars.length > 0) {
+                starsQmarksHtml += '<div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 10px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; text-align: left; text-transform: uppercase;">🌟 DAFTAR PRODUK STAR (BESTSELLER)</div>';
+                stars.slice(0, 10).forEach(p => {
+                    starsQmarksHtml += `
+                        <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px;">
+                            <div style="font-weight: 600; color: #FFF; text-align: left; margin-bottom: 6px; line-height: 1.4;">${p.name}</div>
+                            <div style="color: var(--text-muted); display: flex; justify-content: space-between; font-size: 11.5px; flex-wrap: wrap; gap: 5px; margin-bottom: 6px;">
+                                <span>Omset: <strong style="color:#FFF;">${formatRupiah(p.gmv)}</strong></span>
+                                <span>Dilihat: <strong style="color:#FFF;">${p.traffic.toLocaleString('id-ID')}</strong></span>
+                                <span>CVR: <strong style="color: var(--accent-green);">${p.cvr}%</strong></span>
+                            </div>
+                            <div style="color: var(--accent-cyan); font-size: 11px; text-align: left; font-weight: 500; background: rgba(37, 244, 238, 0.03); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--accent-cyan);">
+                                💡 Strategi: Amankan stok produk (safety stock). Alokasikan budget iklan untuk mempertahankan posisi dominan di pasar.
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            if (qmarks.length > 0) {
+                starsQmarksHtml += '<div style="font-weight: 700; color: var(--accent-orange); margin-top: 15px; margin-bottom: 10px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; text-align: left; text-transform: uppercase;">❓ DAFTAR PRODUK QUESTION MARK (POTENSIAL)</div>';
+                qmarks.slice(0, 10).forEach(p => {
+                    starsQmarksHtml += `
+                        <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px;">
+                            <div style="font-weight: 600; color: #FFF; text-align: left; margin-bottom: 6px; line-height: 1.4;">${p.name}</div>
+                            <div style="color: var(--text-muted); display: flex; justify-content: space-between; font-size: 11.5px; flex-wrap: wrap; gap: 5px; margin-bottom: 6px;">
+                                <span>Omset: <strong style="color:#FFF;">${formatRupiah(p.gmv)}</strong></span>
+                                <span>Dilihat: <strong style="color:#FFF;">${p.traffic.toLocaleString('id-ID')}</strong></span>
+                                <span>CVR: <strong style="color: var(--accent-green);">${p.cvr}%</strong></span>
+                            </div>
+                            <div style="color: var(--accent-orange); font-size: 11px; text-align: left; font-weight: 500; background: rgba(255, 170, 0, 0.03); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--accent-orange);">
+                                💡 Strategi: Konversi sudah bagus tapi kurang paparan. Dorong iklan berbayar (ads) dan lakukan optimasi SEO judul produk agar mudah dicari.
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        if (bcgListStarsQmarks) bcgListStarsQmarks.innerHTML = starsQmarksHtml;
+
+        let cowsDogsHtml = '';
+        if (cows.length === 0 && dogs.length === 0) {
+            cowsDogsHtml = '<div style="color: var(--text-muted); padding: 15px; text-align: center;">Tidak ada produk Cash Cow atau Dog.</div>';
+        } else {
+            if (cows.length > 0) {
+                cowsDogsHtml += '<div style="font-weight: 700; color: var(--accent-green); margin-bottom: 10px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; text-align: left; text-transform: uppercase;">🐮 DAFTAR PRODUK CASH COWS (TRAFFIC MAGNET)</div>';
+                cows.slice(0, 10).forEach(p => {
+                    cowsDogsHtml += `
+                        <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px;">
+                            <div style="font-weight: 600; color: #FFF; text-align: left; margin-bottom: 6px; line-height: 1.4;">${p.name}</div>
+                            <div style="color: var(--text-muted); display: flex; justify-content: space-between; font-size: 11.5px; flex-wrap: wrap; gap: 5px; margin-bottom: 6px;">
+                                <span>Omset: <strong style="color:#FFF;">${formatRupiah(p.gmv)}</strong></span>
+                                <span>Dilihat: <strong style="color: var(--accent-green);">${p.traffic.toLocaleString('id-ID')}</strong></span>
+                                <span>CVR: <strong style="color: var(--accent-pink);">${p.cvr}%</strong></span>
+                            </div>
+                            <div style="color: var(--accent-pink); font-size: 11px; text-align: left; font-weight: 500; background: rgba(254, 44, 85, 0.03); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--accent-pink);">
+                                💡 Solusi: Produk banyak dilihat tapi tidak laku. Evaluasi halaman detail produk (PDP), tambahkan video panduan, dan tawarkan voucher diskon halaman.
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            if (dogs.length > 0) {
+                cowsDogsHtml += '<div style="font-weight: 700; color: var(--accent-pink); margin-top: 15px; margin-bottom: 10px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; text-align: left; text-transform: uppercase;">🐕 DAFTAR PRODUK DOGS (SLOW MOVING)</div>';
+                dogs.slice(0, 10).forEach(p => {
+                    cowsDogsHtml += `
+                        <div style="background: rgba(255,255,255,0.015); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px;">
+                            <div style="font-weight: 600; color: #FFF; text-align: left; margin-bottom: 6px; line-height: 1.4;">${p.name}</div>
+                            <div style="color: var(--text-muted); display: flex; justify-content: space-between; font-size: 11.5px; flex-wrap: wrap; gap: 5px; margin-bottom: 6px;">
+                                <span>Omset: <strong style="color:#FFF;">${formatRupiah(p.gmv)}</strong></span>
+                                <span>Dilihat: <strong style="color:#FFF;">${p.traffic.toLocaleString('id-ID')}</strong></span>
+                                <span>CVR: <strong style="color:#FFF;">${p.cvr}%</strong></span>
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 11px; text-align: left; font-weight: 500; background: rgba(255,255,255,0.03); padding: 6px 8px; border-radius: 4px; border-left: 3px solid var(--text-muted);">
+                                💡 Solusi: Obral cuci gudang lewat live streaming, atau gunakan sebagai hadiah gratis (Gimmick Free Gift) untuk mendongkrak penjualan produk Star.
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        if (bcgListCowsDogs) bcgListCowsDogs.innerHTML = cowsDogsHtml;
+    }
+
+    if (inputBcgFile) {
+        inputBcgFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            inputBcgFile.value = ''; // Reset input
+            bcgFileStatus.textContent = file.name;
+            showToast('Membaca file kinerja produk...', 'info');
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    updateSheetRange(worksheet);
+                    
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    if (!jsonData || jsonData.length < 3) {
+                        showToast('File excel kosong!', 'error');
+                        return;
+                    }
+
+                    // Find header row (usually contains 'Nama')
+                    let headerIndex = -1;
+                    for (let r = 0; r < Math.min(20, jsonData.length); r++) {
+                        const row = jsonData[r];
+                        if (row && row.some(cell => cell && cell.toString().toLowerCase().trim() === 'nama')) {
+                            headerIndex = r;
+                            break;
+                        }
+                    }
+
+                    if (headerIndex === -1) {
+                        showToast('Kolom "Nama" produk tidak ditemukan!', 'error');
+                        return;
+                    }
+
+                    const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
+                    const colMap = {
+                        name: headers.indexOf('nama'),
+                        gmv: headers.indexOf('gmv'),
+                        traffic: headers.findIndex(h => h.includes('impresi produk unik') || h.includes('impresi unik') || h.includes('pengunjung unik') || h.includes('views') || h.includes('dilihat')),
+                        ctr: headers.findIndex(h => h.includes('ctr unik') || h.includes('ctr') || h.includes('klik')),
+                        cvr: headers.findIndex(h => h.includes('ctor unik') || h.includes('cvr') || h.includes('konversi') || h.includes('ctor')),
+                        sold: headers.findIndex(h => h.includes('produk terjual') || h.includes('terjual') || h.includes('unit'))
+                    };
+
+                    if (colMap.name === -1) {
+                        showToast('Format kolom tidak dikenali!', 'error');
+                        return;
+                    }
+
+                    bcgProductData = [];
+                    for (let r = headerIndex + 1; r < jsonData.length; r++) {
+                        const row = jsonData[r];
+                        if (!row || !row[colMap.name]) continue;
+
+                        const cleanGmv = (val) => {
+                            if (!val) return 0;
+                            const cleanStr = val.toString().replace('Rp', '').replace(/\./g, '').replace(/,/g, '.').trim();
+                            return parseFloat(cleanStr) || 0;
+                        };
+
+                        const cleanPct = (val) => {
+                            if (!val) return 0;
+                            const cleanStr = val.toString().replace('%', '').trim();
+                            return parseFloat(cleanStr) || 0;
+                        };
+
+                        const productObj = {
+                            name: row[colMap.name].toString(),
+                            gmv: colMap.gmv !== -1 ? cleanGmv(row[colMap.gmv]) : 0,
+                            traffic: colMap.traffic !== -1 ? parseInt(row[colMap.traffic].toString().replace(/\./g, '').replace(/,/g, '')) || 0 : 0,
+                            ctr: colMap.ctr !== -1 ? cleanPct(row[colMap.ctr]) : 0,
+                            cvr: colMap.cvr !== -1 ? cleanPct(row[colMap.cvr]) : 0,
+                            sold: colMap.sold !== -1 ? parseInt(row[colMap.sold].toString().replace(/\./g, '').replace(/,/g, '')) || 0 : 0
+                        };
+                        bcgProductData.push(productObj);
+                    }
+
+                    if (bcgProductData.length === 0) {
+                        showToast('Tidak ada produk yang diimpor!', 'warning');
+                        return;
+                    }
+
+                    showToast(`Berhasil menganalisis ${bcgProductData.length} produk.`, 'success');
+                    if (bcgResultsArea) bcgResultsArea.style.display = 'block';
+                    runBcgAnalysis();
+
+                } catch (err) {
+                    console.error(err);
+                    showToast('Gagal memproses file: ' + err.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    if (btnApplyBcgThresholds) {
+        btnApplyBcgThresholds.addEventListener('click', () => {
+            showToast('Ambang batas diperbarui.', 'success');
+            runBcgAnalysis();
+        });
+    }
+
+    // ------------------------------------------
     // Initial calls
     // ------------------------------------------
     loadShopSettings();

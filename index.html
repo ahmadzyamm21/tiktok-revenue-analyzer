@@ -43,6 +43,9 @@
                 <a href="#" class="menu-item" data-tab="tab-channels">
                     <i class="fas fa-network-wired"></i> Analisis Saluran
                 </a>
+                <a href="#" class="menu-item" data-tab="tab-bcg">
+                    <i class="fas fa-th-large"></i> Analisis BCG Produk
+                </a>
                 <a href="#" class="menu-item" data-tab="tab-hpp-db">
                     <i class="fas fa-boxes"></i> Database HPP SKU
                 </a>
@@ -484,6 +487,142 @@
                     <p class="section-desc">Saran cerdas berdasarkan rasio persentase performa saluran omset untuk menyeimbangkan profitabilitas toko.</p>
                     <div class="recommendations-container" id="channel-recommendations-list">
                         <!-- Populated via Javascript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB BCG: ANALISIS PORTFOLIO PRODUK -->
+            <section id="tab-bcg" class="tab-content">
+                <div class="header-title-group">
+                    <h2 class="header-title"><i class="fas fa-th-large text-cyan" style="margin-right: 10px;"></i>Analisis Portofolio BCG Produk</h2>
+                    <p class="header-subtitle">Analisis produk terlaris, potensial, magnet traffic, dan slow-moving menggunakan data ekspor Kompas TikTok Shop.</p>
+                </div>
+
+                <!-- Excel Uploader Card for BCG -->
+                <div class="card mb-4" style="border: 1px dashed var(--accent-cyan); background: rgba(37, 244, 238, 0.02); margin-top: 20px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-file-excel"></i> Pengunggah Laporan Kinerja Produk
+                    </h3>
+                    <p class="section-desc" style="margin-bottom: 12px;">Unggah berkas ekspor <strong>Kompas Toko > Analisis Produk</strong> (.xlsx) Anda untuk memetakan produk ke dalam kuadran BCG secara otomatis.</p>
+                    
+                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <label class="btn btn-cyan btn-sm" for="input-bcg-file" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: normal; margin-bottom: 0; padding: 8px 16px;">
+                            <i class="fas fa-upload"></i> Pilih Berkas Kinerja Produk
+                        </label>
+                        <input type="file" id="input-bcg-file" accept=".xlsx, .csv" style="display: none;">
+                        <span id="bcg-file-status" style="font-size: 13px; color: var(--text-muted);">Belum ada file diunggah</span>
+                    </div>
+                </div>
+
+                <!-- Threshold Controls Card -->
+                <div class="card mb-4" style="margin-bottom: 20px;">
+                    <h3 style="margin-top: 0; margin-bottom: 6px; font-size: 14.5px; color: #FFF;">Ambang Batas Pembagian Kuadran (Thresholds)</h3>
+                    <p class="section-desc" style="margin-bottom: 15px;">Sesuaikan ambang batas performa traffic dan tingkat konversi produk di bawah ini.</p>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="bcg-threshold-traffic" style="display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Min. Impresi Unik (Sumbu Y - Traffic)</label>
+                            <input type="number" id="bcg-threshold-traffic" value="1000" min="1" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label for="bcg-threshold-cvr" style="display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; font-weight: 600;">Min. Konversi / CTOR % (Sumbu X - CVR)</label>
+                            <input type="number" id="bcg-threshold-cvr" value="1.5" min="0.1" step="0.1" style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; color: #FFF; padding: 10px; font-family: inherit; font-size: 13.5px; outline: none;">
+                        </div>
+                        <div>
+                            <button type="button" id="btn-apply-bcg-thresholds" class="btn btn-cyan" style="padding: 10px 20px; font-weight: 600; border-radius: 8px; height: 38px; display: inline-flex; align-items: center; justify-content: center;">Terapkan Batasan</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Results Area -->
+                <div id="bcg-results-area" style="display: none;">
+                    <!-- KPI Cards Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card card">
+                            <div class="kpi-icon-container" style="background: rgba(37, 244, 238, 0.1); color: var(--accent-cyan);">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span class="kpi-label">Bintang (Star)</span>
+                                <span class="kpi-value" id="bcg-count-star">0</span>
+                                <span class="kpi-subtext" id="bcg-gmv-star">GMV: Rp 0</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card card">
+                            <div class="kpi-icon-container" style="background: rgba(255, 170, 0, 0.1); color: var(--accent-orange);">
+                                <i class="fas fa-question-circle"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span class="kpi-label">Tanda Tanya (Question Mark)</span>
+                                <span class="kpi-value" id="bcg-count-qmark">0</span>
+                                <span class="kpi-subtext" id="bcg-gmv-qmark">GMV: Rp 0</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card card">
+                            <div class="kpi-icon-container" style="background: rgba(0, 255, 135, 0.1); color: var(--accent-green);">
+                                <i class="fas fa-cow"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span class="kpi-label">Sapi Perah (Cash Cow)</span>
+                                <span class="kpi-value" id="bcg-count-cow">0</span>
+                                <span class="kpi-subtext" id="bcg-gmv-cow">GMV: Rp 0</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card card">
+                            <div class="kpi-icon-container" style="background: rgba(254, 44, 85, 0.1); color: var(--accent-pink);">
+                                <i class="fas fa-dog"></i>
+                            </div>
+                            <div class="kpi-content">
+                                <span class="kpi-label">Anjing (Dog)</span>
+                                <span class="kpi-value" id="bcg-count-dog">0</span>
+                                <span class="kpi-subtext" id="bcg-gmv-dog">GMV: Rp 0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Table Card -->
+                    <div class="card mt-4" style="margin-top: 20px;">
+                        <h3 style="margin-top: 0; margin-bottom: 6px; color: #FFF;">Ringkasan Kinerja Portofolio BCG</h3>
+                        <p class="section-desc" style="margin-bottom: 15px;">Persentase kontribusi omset dan volume produk per kuadran terhadap keseluruhan toko.</p>
+                        <div class="table-responsive">
+                            <table class="premium-table" id="bcg-summary-table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left;">Kategori Kuadran BCG</th>
+                                        <th style="text-align: center; width: 150px;">Jumlah Produk</th>
+                                        <th style="text-align: right;">Total Omset (GMV)</th>
+                                        <th style="text-align: right; width: 180px;">Persentase Kontribusi Omset</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bcg-summary-table-body">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Details and Actions Section -->
+                    <div class="charts-grid-two mt-4" style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                        <!-- Stars & QMarks -->
+                        <div class="card" style="padding: 20px;">
+                            <h3 style="color: var(--accent-cyan); display: flex; align-items: center; gap: 8px; margin-top: 0; font-size: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                                <i class="fas fa-trophy text-cyan"></i> Lini Produk Unggulan (Stars & Question Marks)
+                            </h3>
+                            <p class="section-desc" style="margin-bottom: 15px;">Daftar produk terbaik dan produk potensial yang membutuhkan dorongan traffic.</p>
+                            <div id="bcg-list-stars-qmarks" style="max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 5px;">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Cows & Dogs -->
+                        <div class="card" style="padding: 20px;">
+                            <h3 style="color: var(--accent-pink); display: flex; align-items: center; gap: 8px; margin-top: 0; font-size: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                                <i class="fas fa-exclamation-triangle text-pink" style="color: var(--accent-pink) !important;"></i> Evaluasi & Perbaikan (Cash Cows & Dogs)
+                            </h3>
+                            <p class="section-desc" style="margin-bottom: 15px;">Daftar produk dengan kebocoran konversi (Cash Cows) dan produk mati (Dogs) beserta solusinya.</p>
+                            <div id="bcg-list-cows-dogs" style="max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 5px;">
+                                <!-- Populated via JS -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
