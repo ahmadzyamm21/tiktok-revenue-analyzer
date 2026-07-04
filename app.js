@@ -1826,7 +1826,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const isAppealWonRow = typeVal.includes('kompensasi') || 
                                                typeVal.includes('compensation') || 
                                                typeVal.includes('banding') || 
-                                               typeVal.includes('appeal');
+                                               typeVal.includes('appeal') ||
+                                               typeVal.includes('penggantian') ||
+                                               typeVal.includes('reimbursement');
                         if (isAppealWonRow) {
                             tempParsedOrderPayouts[orderId].isAppealWon = true;
                         }
@@ -3278,7 +3280,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalHpp = (isCancelled || (isReturnedOnly && resolution !== 'rugi')) ? 0 : (item.qty * hppVal);
             const netProfit = isSettled ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -(item.qty * hppVal) : 0);
 
-            const assocIdStr = payoutInfo && payoutInfo.associatedOrderId ? payoutInfo.associatedOrderId : '';
+            const assocIdStr = payoutInfo && payoutInfo.associatedOrderId && payoutInfo.associatedOrderId !== item.orderId ? payoutInfo.associatedOrderId : '';
             const row = [
                 idx + 1,
                 item.date || '',
@@ -3560,7 +3562,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="padding: 12px 8px;">${item.date || '-'}</td>
                     <td style="padding: 12px 8px;"><span class="text-cyan font-mono" style="font-size: 11px;">${item.trackingId || '-'}</span></td>
                     <td style="padding: 12px 8px;"><span class="text-muted font-mono" style="font-size: 11px;">${item.orderId}</span></td>
-                    <td style="padding: 12px 8px;"><span class="text-muted font-mono" style="font-size: 11px;">${(payoutInfo && payoutInfo.associatedOrderId) ? payoutInfo.associatedOrderId : '-'}</span></td>
+                    <td style="padding: 12px 8px;"><span class="text-muted font-mono" style="font-size: 11px;">${(payoutInfo && payoutInfo.associatedOrderId && payoutInfo.associatedOrderId !== item.orderId) ? payoutInfo.associatedOrderId : '-'}</span></td>
                     <td style="padding: 12px 8px;">
                         <div style="font-weight: 500; font-size: 13px; color: #FFF; text-align: left;">${item.product}</div>
                         <div style="font-size: 11px; color: var(--text-muted); text-align: left;">${item.sku} | ${item.variation || '-'}</div>
