@@ -3459,8 +3459,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filterStatus === 'returned' && !isReturnedOnly) return;
 
             // Apply search query
+            const assocIdStr = payoutInfo && payoutInfo.associatedOrderId ? payoutInfo.associatedOrderId.toLowerCase() : '';
             const matchSearch = !query || 
                 item.orderId.toLowerCase().includes(query) ||
+                assocIdStr.includes(query) ||
                 (item.trackingId || '').toLowerCase().includes(query) ||
                 (item.product || '').toLowerCase().includes(query) ||
                 (item.sku || '').toLowerCase().includes(query);
