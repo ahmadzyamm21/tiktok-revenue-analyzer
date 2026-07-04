@@ -2625,7 +2625,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (typeof renderStockAlerts === 'function') renderStockAlerts();
         if (typeof renderBestsellers === 'function') renderBestsellers();
-        if (typeof populateCalculatorProductDropdown === 'function') populateCalculatorProductDropdown();
     }
 
     if (hppSkuForm) {
@@ -3800,7 +3799,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------------------------------------
     // Product Calculator Logic
     // ------------------------------------------
-    const calcProductSelect = document.getElementById('calc-product-select');
     const calcHpp = document.getElementById('calc-hpp');
     const calcPacking = document.getElementById('calc-packing');
     const calcPrice = document.getElementById('calc-price');
@@ -3943,48 +3941,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function populateCalculatorProductDropdown() {
-        if (!calcProductSelect) return;
-        calcProductSelect.innerHTML = '<option value="custom">-- Input Manual --</option>';
-        
-        const skus = Object.values(hppSkuDb);
-        if (skus.length === 0) return;
-        
-        skus.sort((a, b) => (a.product || '').localeCompare(b.product || ''));
-        
-        skus.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.sku;
-            opt.textContent = `${s.product || s.sku} (${s.sku})`;
-            calcProductSelect.appendChild(opt);
-        });
-    }
-
-    if (calcProductSelect) {
-        calcProductSelect.addEventListener('change', () => {
-            const sku = calcProductSelect.value;
-            if (sku !== 'custom' && hppSkuDb[sku]) {
-                if (calcHpp) calcHpp.value = hppSkuDb[sku].hpp || 0;
-            }
-            updateProductCalculator();
-        });
-    }
-
     // Add event listeners for instant updates
     const inputsToWatch = [calcHpp, calcPacking, calcPrice, calcAdminPct, calcAdminFlat, calcOngkirPct, calcCashbackPct, calcVoucher, calcAdsFee];
     inputsToWatch.forEach(input => {
         if (input) {
             input.addEventListener('input', () => {
-                if (input === calcHpp) {
-                    if (calcProductSelect) calcProductSelect.value = 'custom';
-                }
                 updateProductCalculator();
             });
         }
     });
 
     // Run once on load to initialize values
-    populateCalculatorProductDropdown();
     updateProductCalculator();
 
     // ------------------------------------------
