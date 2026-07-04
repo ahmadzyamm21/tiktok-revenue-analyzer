@@ -4134,6 +4134,69 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Export & Import Backup handlers
+    const btnExportCalc = document.getElementById('btn-export-calc');
+    if (btnExportCalc) {
+        btnExportCalc.addEventListener('click', () => {
+            // Save current active tab values first
+            const currentActive = calcTabsDb.find(t => t.id === activeCalcTabId);
+            if (currentActive) {
+                if (calcHpp) currentActive.hpp = parseFloat(calcHpp.value) || 0;
+                if (calcPrice) currentActive.price = parseFloat(calcPrice.value) || 0;
+                if (calcVoucher) currentActive.voucher = parseFloat(calcVoucher.value) || 0;
+                if (calcAdminPct) currentActive.adminPct = parseFloat(calcAdminPct.value) || 0;
+                if (calcDynamicCommissionPct) currentActive.dynamicCommissionPct = parseFloat(calcDynamicCommissionPct.value) || 0;
+                if (calcGrowthXtraPct) currentActive.growthXtraPct = parseFloat(calcGrowthXtraPct.value) || 0;
+                if (calcSapPct) currentActive.sapPct = parseFloat(calcSapPct.value) || 0;
+                if (calcAffiliatePct) currentActive.affiliatePct = parseFloat(calcAffiliatePct.value) || 0;
+                if (calcServiceFee) currentActive.serviceFee = parseFloat(calcServiceFee.value) || 0;
+                if (calcLogisticFee) currentActive.logisticFee = parseFloat(calcLogisticFee.value) || 0;
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(calcTabsDb, null, 4));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "kalkulator_produk_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Backup data kalkulator berhasil diunduh.', 'success');
+        });
+    }
+
+    const btnImportCalc = document.getElementById('btn-import-calc');
+    const importCalcFile = document.getElementById('import-calc-file');
+    if (btnImportCalc && importCalcFile) {
+        btnImportCalc.addEventListener('click', () => {
+            importCalcFile.click();
+        });
+
+        importCalcFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const importedData = JSON.parse(evt.target.result);
+                    if (Array.isArray(importedData) && importedData.length > 0 && importedData[0].name) {
+                        calcTabsDb = importedData;
+                        activeCalcTabId = calcTabsDb[0].id;
+                        saveCalcTabsDb();
+                        switchCalcTab(activeCalcTabId);
+                        showToast('Data kalkulator berhasil dipulihkan dari file backup!', 'success');
+                    } else {
+                        showToast('Format file backup tidak valid.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Gagal membaca file backup. Pastikan file berformat JSON.', 'error');
+                }
+                importCalcFile.value = ''; // Reset file input
+            };
+            reader.readAsText(file);
+        });
+    }
+
     function updateProductCalculator() {
         if (!calcHpp || !calcPrice) return;
 

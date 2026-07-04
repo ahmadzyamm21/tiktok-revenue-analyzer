@@ -927,9 +927,18 @@
                         <div style="height: 1px; background: rgba(255,255,255,0.05); margin-bottom: 15px;"></div>
                         <div id="calc-tabs-container" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                             <!-- Dynamic tabs will be inserted here -->
-                            <button type="button" id="btn-add-calc-tab" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px dashed rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s;">
+                            <button type="button" id="btn-add-calc-tab" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 6px 12px; border-radius: 20px; border: 1px dashed rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.8); cursor: pointer; transition: all 0.2s; margin-right: auto;">
                                 <i class="fas fa-plus"></i> Tambah Produk
                             </button>
+                            
+                            <button type="button" id="btn-export-calc" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 6px 12px; border-radius: 20px; background: rgba(0,255,135,0.05); border: 1px solid rgba(0,255,135,0.2); color: var(--accent-green); cursor: pointer; transition: all 0.2s;" title="Unduh semua data produk sebagai file backup .json">
+                                <i class="fas fa-download"></i> Ekspor Backup (.json)
+                            </button>
+                            
+                            <button type="button" id="btn-import-calc" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 6px 12px; border-radius: 20px; background: rgba(37,244,238,0.05); border: 1px solid rgba(37,244,238,0.2); color: var(--accent-cyan); cursor: pointer; transition: all 0.2s;" title="Upload file backup .json untuk memulihkan data kalkulator">
+                                <i class="fas fa-upload"></i> Impor Backup
+                            </button>
+                            <input type="file" id="import-calc-file" accept=".json" style="display: none;">
                         </div>
                     </div>
 
