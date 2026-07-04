@@ -3859,6 +3859,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (savedTabs) {
                 calcTabsDb = JSON.parse(savedTabs);
             }
+            // Remove old default tab named "Produk Utama"
+            if (calcTabsDb && calcTabsDb.length > 0) {
+                calcTabsDb = calcTabsDb.filter(t => t.name !== 'Produk Utama');
+            }
             if (savedActiveId && calcTabsDb.some(t => t.id === savedActiveId)) {
                 activeCalcTabId = savedActiveId;
             }
@@ -3916,8 +3920,8 @@ document.addEventListener('DOMContentLoaded', () => {
             saveCalcTabsDb();
         }
 
-        if (!activeCalcTabId) {
-            activeCalcTabId = calcTabsDb[0].id;
+        if (!activeCalcTabId || !calcTabsDb.some(t => t.id === activeCalcTabId)) {
+            activeCalcTabId = calcTabsDb[0] ? calcTabsDb[0].id : '';
         }
     }
 
