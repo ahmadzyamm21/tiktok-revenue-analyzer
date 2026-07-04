@@ -2103,6 +2103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hppProductName = document.getElementById('hpp-product-name');
     const hppVariation = document.getElementById('hpp-variation');
     const hppUnitValue = document.getElementById('hpp-unit-value');
+    const hppStockValue = document.getElementById('hpp-stock-value');
     const btnCancelHppEdit = document.getElementById('btn-cancel-hpp-edit');
     const btnBackupHpp = document.getElementById('btn-backup-hpp');
     const inputRestoreHpp = document.getElementById('input-restore-hpp');
@@ -2114,6 +2115,139 @@ document.addEventListener('DOMContentLoaded', () => {
     let hppEditSku = null;
     let tempParsedOrders = [];
     let tempParsedOrderPayouts = {};
+
+    function renderStockAlerts() {
+        const tableBody = document.getElementById('stock-alerts-table-body');
+        const alertCard = document.getElementById('card-stock-alerts');
+        if (!tableBody || !alertCard) return;
+
+        tableBody.innerHTML = '';
+        
+        const velocityMap = {};
+        if (orderItemsDb && orderItemsDb.length > 0) {
+            let maxDateTime = 0;
+            orderItemsDb.forEach(item => {
+                if (item.date) {
+                    const t = new Date(item.date).getTime();
+                    if (t > maxDateTime) maxDateTime = t;
+                }
+            });
+            if (maxDateTime > 0) {
+                const thirtyDaysAgo = maxDateTime - (30 * 24 * 60 * 60 * 1000);
+                orderItemsDb.forEach(item => {
+                    if (!item.sku || !item.date) return;
+                    const statusLower = (item.status || '').toLowerCase();
+                    const isCancelled = statusLower.includes('batal') || statusLower.includes('cancel');
+                    if (isCancelled) return;
+
+                    const t = new Date(item.date).getTime();
+                    if (t >= thirtyDaysAgo && t <= maxDateTime) {
+                        if (!velocityMap[item.sku]) {
+                            velocityMap[item.sku] = 0;
+                        }
+                        velocityMap[item.sku] += (parseInt(item.qty) || 1);
+                    }
+                });
+                for (const sku in velocityMap) {
+                    velocityMap[sku] = velocityMap[sku] / 30;
+                }
+            }
+        }
+
+        const skus = Object.values(hppSkuDb);
+        const alertsList = [];
+
+        skus.forEach(s => {
+            const stock = s.stock !== undefined ? parseInt(s.stock) : null;
+            if (stock === null) return; // Skip if stock is not defined or is not set
+
+            const dailyVelocity = velocityMap[s.sku] || 0;
+            let daysRemaining = Infinity;
+            if (dailyVelocity > 0) {
+                daysRemaining = stock / dailyVelocity;
+            }
+
+            // Trigger alert if stock is 0 OR days remaining <= 7
+            if (stock === 0 || daysRemaining <= 7) {
+                alertsList.push({
+                    sku: s.sku,
+                    product: s.product || '-',
+                    variation: s.variation || '-',
+                    stock: stock,
+                    velocity: dailyVelocity,
+                    daysRemaining: daysRemaining
+                });
+            }
+        });
+
+        if (alertsList.length === 0) {
+            alertCard.style.display = 'none';
+            return;
+        }
+
+        // Sort: out of stock first, then by days remaining ascending
+        alertsList.sort((a, b) => {
+            if (a.stock === 0 && b.stock > 0) return -1;
+            if (a.stock > 0 && b.stock === 0) return 1;
+            return a.daysRemaining - b.daysRemaining;
+        });
+
+        alertCard.style.display = 'block';
+
+        alertsList.forEach(alert => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid var(--border-color)';
+
+            const tdSku = document.createElement('td');
+            tdSku.innerHTML = `<span style="font-weight: 500; color: var(--accent-cyan); font-family: monospace;">${alert.sku}</span><br><span style="font-size:11px; color: var(--text-muted);">${alert.variation}</span>`;
+            tdSku.style.padding = '12px 8px';
+            tdSku.style.textAlign = 'left';
+            tr.appendChild(tdSku);
+
+            const tdProduct = document.createElement('td');
+            tdProduct.textContent = alert.product;
+            tdProduct.style.padding = '12px 8px';
+            tdProduct.style.textAlign = 'left';
+            tr.appendChild(tdProduct);
+
+            const tdStock = document.createElement('td');
+            tdStock.textContent = alert.stock.toLocaleString('id-ID');
+            tdStock.style.textAlign = 'right';
+            tdStock.style.padding = '12px 8px';
+            tdStock.style.fontWeight = '600';
+            if (alert.stock === 0) {
+                tdStock.style.color = 'var(--accent-pink)';
+            }
+            tr.appendChild(tdStock);
+
+            const tdVelocity = document.createElement('td');
+            tdVelocity.textContent = alert.velocity.toFixed(2);
+            tdVelocity.style.textAlign = 'right';
+            tdVelocity.style.padding = '12px 8px';
+            tr.appendChild(tdVelocity);
+
+            const tdDays = document.createElement('td');
+            tdDays.textContent = alert.stock === 0 ? '-' : (alert.daysRemaining === Infinity ? '∞' : `${alert.daysRemaining.toFixed(1)} Hari`);
+            tdDays.style.textAlign = 'right';
+            tdDays.style.padding = '12px 8px';
+            tdDays.style.fontWeight = '600';
+            tr.appendChild(tdDays);
+
+            const tdStatus = document.createElement('td');
+            tdStatus.style.textAlign = 'center';
+            tdStatus.style.padding = '12px 8px';
+            if (alert.stock === 0) {
+                tdStatus.innerHTML = '<span class="status-pill danger" style="padding: 4px 8px; border-radius: 12px; font-size:11px; font-weight:600; background: rgba(254, 44, 85, 0.1); color: var(--accent-pink);">Stok Habis</span>';
+            } else if (alert.daysRemaining <= 3) {
+                tdStatus.innerHTML = '<span class="status-pill danger" style="padding: 4px 8px; border-radius: 12px; font-size:11px; font-weight:600; background: rgba(254, 44, 85, 0.1); color: var(--accent-pink);">Kritis</span>';
+            } else {
+                tdStatus.innerHTML = '<span class="status-pill warning" style="padding: 4px 8px; border-radius: 12px; font-size:11px; font-weight:600; background: rgba(255, 170, 0, 0.1); color: var(--accent-orange);">Peringatan</span>';
+            }
+            tr.appendChild(tdStatus);
+
+            tableBody.appendChild(tr);
+        });
+    }
 
     function renderHppTable() {
         if (!hppTableBody) return;
@@ -2132,7 +2266,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (filtered.length === 0) {
-            hppTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-gray">Tidak ada data SKU ditemukan. Silakan tambahkan baru atau impor dari JSON.</td></tr>';
+            hppTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-gray">Tidak ada data SKU ditemukan. Silakan tambahkan baru atau impor dari JSON.</td></tr>';
+            if (typeof renderStockAlerts === 'function') renderStockAlerts();
             return;
         }
 
@@ -2162,6 +2297,13 @@ document.addEventListener('DOMContentLoaded', () => {
             tdHpp.style.color = 'var(--accent-green)';
             tr.appendChild(tdHpp);
 
+            const tdStock = document.createElement('td');
+            tdStock.textContent = (s.stock !== undefined) ? s.stock.toLocaleString('id-ID') : '0';
+            tdStock.style.textAlign = 'right';
+            tdStock.style.fontWeight = '500';
+            tdStock.style.color = (s.stock && s.stock > 0) ? '#FFF' : 'var(--accent-pink)';
+            tr.appendChild(tdStock);
+
             const tdActions = document.createElement('td');
             tdActions.style.textAlign = 'center';
             
@@ -2178,8 +2320,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 hppProductName.value = s.product || '';
                 hppVariation.value = s.variation || '';
                 hppUnitValue.value = s.hpp || 0;
+                if (hppStockValue) hppStockValue.value = s.stock || 0;
                 
-                document.getElementById('hpp-form-title').textContent = 'Perbarui HPP SKU';
+                document.getElementById('hpp-form-title').textContent = 'Perbarui HPP & Stok SKU';
                 btnCancelHppEdit.style.display = 'inline-block';
             });
             tdActions.appendChild(btnEdit);
@@ -2205,6 +2348,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.appendChild(tdActions);
             hppTableBody.appendChild(tr);
         });
+
+        if (typeof renderStockAlerts === 'function') renderStockAlerts();
     }
 
     if (hppSkuForm) {
@@ -2214,6 +2359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const product = hppProductName.value.trim();
             const variation = hppVariation.value.trim();
             const hppVal = parseFloat(hppUnitValue.value) || 0;
+            const stockVal = hppStockValue ? (parseInt(hppStockValue.value) || 0) : 0;
 
             if (!sku) {
                 showToast('Kode SKU tidak boleh kosong!', 'error');
@@ -2224,7 +2370,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 sku: sku,
                 product: product,
                 variation: variation,
-                hpp: hppVal
+                hpp: hppVal,
+                stock: stockVal
             };
 
             saveHppDb();
@@ -2237,7 +2384,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('hpp-form-title').textContent = 'Atur HPP per SKU';
             btnCancelHppEdit.style.display = 'none';
 
-            showToast(`HPP untuk SKU ${sku} berhasil disimpan.`, 'success');
+            showToast(`SKU ${sku} berhasil disimpan.`, 'success');
         });
     }
 

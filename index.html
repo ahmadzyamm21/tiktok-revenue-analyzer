@@ -148,6 +148,31 @@
                     </div>
                 </div>
 
+                <!-- ALERTS STOK (INVENTORY ALERTS) -->
+                <div class="card mt-4" id="card-stock-alerts" style="margin-top: 20px; display: none;">
+                    <h3 style="margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-exclamation-triangle text-pink" style="color: var(--accent-pink) !important;"></i> Peringatan Stok & Prediksi Habis
+                    </h3>
+                    <p class="section-desc" style="margin-bottom: 15px;">Daftar SKU yang stoknya menipis atau habis berdasarkan kecepatan penjualan harian 30 hari terakhir.</p>
+                    <div class="table-responsive">
+                        <table class="premium-table" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Seller SKU</th>
+                                    <th style="text-align: left;">Nama Produk</th>
+                                    <th style="text-align: right; width: 100px;">Stok Saat Ini</th>
+                                    <th style="text-align: right; width: 130px;">Kecepatan Jual/Hari</th>
+                                    <th style="text-align: right; width: 140px;">Estimasi Sisa Hari</th>
+                                    <th style="text-align: center; width: 120px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-alerts-table-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- RINCIAN LABA RUGI (P&L SUMMARY) -->
                 <div class="card mt-4" id="card-pnl-summary" style="margin-top: 20px;">
                     <h3 style="margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
@@ -659,6 +684,14 @@
                                 </div>
                             </div>
 
+                            <div class="form-group mt-3" style="margin-top: 15px;">
+                                <label for="hpp-stock-value">Stok Saat Ini (Pcs)</label>
+                                <div class="input-with-addon">
+                                    <span class="addon"><i class="fas fa-boxes"></i></span>
+                                    <input type="number" id="hpp-stock-value" placeholder="100" min="0" value="0">
+                                </div>
+                            </div>
+
                             <div style="display: flex; gap: 8px; margin-top: 20px;">
                                 <button type="button" class="btn btn-secondary flex-1" id="btn-cancel-hpp-edit" style="display: none;">Batal</button>
                                 <button type="submit" class="btn btn-cyan flex-1" id="btn-save-hpp-sku"><i class="fas fa-save"></i> Simpan HPP</button>
@@ -699,6 +732,7 @@
                                             <th>Nama Produk</th>
                                             <th>Variasi</th>
                                             <th style="text-align: right;">HPP Satuan</th>
+                                            <th style="text-align: right; width: 90px;">Stok</th>
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
