@@ -289,6 +289,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        let returnResolutions = {};
+        try {
+            returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
+        } catch (e) {
+            returnResolutions = {};
+        }
+
         const dailyAgg = {};
         const orderIdCounts = {};
         orderItemsDb.forEach(item => {
@@ -303,7 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const payoutInfo = orderPayouts[item.orderId];
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
-            const isSettled = payoutInfo && payoutInfo.amount > 0;
+            
+            const resolution = returnResolutions[item.orderId] || 'pending';
+            const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
+            
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
@@ -344,12 +354,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 agg.gross += itemGross;
 
-                // Only calculate HPP for completed orders
-                if (statusLower.includes('selesai') || statusLower.includes('completed')) {
-                    const skuInfo = hppSkuDb[item.sku];
-                    const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-                    agg.hpp += (item.qty || 1) * hppVal;
+                // Calculate HPP based on status and return resolutions:
+                // Selesai/completed atau Banding Menang -> yes HPP
+                // Retur tapi barang hilang/rusak (rugi HPP) -> yes HPP
+                // Retur tapi barang kembali ke stok -> no HPP
+                let calculatedHpp = 0;
+                const skuInfo = hppSkuDb[item.sku];
+                const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                const itemHpp = (item.qty || 1) * hppVal;
+
+                if (statusLower.includes('selesai') || statusLower.includes('completed') || resolution === 'menang') {
+                    calculatedHpp = itemHpp;
+                } else if (isReturnedOnly && resolution === 'rugi') {
+                    calculatedHpp = itemHpp;
                 }
+                agg.hpp += calculatedHpp;
 
                 if (!agg.uniqueOrders.has(item.orderId)) {
                     agg.uniqueOrders.add(item.orderId);
@@ -357,7 +376,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     agg.orderIds.push(item.orderId);
 
                     if (payoutInfo) {
-                        agg.refunds += (payoutInfo.refund || 0);
+                        // If Banding Menang, refunds is treated as 0 or not calculated as loss
+                        const refundAmount = resolution === 'menang' ? 0 : (payoutInfo.refund || 0);
+                        agg.refunds += refundAmount;
                         agg.vouchers += (payoutInfo.voucher || 0);
                         agg.adminFees += (payoutInfo.adminFees || 0);
                         agg.adsSpend += (payoutInfo.ads || 0);
@@ -452,12 +473,22 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let sumGross = 0;
             const uniqueOrderIds = new Set();
+            let returnResolutions = {};
+            try {
+                returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
+            } catch (e) {
+                returnResolutions = {};
+            }
+
             orderItemsDb.forEach(item => {
                 if (!item.date || !item.date.startsWith(analysisMonth)) return;
                 const payoutInfo = orderPayouts[item.orderId];
                 const statusLower = (item.status || '').toLowerCase();
                 const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
-                const isSettled = payoutInfo && payoutInfo.amount > 0;
+                
+                const resolution = returnResolutions[item.orderId] || 'pending';
+                const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
+                
                 const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
                 const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
                 const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
@@ -3264,6 +3295,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const query = searchPayouts ? searchPayouts.value.toLowerCase().trim() : '';
         const filterStatus = filterPayoutsStatus ? filterPayoutsStatus.value : 'all';
 
+        let returnResolutions = {};
+        try {
+            returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
+        } catch (e) {
+            returnResolutions = {};
+        }
+
         const totalOrderIds = new Set();
         const settledOrderIds = new Set();
         const returnedOrderIds = new Set();
@@ -3282,7 +3320,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const payoutInfo = orderPayouts[item.orderId];
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
-            const isSettled = payoutInfo && payoutInfo.amount > 0;
+            
+            const resolution = returnResolutions[item.orderId] || 'pending';
+            const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
+            
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
@@ -3300,11 +3341,37 @@ document.addEventListener('DOMContentLoaded', () => {
                                 (payoutInfo && payoutInfo.isReturned) ||
                                 (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                 (item.returnQty && item.returnQty > 0)) && !hasValidShipment;
-            const fullSettlementAmt = isSettled ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
+            
+            const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
+            const fullSettlementAmt = isSettled ? (payoutInfo ? (payoutInfo.originalAmount || payoutInfo.amount) : itemOriginalPrice) : 0;
             const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
-            const statusStr = isSettled ? 'Sudah Cair' : 
-                              (isReturnedOnly ? 'Retur' : 
-                              (isCancelled ? 'Dibatalkan' : 'Belum Cair'));
+            
+            let statusStr = 'Belum Cair';
+            let statusClass = 'status-pill warning';
+
+            if (isSettled) {
+                if (resolution === 'menang') {
+                    statusStr = 'Banding Menang';
+                    statusClass = 'status-pill success';
+                } else {
+                    statusStr = 'Sudah Cair';
+                    statusClass = 'status-pill success';
+                }
+            } else if (isReturnedOnly) {
+                if (resolution === 'kembali') {
+                    statusStr = 'Barang Kembali';
+                    statusClass = 'status-pill info';
+                } else if (resolution === 'rugi') {
+                    statusStr = 'Rugi HPP';
+                    statusClass = 'status-pill danger';
+                } else {
+                    statusStr = 'Retur (Pending)';
+                    statusClass = 'status-pill warning';
+                }
+            } else if (isCancelled) {
+                statusStr = 'Dibatalkan';
+                statusClass = 'status-pill danger';
+            }
 
             // Apply filters
             if (filterStatus === 'settled' && !isSettled) return;
@@ -3331,15 +3398,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 settledAmountSum += settlementAmt;
             } else if (isReturnedOnly) {
                 returnedOrderIds.add(item.orderId);
-                returnedHppSum += itemHpp;
+                if (resolution === 'rugi') {
+                    returnedHppSum += itemHpp;
+                }
             } else if (isCancelled) {
                 cancelledOrderIds.add(item.orderId);
             }
 
-            const totalHpp = (isCancelled || isReturnedOnly) ? 0 : itemHpp;
-            const netProfit = isSettled ? (settlementAmt - totalHpp) : 0;
-
-            const statusClass = isSettled ? 'status-pill success' : (isCancelled ? 'status-pill danger' : 'status-pill warning');
+            const totalHpp = (isCancelled || (isReturnedOnly && resolution !== 'rugi')) ? 0 : itemHpp;
+            const netProfit = isSettled ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -itemHpp : 0);
 
             const itemAdmin = (payoutInfo && payoutInfo.adminFees ? payoutInfo.adminFees : 0) / (orderIdCounts[item.orderId] || 1);
             const itemVoucher = (payoutInfo && payoutInfo.voucher ? payoutInfo.voucher : 0) / (orderIdCounts[item.orderId] || 1);
@@ -3456,6 +3523,33 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
 
+                        <!-- Return Resolution Selector -->
+                        ${(() => {
+                            if (isReturnedOnly) {
+                                return `
+                                    <div style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.2); padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+                                        <div style="text-align: left;">
+                                            <div style="font-weight: 600; color: #FFF; font-size: 13px;">
+                                                <i class="fas fa-exclamation-triangle" style="color: var(--accent-orange); margin-right: 6px;"></i> Status Resolusi Masalah Retur/Batal
+                                            </div>
+                                            <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px;">
+                                                Pilih penyelesaian retur ini untuk menyesuaikan HPP dan laporan laba/rugi toko Anda.
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <select onchange="updateReturnResolution('${item.orderId}', this.value)" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #FFF; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-family: inherit; cursor: pointer; outline: none;">
+                                                <option value="pending" ${resolution === 'pending' ? 'selected' : ''}>⏳ Retur Pending (Belum Selesai)</option>
+                                                <option value="menang" ${resolution === 'menang' ? 'selected' : ''}>🏆 Banding Menang (Dana Tetap Cair +)</option>
+                                                <option value="kembali" ${resolution === 'kembali' ? 'selected' : ''}>📦 Retur Sukses (Barang Kembali ke Stok)</option>
+                                                <option value="rugi" ${resolution === 'rugi' ? 'selected' : ''}>❌ Retur Hilang/Rusak (Rugi HPP -)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            return '';
+                        })()}
+
                         <!-- 9 Breakdown Cards Grid -->
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
                             ${cardsHtml}
@@ -3486,6 +3580,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('kpi-payouts-cancelled')) document.getElementById('kpi-payouts-cancelled').textContent = `${cancelledOrderIds.size} Order`;
         if (document.getElementById('kpi-payouts-cancelled-sub')) document.getElementById('kpi-payouts-cancelled-sub').textContent = 'Total Pesanan Dibatalkan';
     }
+
+    window.updateReturnResolution = function(orderId, val) {
+        let resolutions = {};
+        try {
+            resolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
+        } catch (e) {
+            resolutions = {};
+        }
+        resolutions[orderId] = val;
+        localStorage.setItem('tiktok_return_resolutions', JSON.stringify(resolutions));
+        showToast('Status resolusi retur berhasil diperbarui.', 'success');
+        
+        // Re-calculate and render everything
+        renderPayoutsTable();
+        calculateMetrics();
+        renderDailyLogs();
+    };
 
     if (searchPayouts) {
         searchPayouts.addEventListener('input', renderPayoutsTable);

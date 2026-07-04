@@ -678,6 +678,11 @@ input:focus, select:focus {
     color: var(--accent-pink);
     border: 1px solid rgba(254, 44, 85, 0.2);
 }
+.status-pill.info {
+    background-color: rgba(37, 244, 238, 0.1);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(37, 244, 238, 0.2);
+}
 
 /* Print CSS Media Query rules */
 @media print {
