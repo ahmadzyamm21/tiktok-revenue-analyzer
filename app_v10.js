@@ -3341,11 +3341,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let statusStr = 'Belum Cair';
             if (isSettled) {
-                statusStr = resolution === 'menang' ? 'Kompensasi' : 'Sudah Cair';
+                statusStr = resolution === 'menang' ? 'Pengembalian Dana (Banding Menang)' : 'Sudah Cair';
             } else if (isReturnedOnly) {
-                if (resolution === 'kembali') statusStr = 'Barang Kembali';
-                else if (resolution === 'rugi') statusStr = 'Rugi HPP';
-                else statusStr = 'Retur (Pending)';
+                if (resolution === 'kembali') statusStr = 'Pengembalian Dana (Tidak Mengajukan Banding)';
+                else if (resolution === 'rugi') statusStr = 'Pengembalian Dana (Banding Kalah)';
+                else statusStr = 'Pengembalian Dana (Pending)';
             } else if (isCancelled) {
                 statusStr = hasShipped ? 'Batal (Sudah Kirim)' : 'Batal (Belum Kirim)';
             } else if (isOnHold) {
@@ -3358,7 +3358,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
             const totalHpp = (isCancelled || (isReturnedOnly && resolution !== 'rugi')) ? 0 : (item.qty * hppVal);
-            const netProfit = isSettled ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -(item.qty * hppVal) : 0);
+            const netProfit = (isSettled || payoutInfo) ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -(item.qty * hppVal) : 0);
 
             const assocIdStr = payoutInfo && payoutInfo.associatedOrderId ? payoutInfo.associatedOrderId : item.orderId;
             const itemBasePriceVal = (payoutInfo && payoutInfo.subtotalSetelahDiskonPenjual ? payoutInfo.subtotalSetelahDiskonPenjual : 0) / (orderIdCounts[item.orderId] || 1);
@@ -3583,7 +3583,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isSettled) {
                 if (resolution === 'menang') {
-                    statusStr = 'Kompensasi';
+                    statusStr = 'Pengembalian Dana (Banding Menang)';
                     statusClass = 'status-pill success';
                 } else {
                     statusStr = 'Sudah Cair';
@@ -3591,13 +3591,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (isReturnedOnly) {
                 if (resolution === 'kembali') {
-                    statusStr = 'Barang Kembali';
+                    statusStr = 'Pengembalian Dana (Tidak Mengajukan Banding)';
                     statusClass = 'status-pill info';
                 } else if (resolution === 'rugi') {
-                    statusStr = 'Rugi HPP';
+                    statusStr = 'Pengembalian Dana (Banding Kalah)';
                     statusClass = 'status-pill danger';
                 } else {
-                    statusStr = 'Retur (Pending)';
+                    statusStr = 'Pengembalian Dana (Pending)';
                     statusClass = 'status-pill warning';
                 }
             } else if (isCancelled) {
@@ -3784,10 +3784,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                         </div>
                                         <div>
                                             <select onchange="updateReturnResolution('${item.orderId}', this.value)" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #FFF; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-family: inherit; cursor: pointer; outline: none;">
-                                                <option value="pending" ${resolution === 'pending' ? 'selected' : ''}>⏳ Retur Pending (Belum Selesai)</option>
-                                                <option value="menang" ${resolution === 'menang' ? 'selected' : ''}>🏆 Banding Menang (Dana Tetap Cair +)</option>
-                                                <option value="kembali" ${resolution === 'kembali' ? 'selected' : ''}>📦 Retur Sukses (Barang Kembali ke Stok)</option>
-                                                <option value="rugi" ${resolution === 'rugi' ? 'selected' : ''}>❌ Retur Hilang/Rusak (Rugi HPP -)</option>
+                                                <option value="pending" ${resolution === 'pending' ? 'selected' : ''}>⏳ Pengembalian Dana (Pending)</option>
+                                                <option value="menang" ${resolution === 'menang' ? 'selected' : ''}>🏆 Ajukan Banding Menang</option>
+                                                <option value="rugi" ${resolution === 'rugi' ? 'selected' : ''}>❌ Ajukan Banding Kalah</option>
+                                                <option value="kembali" ${resolution === 'kembali' ? 'selected' : ''}>📦 Tidak Mengajukan Banding</option>
                                             </select>
                                         </div>
                                     </div>
