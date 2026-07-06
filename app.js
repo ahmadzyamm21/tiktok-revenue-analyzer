@@ -3206,7 +3206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let csvContent = "\uFEFF"; // UTF-8 BOM for Excel compatibility
-        csvContent += "No,Tanggal Pemesanan,No. Resi (Tracking ID),ID Pesanan,ID Pesanan/Penyesuaian,Nama Produk,SKU,Variasi,Qty,Status,Omset,Dana Cair,HPP,Laba Bersih\n";
+        csvContent += "No,Tanggal Pemesanan,No. Resi (Tracking ID),ID Pesanan,ID Pesanan/Penyesuaian,Nama Produk,SKU,Variasi,Qty,Status,Keterangan,Omset,Dana Cair,HPP,Laba Bersih\n";
 
         let returnResolutions = {};
         try {
@@ -3357,16 +3357,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             let statusStr = 'Belum Cair';
-            if (isSettled) {
-                statusStr = resolution === 'menang' ? 'Pengembalian Dana (Banding Menang)' : 'Sudah Cair';
-            } else if (isReturnedOnly) {
-                if (resolution === 'kembali') statusStr = 'Pengembalian Dana (Tidak Mengajukan Banding)';
-                else if (resolution === 'rugi') statusStr = 'Pengembalian Dana (Banding Kalah)';
-                else statusStr = 'Pengembalian Dana (Pending)';
+            let keteranganStr = '-';
+
+            const isReturn = (resolution === 'menang' || isReturnedOnly);
+            if (isReturn) {
+                statusStr = 'Retur';
+                if (resolution === 'menang') {
+                    keteranganStr = 'Banding Menang';
+                } else if (resolution === 'kembali') {
+                    keteranganStr = 'Tidak Mengajukan Banding';
+                } else if (resolution === 'rugi') {
+                    keteranganStr = 'Pengembalian Dana (Banding Kalah)';
+                } else {
+                    keteranganStr = 'Pengembalian Dana (Pending)';
+                }
             } else if (isCancelled) {
-                statusStr = hasShipped ? 'Batal (Sudah Kirim)' : 'Batal (Belum Kirim)';
+                statusStr = 'Batal';
+                keteranganStr = hasShipped ? 'Sudah Kirim' : 'Belum Kirim';
+            } else if (isSettled) {
+                statusStr = 'Sudah Cair';
+                keteranganStr = '-';
             } else if (isOnHold) {
                 statusStr = 'On Hold';
+                keteranganStr = 'Transit >10 hari';
             }
 
             // Exclude rows without resi unless they are settled (cair/menang)
@@ -3392,6 +3405,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `"${(item.variation || '').replace(/"/g, '""')}"`,
                 item.qty,
                 `"${statusStr}"`,
+                `"${keteranganStr}"`,
                 Math.round(itemBasePrice),
                 Math.round(settlementAmt),
                 totalHpp,
@@ -3614,45 +3628,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let statusStr = 'Belum Cair';
             let statusClass = 'status-pill warning';
+            let keteranganStr = '-';
 
-            if (isSettled) {
+            const isReturn = (resolution === 'menang' || isReturnedOnly);
+            if (isReturn) {
+                statusStr = 'Retur';
                 if (resolution === 'menang') {
-                    statusStr = 'Pengembalian Dana (Banding Menang)';
                     statusClass = 'status-pill success';
-                } else {
-                    statusStr = 'Sudah Cair';
-                    statusClass = 'status-pill success';
-                }
-            } else if (isReturnedOnly) {
-                if (resolution === 'kembali') {
-                    statusStr = 'Pengembalian Dana (Tidak Mengajukan Banding)';
+                    keteranganStr = 'Banding Menang';
+                } else if (resolution === 'kembali') {
                     statusClass = 'status-pill info';
+                    keteranganStr = 'Tidak Mengajukan Banding';
                 } else if (resolution === 'rugi') {
-                    statusStr = 'Pengembalian Dana (Banding Kalah)';
                     statusClass = 'status-pill danger';
+                    keteranganStr = 'Pengembalian Dana (Banding Kalah)';
                 } else {
-                    statusStr = 'Pengembalian Dana (Pending)';
                     statusClass = 'status-pill warning';
+                    keteranganStr = 'Pengembalian Dana (Pending)';
                 }
             } else if (isCancelled) {
+                statusStr = 'Batal';
                 if (hasShipped) {
-                    statusStr = 'Batal (Sudah Kirim)';
                     statusClass = 'status-pill danger';
+                    keteranganStr = 'Sudah Kirim';
                 } else {
-                    statusStr = 'Batal (Belum Kirim)';
                     statusClass = 'status-pill warning';
+                    keteranganStr = 'Belum Kirim';
                 }
+            } else if (isSettled) {
+                statusStr = 'Sudah Cair';
+                statusClass = 'status-pill success';
+                keteranganStr = '-';
             } else if (isOnHold) {
                 statusStr = 'On Hold';
                 statusClass = 'status-pill danger';
+                keteranganStr = 'Transit >10 hari';
             }
 
             // Apply filters
             if (filterStatus === 'settled' && !isSettled) return;
-            if (filterStatus === 'pending' && (isSettled || isCancelled || isReturnedOnly)) return;
+            if (filterStatus === 'pending' && (isSettled || isCancelled || isReturn)) return;
             if (filterStatus === 'onhold' && !isOnHold) return;
             if (filterStatus === 'cancelled' && !isCancelled) return;
-            if (filterStatus === 'returned' && !isReturnedOnly) return;
+            if (filterStatus === 'returned' && !isReturn) return;
             // Exclude rows without resi unless they are settled (cair/menang)
             if (!hasResi && !isSettled) return;
             // Apply search query
@@ -3768,6 +3786,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td style="padding: 12px 8px;">${item.qty} Pcs</td>
                     <td style="padding: 12px 8px;"><span class="${statusClass}">${statusStr}</span></td>
+                    <td style="padding: 12px 8px; color: var(--text-muted); font-size: 12px; text-align: left;">${keteranganStr}</td>
                     <td style="padding: 12px 8px;"><strong class="${(isSettled || payoutInfo) ? (settlementAmt >= 0 ? 'text-green' : 'text-pink') : ''}">${(isSettled || payoutInfo) ? formatRupiah(settlementAmt) : '-'}</strong></td>
                     <td style="padding: 12px 8px; color: var(--text-muted);">${formatRupiah(totalHpp)}</td>
                     <td style="padding: 12px 8px;"><strong class="${(isSettled || payoutInfo) ? (netProfit >= 0 ? 'text-green' : 'text-pink') : ''}">${(isSettled || payoutInfo) ? formatRupiah(netProfit) : '-'}</strong></td>
@@ -3778,7 +3797,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                 </tr>
                 <tr id="detail-row-${idx}" class="detail-row" style="display: none; background: rgba(255, 255, 255, 0.015);">
-                    <td colspan="12" style="padding: 15px 20px;">
+                    <td colspan="13" style="padding: 15px 20px;">
                         <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #FFF; display: flex; align-items: center; gap: 6px; text-align: left;">
                             <i class="fas fa-file-invoice-dollar text-green"></i> Rincian Pendapatan & Potongan Biaya
                         </h4>
