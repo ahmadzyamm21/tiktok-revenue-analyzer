@@ -3215,22 +3215,19 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(orderPayouts).forEach(payoutOrderId => {
             if (!existingOrderIds.has(payoutOrderId) && payoutOrderId !== 'null' && payoutOrderId !== '') {
                 const payoutInfo = orderPayouts[payoutOrderId];
-                let productName = "Pesanan Keuangan (Tanpa Detail Pesanan)";
+                // Only synthesize if it is a won appeal/compensation
                 if (payoutInfo.isAppealWon) {
-                    productName = "Kompensasi Banding (Laporan Keuangan)";
-                } else if (payoutInfo.refund > 0) {
-                    productName = "Transaksi Refund (Laporan Keuangan)";
+                    displayItems.push({
+                        orderId: payoutOrderId,
+                        trackingId: "-",
+                        product: "Kompensasi Banding (Laporan Keuangan)",
+                        sku: "-",
+                        variation: "-",
+                        qty: 1,
+                        date: payoutInfo.date || "-",
+                        status: "Selesai"
+                    });
                 }
-                displayItems.push({
-                    orderId: payoutOrderId,
-                    trackingId: "-",
-                    product: productName,
-                    sku: "-",
-                    variation: "-",
-                    qty: 1,
-                    date: payoutInfo.date || "-",
-                    status: payoutInfo.isAppealWon ? "Selesai" : (payoutInfo.refund > 0 ? "Retur" : "Selesai")
-                });
             }
         });
 
@@ -3426,22 +3423,19 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(orderPayouts).forEach(payoutOrderId => {
             if (!existingOrderIds.has(payoutOrderId) && payoutOrderId !== 'null' && payoutOrderId !== '') {
                 const payoutInfo = orderPayouts[payoutOrderId];
-                let productName = "Pesanan Keuangan (Tanpa Detail Pesanan)";
+                // Only synthesize if it is a won appeal/compensation
                 if (payoutInfo.isAppealWon) {
-                    productName = "Kompensasi Banding (Laporan Keuangan)";
-                } else if (payoutInfo.refund > 0) {
-                    productName = "Transaksi Refund (Laporan Keuangan)";
+                    displayItems.push({
+                        orderId: payoutOrderId,
+                        trackingId: "-",
+                        product: "Kompensasi Banding (Laporan Keuangan)",
+                        sku: "-",
+                        variation: "-",
+                        qty: 1,
+                        date: payoutInfo.date || "-",
+                        status: "Selesai"
+                    });
                 }
-                displayItems.push({
-                    orderId: payoutOrderId,
-                    trackingId: "-",
-                    product: productName,
-                    sku: "-",
-                    variation: "-",
-                    qty: 1,
-                    date: payoutInfo.date || "-",
-                    status: payoutInfo.isAppealWon ? "Selesai" : (payoutInfo.refund > 0 ? "Retur" : "Selesai")
-                });
             }
         });
 
