@@ -588,18 +588,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             displayGross = settledAmountSum;
             displayOrders = settledItemCount;
-
-            // Override with exact monthly financial stats from Keuangan file if available (to match Seller Center exactly)
-            let financialStats = {};
-            try {
-                financialStats = JSON.parse(localStorage.getItem('tiktok_financial_payout_stats')) || {};
-            } catch (e) {
-                financialStats = {};
-            }
-            if (financialStats[analysisMonth]) {
-                displayGross = financialStats[analysisMonth].amount;
-                displayOrders = financialStats[analysisMonth].count;
-            }
         }
 
         const aov = displayOrders > 0 ? displayGross / displayOrders : 0;
