@@ -326,6 +326,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         adsSpend: 0,
                         adjustments: 0,
                         hpp: 0,
+                        komisiDinamis: 0,
+                        biayaPemrosesan: 0,
+                        komisiAfiliasi: 0,
+                        biayaCashback: 0,
                         uniqueOrders: new Set(),
                         orderIds: []
                     };
@@ -344,6 +348,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     agg.adminFees += (payoutInfo.adminFees || 0);
                     agg.adsSpend += (payoutInfo.ads || 0);
                     agg.adjustments += (payoutInfo.adjustments || 0);
+                    // Admin fee breakdown
+                    agg.komisiDinamis += (payoutInfo.komisiDinamis || 0);
+                    agg.biayaPemrosesan += (payoutInfo.biayaPemrosesanPesanan || 0);
+                    agg.komisiAfiliasi += (payoutInfo.komisiAfiliasi || 0);
+                    agg.biayaCashback += (payoutInfo.biayaLayananCashbackBonus || 0);
                 }
 
                 // Add items details (gross and HPP)
@@ -455,6 +464,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         adsSpend: 0,
                         adjustments: 0,
                         hpp: 0,
+                        komisiDinamis: 0,
+                        biayaPemrosesan: 0,
+                        komisiAfiliasi: 0,
+                        biayaCashback: 0,
                         uniqueOrders: new Set(),
                         orderIds: []
                     };
@@ -476,6 +489,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 adsSpend: agg.adsSpend + gmvAds,
                 adjustments: agg.adjustments,
                 hpp: agg.hpp,
+                komisiDinamis: agg.komisiDinamis,
+                biayaPemrosesan: agg.biayaPemrosesan,
+                komisiAfiliasi: agg.komisiAfiliasi,
+                biayaCashback: agg.biayaCashback,
                 orderIds: agg.orderIds,
                 channels: { ads: 30, affiliate: 25, live: 25, video: 20 }
             };
@@ -497,6 +514,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalAdsSpend = 0;
         let totalAdjustments = 0;
         let totalHppFromLogs = 0;
+        let totalKomisiDinamis = 0;
+        let totalBiayaPemrosesan = 0;
+        let totalKomisiAfiliasi = 0;
+        let totalBiayaCashback = 0;
 
         let activeDiskonPenjual = 0;
         let activeDiskonOngkirPenjual = 0;
@@ -514,6 +535,10 @@ document.addEventListener('DOMContentLoaded', () => {
             totalAdsSpend += (log.adsSpend || 0);
             totalAdjustments += (log.adjustments || 0);
             totalHppFromLogs += (log.hpp || 0);
+            totalKomisiDinamis += (log.komisiDinamis || 0);
+            totalBiayaPemrosesan += (log.biayaPemrosesan || 0);
+            totalKomisiAfiliasi += (log.komisiAfiliasi || 0);
+            totalBiayaCashback += (log.biayaCashback || 0);
         });
 
         let totalNet = totalGross - totalRefunds - totalVouchers;
@@ -791,6 +816,29 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (pnlAdmin) pnlAdmin.textContent = `-${formatRupiah(totalAdminFees)}`;
         if (pnlAdminPct) pnlAdminPct.textContent = `${((totalAdminFees / pctDenom) * 100).toFixed(1)}%`;
+
+        // Admin fee breakdown detail
+        const totalBiayaLainnya = Math.max(0, totalAdminFees - totalKomisiDinamis - totalBiayaPemrosesan - totalKomisiAfiliasi - totalBiayaCashback);
+        const elKomisiDinamis = document.getElementById('pnl-komisi-dinamis');
+        const elKomisiDinamisPct = document.getElementById('pnl-komisi-dinamis-pct');
+        const elBiayaPemrosesan = document.getElementById('pnl-biaya-pemrosesan');
+        const elBiayaPemrosesanPct = document.getElementById('pnl-biaya-pemrosesan-pct');
+        const elKomisiAfiliasi = document.getElementById('pnl-komisi-afiliasi');
+        const elKomisiAfiliasiPct = document.getElementById('pnl-komisi-afiliasi-pct');
+        const elBiayaCashback = document.getElementById('pnl-biaya-cashback');
+        const elBiayaCashbackPct = document.getElementById('pnl-biaya-cashback-pct');
+        const elBiayaLainnya = document.getElementById('pnl-biaya-lainnya');
+        const elBiayaLainnyaPct = document.getElementById('pnl-biaya-lainnya-pct');
+        if (elKomisiDinamis) elKomisiDinamis.textContent = `-${formatRupiah(totalKomisiDinamis)}`;
+        if (elKomisiDinamisPct) elKomisiDinamisPct.textContent = `${((totalKomisiDinamis / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaPemrosesan) elBiayaPemrosesan.textContent = `-${formatRupiah(totalBiayaPemrosesan)}`;
+        if (elBiayaPemrosesanPct) elBiayaPemrosesanPct.textContent = `${((totalBiayaPemrosesan / pctDenom) * 100).toFixed(1)}%`;
+        if (elKomisiAfiliasi) elKomisiAfiliasi.textContent = `-${formatRupiah(totalKomisiAfiliasi)}`;
+        if (elKomisiAfiliasiPct) elKomisiAfiliasiPct.textContent = `${((totalKomisiAfiliasi / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaCashback) elBiayaCashback.textContent = `-${formatRupiah(totalBiayaCashback)}`;
+        if (elBiayaCashbackPct) elBiayaCashbackPct.textContent = `${((totalBiayaCashback / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaLainnya) elBiayaLainnya.textContent = `-${formatRupiah(totalBiayaLainnya)}`;
+        if (elBiayaLainnyaPct) elBiayaLainnyaPct.textContent = `${((totalBiayaLainnya / pctDenom) * 100).toFixed(1)}%`;
         
         if (pnlAds) pnlAds.textContent = `-${formatRupiah(totalAdsSpend)}`;
         if (pnlAdsPct) pnlAdsPct.textContent = `${((totalAdsSpend / pctDenom) * 100).toFixed(1)}%`;
