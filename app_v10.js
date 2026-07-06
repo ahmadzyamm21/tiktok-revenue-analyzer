@@ -3234,12 +3234,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Find all unique months present in the uploaded Keuangan files
+        const activeFinanceMonths = new Set();
+        Object.values(orderPayouts).forEach(p => {
+            if (p && p.date) {
+                const m = p.date.substring(0, 7); // "YYYY-MM"
+                if (m.match(/^\d{4}-\d{2}$/)) {
+                    activeFinanceMonths.add(m);
+                }
+            }
+        });
+
+        // Filter displayItems by active finance months if Keuangan files are uploaded
+        let filteredDisplayItems = [...displayItems];
+        if (activeFinanceMonths.size > 0) {
+            filteredDisplayItems = displayItems.filter(item => {
+                if (orderPayouts[item.orderId]) return true;
+                if (item.date) {
+                    const itemMonth = item.date.substring(0, 7);
+                    return activeFinanceMonths.has(itemMonth);
+                }
+                return false;
+            });
+        }
+
         const orderIdCounts = {};
-        displayItems.forEach(item => {
+        filteredDisplayItems.forEach(item => {
             orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
         });
 
-        displayItems.forEach((item, idx) => {
+        filteredDisplayItems.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
@@ -3421,12 +3445,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Find all unique months present in the uploaded Keuangan files
+        const activeFinanceMonths = new Set();
+        Object.values(orderPayouts).forEach(p => {
+            if (p && p.date) {
+                const m = p.date.substring(0, 7); // "YYYY-MM"
+                if (m.match(/^\d{4}-\d{2}$/)) {
+                    activeFinanceMonths.add(m);
+                }
+            }
+        });
+
+        // Filter displayItems by active finance months if Keuangan files are uploaded
+        let filteredDisplayItems = [...displayItems];
+        if (activeFinanceMonths.size > 0) {
+            filteredDisplayItems = displayItems.filter(item => {
+                if (orderPayouts[item.orderId]) return true;
+                if (item.date) {
+                    const itemMonth = item.date.substring(0, 7);
+                    return activeFinanceMonths.has(itemMonth);
+                }
+                return false;
+            });
+        }
+
         const orderIdCounts = {};
-        displayItems.forEach(item => {
+        filteredDisplayItems.forEach(item => {
             orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
         });
 
-        displayItems.forEach((item, idx) => {
+        filteredDisplayItems.forEach((item, idx) => {
             const payoutInfo = orderPayouts[item.orderId];
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
