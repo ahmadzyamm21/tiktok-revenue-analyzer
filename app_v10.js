@@ -3341,7 +3341,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let statusStr = 'Belum Cair';
             if (isSettled) {
-                statusStr = resolution === 'menang' ? 'Banding Menang' : 'Sudah Cair';
+                statusStr = resolution === 'menang' ? 'Kompensasi' : 'Sudah Cair';
             } else if (isReturnedOnly) {
                 if (resolution === 'kembali') statusStr = 'Barang Kembali';
                 else if (resolution === 'rugi') statusStr = 'Rugi HPP';
@@ -3583,7 +3583,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isSettled) {
                 if (resolution === 'menang') {
-                    statusStr = 'Banding Menang';
+                    statusStr = 'Kompensasi';
                     statusClass = 'status-pill success';
                 } else {
                     statusStr = 'Sudah Cair';
