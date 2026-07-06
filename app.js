@@ -3270,7 +3270,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             
-            const resolution = returnResolutions[item.orderId] || (payoutInfo && payoutInfo.isAppealWon ? 'menang' : 'pending');
+            const resolution = returnResolutions[item.orderId] || 'kembali';
             const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
@@ -3509,7 +3509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             
-            const resolution = returnResolutions[item.orderId] || (payoutInfo && payoutInfo.isAppealWon ? 'menang' : 'pending');
+            const resolution = returnResolutions[item.orderId] || 'kembali';
             const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
