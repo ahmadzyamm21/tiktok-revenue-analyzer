@@ -498,6 +498,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalAdjustments = 0;
         let totalHppFromLogs = 0;
 
+        let activeDiskonPenjual = 0;
+        let activeDiskonOngkirPenjual = 0;
+        let activeDiskonPlatform = 0;
+        let activeDiskonVoucherPlatform = 0;
+        let activeDiskonBelanjaIklan = 0;
+
         revenueLogs.forEach(log => {
             if (!log.date || !log.date.startsWith(analysisMonth)) return;
             totalGross += log.gross;
@@ -529,11 +535,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const settledUniqueOrderIds = new Set();
             let settledItemCount = 0;
             let calculatedTotalPayout = 0;
-            let activeDiskonPenjual = 0;
-            let activeDiskonOngkirPenjual = 0;
-            let activeDiskonPlatform = 0;
-            let activeDiskonVoucherPlatform = 0;
-            let activeDiskonBelanjaIklan = 0;
+            activeDiskonPenjual = 0;
+            activeDiskonOngkirPenjual = 0;
+            activeDiskonPlatform = 0;
+            activeDiskonVoucherPlatform = 0;
+            activeDiskonBelanjaIklan = 0;
             let returnResolutions = {};
             try {
                 returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
@@ -2281,6 +2287,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const newItems = tempParsedOrders.filter(item => !existingKeys.has(item.orderId + '_' + (item.product || '') + '_' + (item.sku || '') + '_' + (item.variation || '')));
                     orderItemsDb = [...orderItemsDb, ...newItems];
                     localStorage.setItem('tiktok_order_items', JSON.stringify(orderItemsDb));
+
+                    // Auto-set analysisMonth to the month of the first imported order
+                    const firstOrder = tempParsedOrders[0];
+                    if (firstOrder && firstOrder.date) {
+                        analysisMonth = firstOrder.date.substring(0, 7);
+                        localStorage.setItem('tiktok_analysis_month', analysisMonth);
+                        loadShopSettings(); // Updates UI input value
+                    }
                 }
 
                 if (typeof renderPayoutsTable === 'function') renderPayoutsTable();
