@@ -3808,7 +3808,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td style="padding: 12px 8px;"><span class="${statusClass}">${statusStr}</span></td>
                     <td style="padding: 12px 8px; color: var(--text-muted); font-size: 12px; text-align: left;">${keteranganStr}</td>
                     <td style="padding: 12px 8px;"><strong class="${(isSettled || payoutInfo) ? (settlementAmt >= 0 ? 'text-green' : 'text-pink') : ''}">${(isSettled || payoutInfo) ? formatRupiah(settlementAmt) : '-'}</strong></td>
-                    <td style="padding: 12px 8px; color: var(--text-muted);">${formatRupiah(totalHpp)}</td>
+                    <td style="padding: 12px 8px; color: var(--text-muted);">
+                        ${(() => {
+                            if (totalHpp > 0) return formatRupiah(totalHpp);
+                            if (itemHpp > 0) {
+                                if (isCancelled) {
+                                    return `<span style="text-decoration: line-through; opacity: 0.6;">${formatRupiah(itemHpp)}</span> <span style="font-size: 10px; color: var(--text-muted);">(Batal)</span>`;
+                                } else if (isReturnedOnly && resolution === 'kembali') {
+                                    return `<span style="text-decoration: line-through; opacity: 0.6;">${formatRupiah(itemHpp)}</span> <span style="font-size: 10px; color: var(--accent-cyan);">(Kembali)</span>`;
+                                }
+                            }
+                            return 'Rp 0';
+                        })()}
+                    </td>
                     <td style="padding: 12px 8px;"><strong class="${(isSettled || payoutInfo) ? (netProfit >= 0 ? 'text-green' : 'text-pink') : ''}">${(isSettled || payoutInfo) ? formatRupiah(netProfit) : '-'}</strong></td>
                     <td style="padding: 12px 8px; text-align: center;">
                         <button onclick="toggleOrderDetail('${item.orderId}', '${item.sku.replace(/'/g, "\\'")}', ${idx})" style="background: none; border: none; cursor: pointer; padding: 4px;" title="Lihat Rincian Biaya">
