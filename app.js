@@ -529,6 +529,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const settledUniqueOrderIds = new Set();
             let settledItemCount = 0;
             let calculatedTotalPayout = 0;
+            let activeDiskonPenjual = 0;
+            let activeDiskonOngkirPenjual = 0;
+            let activeDiskonPlatform = 0;
+            let activeDiskonVoucherPlatform = 0;
+            let activeDiskonBelanjaIklan = 0;
             let returnResolutions = {};
             try {
                 returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
@@ -617,6 +622,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 settledAmountSum += settlementAmt;
                 settledUniqueOrderIds.add(item.orderId);
                 settledItemCount++;
+
+                if (payoutInfo) {
+                    const count = orderIdCounts[item.orderId] || 1;
+                    activeDiskonPenjual += (payoutInfo.voucher || 0) / count;
+                    activeDiskonOngkirPenjual += (payoutInfo.diskonOngkirPenjual || 0) / count;
+                    activeDiskonPlatform += (payoutInfo.diskonPlatform || 0) / count;
+                    activeDiskonVoucherPlatform += (payoutInfo.diskonVoucherPlatform || 0) / count;
+                    activeDiskonBelanjaIklan += (payoutInfo.diskonBelanjaIklan || 0) / count;
+                }
 
                 // Sum payout only for Sudah Cair and appeal won returns
                 const isBandingMenang = resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
@@ -708,8 +722,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Rincian Laba Rugi Table
         const pnlGross = document.getElementById('pnl-gross-rev');
-        const pnlVoucher = document.getElementById('pnl-voucher-deduction');
-        const pnlVoucherPct = document.getElementById('pnl-voucher-pct');
+        const pnlSellerVoucher = document.getElementById('pnl-seller-voucher');
+        const pnlSellerVoucherPct = document.getElementById('pnl-seller-voucher-pct');
+        const pnlSellerShippingDiscount = document.getElementById('pnl-seller-shipping-discount');
+        const pnlSellerShippingDiscountPct = document.getElementById('pnl-seller-shipping-discount-pct');
+        const pnlPlatformDiscount = document.getElementById('pnl-platform-discount');
+        const pnlPlatformDiscountPct = document.getElementById('pnl-platform-discount-pct');
+        const pnlPlatformVoucher = document.getElementById('pnl-platform-voucher');
+        const pnlPlatformVoucherPct = document.getElementById('pnl-platform-voucher-pct');
+        const pnlAdsDiscount = document.getElementById('pnl-ads-discount');
+        const pnlAdsDiscountPct = document.getElementById('pnl-ads-discount-pct');
         const pnlRefund = document.getElementById('pnl-refund-deduction');
         const pnlRefundPct = document.getElementById('pnl-refund-pct');
         const pnlNetRevText = document.getElementById('pnl-net-rev');
@@ -728,10 +750,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pnlGross) pnlGross.textContent = formatRupiah(displayGross);
         
         const pctDenom = displayGross > 0 ? displayGross : 1;
-        const displayVouchers = Math.max(0, displayGross - totalNet - totalRefunds);
         
-        if (pnlVoucher) pnlVoucher.textContent = `-${formatRupiah(displayVouchers)}`;
-        if (pnlVoucherPct) pnlVoucherPct.textContent = `${((displayVouchers / pctDenom) * 100).toFixed(1)}%`;
+        if (pnlSellerVoucher) pnlSellerVoucher.textContent = `-${formatRupiah(activeDiskonPenjual)}`;
+        if (pnlSellerVoucherPct) pnlSellerVoucherPct.textContent = `${((activeDiskonPenjual / pctDenom) * 100).toFixed(1)}%`;
+
+        if (pnlSellerShippingDiscount) pnlSellerShippingDiscount.textContent = `-${formatRupiah(activeDiskonOngkirPenjual)}`;
+        if (pnlSellerShippingDiscountPct) pnlSellerShippingDiscountPct.textContent = `${((activeDiskonOngkirPenjual / pctDenom) * 100).toFixed(1)}%`;
+
+        if (pnlPlatformDiscount) pnlPlatformDiscount.textContent = `-${formatRupiah(activeDiskonPlatform)}`;
+        if (pnlPlatformDiscountPct) pnlPlatformDiscountPct.textContent = `${((activeDiskonPlatform / pctDenom) * 100).toFixed(1)}%`;
+
+        if (pnlPlatformVoucher) pnlPlatformVoucher.textContent = `-${formatRupiah(activeDiskonVoucherPlatform)}`;
+        if (pnlPlatformVoucherPct) pnlPlatformVoucherPct.textContent = `${((activeDiskonVoucherPlatform / pctDenom) * 100).toFixed(1)}%`;
+
+        if (pnlAdsDiscount) pnlAdsDiscount.textContent = `-${formatRupiah(activeDiskonBelanjaIklan)}`;
+        if (pnlAdsDiscountPct) pnlAdsDiscountPct.textContent = `${((activeDiskonBelanjaIklan / pctDenom) * 100).toFixed(1)}%`;
         
         if (pnlRefund) pnlRefund.textContent = `-${formatRupiah(totalRefunds)}`;
         if (pnlRefundPct) pnlRefundPct.textContent = `${((totalRefunds / pctDenom) * 100).toFixed(1)}%`;
@@ -1720,6 +1753,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         diskonBelanjaIklan: findColIdx(['diskon (dari belanja iklan)']),
                         biayaLayananCashbackBonus: findColIdx(['biaya layanan cashback bonus']),
                         subtotalSetelahDiskonPenjual: findColIdx(['subtotal setelah diskon penjual', 'subtotal after seller discount']),
+                        diskonPlatform: findColIdx(['diskon platform', 'platform discount', 'subsidi platform']),
+                        diskonOngkirPenjual: findColIdx(['diskon ongkir dari penjual', 'seller shipping discount', 'diskon ongkir penjual']),
+                        diskonVoucherPlatform: findColIdx(['diskon voucher yang ditanggung platform', 'platform voucher discount']),
                         
                         // Newly added possible fee columns
                         biayaLayananPreOrder: findColIdx(['biaya layanan pre-order']),
@@ -1908,9 +1944,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         dayData.uniqueOrders.add(orderId);
                         if (!dayData.orderIds.includes(orderId)) {
                             dayData.orderIds.push(orderId);
-                        }
-
-                        if (!tempParsedOrderPayouts[orderId]) {
+                                         if (!tempParsedOrderPayouts[orderId]) {
                             tempParsedOrderPayouts[orderId] = {
                                 amount: 0,
                                 originalAmount: 0,
@@ -1931,6 +1965,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 biayaPemrosesanPesanan: 0,
                                 biayaKomisiSebelumDiskon: 0,
                                 diskonBelanjaIklan: 0,
+                                diskonPlatform: 0,
+                                diskonOngkirPenjual: 0,
+                                diskonVoucherPlatform: 0,
                                 biayaLayananCashbackBonus: 0,
                                 subtotalSetelahDiskonPenjual: 0,
                                 biayaLayananPreOrder: 0,
@@ -1951,7 +1988,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 biayaAsuransi: 0,
                                 isPaid: false
                             };
-                        }
+                        }          }
                         tempParsedOrderPayouts[orderId].amount += settlementVal;
                         const isMainOrderRow = typeVal.includes('pesanan') || typeVal.includes('order') || typeVal.includes('payment') || typeVal.includes('gmv');
                         if (isMainOrderRow) {
@@ -1988,6 +2025,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempParsedOrderPayouts[orderId].biayaKomisiSebelumDiskon += biayaKomisiSebelumDiskonVal;
                         tempParsedOrderPayouts[orderId].diskonBelanjaIklan += diskonBelanjaIklanVal;
                         tempParsedOrderPayouts[orderId].biayaLayananCashbackBonus += biayaLayananCashbackBonusVal;
+                        
+                        const diskonPlatformVal = Math.abs(parseFloat(colMap.diskonPlatform !== -1 ? row[colMap.diskonPlatform] : 0) || 0);
+                        const diskonOngkirPenjualVal = Math.abs(parseFloat(colMap.diskonOngkirPenjual !== -1 ? row[colMap.diskonOngkirPenjual] : 0) || 0);
+                        const diskonVoucherPlatformVal = Math.abs(parseFloat(colMap.diskonVoucherPlatform !== -1 ? row[colMap.diskonVoucherPlatform] : 0) || 0);
+
+                        tempParsedOrderPayouts[orderId].diskonPlatform += diskonPlatformVal;
+                        tempParsedOrderPayouts[orderId].diskonOngkirPenjual += diskonOngkirPenjualVal;
+                        tempParsedOrderPayouts[orderId].diskonVoucherPlatform += diskonVoucherPlatformVal;
                         
                         const subtotalSetelahDiskonPenjualVal = colMap.subtotalSetelahDiskonPenjual !== -1 ? (parseFloat(row[colMap.subtotalSetelahDiskonPenjual]) || 0) : 0;
                         tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual = (tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual || 0) + subtotalSetelahDiskonPenjualVal;
