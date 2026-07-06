@@ -227,38 +227,36 @@
                                     <td style="text-align: right; font-weight: 500; color: var(--accent-cyan);" id="pnl-net-rev">Rp 0</td>
                                     <td style="text-align: right; font-weight: 500; color: var(--accent-cyan);" id="pnl-net-rev-pct">0.0%</td>
                                 </tr>
-                                <tr style="cursor: pointer;" onclick="document.getElementById('admin-detail-rows').style.display = document.getElementById('admin-detail-rows').style.display === 'none' ? '' : 'none'; this.querySelector('.toggle-icon').textContent = document.getElementById('admin-detail-rows').style.display === 'none' ? '▶' : '▼';">
+                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.admin-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); this.querySelector('.toggle-icon').textContent = isHidden ? '▼' : '▶';">
                                     <td style="padding-left: 25px; color: var(--text-muted);">(-) Biaya Admin Platform <span class="toggle-icon" style="font-size: 10px; margin-left: 5px; color: var(--accent-cyan);">▶</span></td>
                                     <td style="text-align: right; color: var(--accent-pink);" id="pnl-admin-fees">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted);" id="pnl-admin-pct">0.0%</td>
                                 </tr>
-                                <tbody id="admin-detail-rows" style="display: none;">
-                                    <tr>
-                                        <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Komisi Dinamis</td>
-                                        <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-komisi-dinamis">-Rp 0</td>
-                                        <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-komisi-dinamis-pct">0.0%</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Pemrosesan Pesanan</td>
-                                        <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-pemrosesan">-Rp 0</td>
-                                        <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-pemrosesan-pct">0.0%</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Komisi Afiliasi</td>
-                                        <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-komisi-afiliasi">-Rp 0</td>
-                                        <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-komisi-afiliasi-pct">0.0%</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Layanan Cashback</td>
-                                        <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-cashback">-Rp 0</td>
-                                        <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-cashback-pct">0.0%</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Lainnya</td>
-                                        <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-lainnya">-Rp 0</td>
-                                        <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-lainnya-pct">0.0%</td>
-                                    </tr>
-                                </tbody>
+                                <tr class="admin-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Komisi Dinamis</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-komisi-dinamis">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-komisi-dinamis-pct">0.0%</td>
+                                </tr>
+                                <tr class="admin-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Pemrosesan Pesanan</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-pemrosesan">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-pemrosesan-pct">0.0%</td>
+                                </tr>
+                                <tr class="admin-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Komisi Afiliasi</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-komisi-afiliasi">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-komisi-afiliasi-pct">0.0%</td>
+                                </tr>
+                                <tr class="admin-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Layanan Cashback</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-cashback">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-cashback-pct">0.0%</td>
+                                </tr>
+                                <tr class="admin-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Lainnya</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-lainnya">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-lainnya-pct">0.0%</td>
+                                </tr>
                                 <tr>
                                     <td style="padding-left: 25px; color: var(--text-muted);">(-) Biaya Iklan (Ads Spend)</td>
                                     <td style="text-align: right; color: var(--accent-pink);" id="pnl-ads-spend">-Rp 0</td>
