@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const totalNet = totalGross - totalRefunds - totalVouchers;
-        const totalPayout = totalNet - totalAdminFees - totalAdsSpend + totalAdjustments;
+        let totalPayout = totalNet - totalAdminFees - totalAdsSpend + totalAdjustments;
         const targetPct = targetRevenue > 0 ? (totalNet / targetRevenue) * 100 : 0;
 
         let displayGross = totalGross;
@@ -528,6 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let settledAmountSum = 0;
             const settledUniqueOrderIds = new Set();
             let settledItemCount = 0;
+            let calculatedTotalPayout = 0;
             let returnResolutions = {};
             try {
                 returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
@@ -616,9 +617,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 settledAmountSum += settlementAmt;
                 settledUniqueOrderIds.add(item.orderId);
                 settledItemCount++;
+
+                // Sum payout only for Sudah Cair and appeal won returns
+                const isBandingMenang = resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
+                const qualifyForNetPayout = isSettled && (!isReturn || isBandingMenang);
+                if (qualifyForNetPayout) {
+                    let itemPayout = 0;
+                    if (payoutInfo) {
+                        itemPayout = (payoutInfo.amount || 0) / (orderIdCounts[item.orderId] || 1);
+                    } else {
+                        const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 0;
+                        itemPayout = itemOriginalPrice / (orderIdCounts[item.orderId] || 1);
+                    }
+                    calculatedTotalPayout += itemPayout;
+                }
             });
             displayGross = settledAmountSum;
             displayOrders = settledItemCount;
+            totalPayout = calculatedTotalPayout;
         }
 
         const aov = displayOrders > 0 ? displayGross / displayOrders : 0;
