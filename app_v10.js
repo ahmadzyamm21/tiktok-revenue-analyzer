@@ -508,6 +508,8 @@ document.addEventListener('DOMContentLoaded', () => {
         rebuildRevenueLogs();
         let totalGross = 0;
         let totalRefunds = 0;
+        let totalRefundBatal = 0;
+        let totalRefundPaketGagal = 0;
         let totalVouchers = 0;
         let totalOrders = 0;
         let totalAdminFees = 0;
@@ -561,6 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let settledItemCount = 0;
             let calculatedTotalPayout = 0;
             let calculatedTotalRefunds = 0;
+            let calculatedRefundBatal = 0;
+            let calculatedRefundPaketGagal = 0;
             activeDiskonPenjual = 0;
             activeDiskonOngkirPenjual = 0;
             activeDiskonPlatform = 0;
@@ -618,6 +622,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isBatal || isPaketGagal) {
                     const price = item.subtotalAfterDiscount || (item.originalPrice * item.qty) || 0;
                     calculatedTotalRefunds += price;
+                    if (isPaketGagal) {
+                        calculatedRefundPaketGagal += price;
+                    } else {
+                        calculatedRefundBatal += price;
+                    }
                 }
 
                 const shouldInclude = isSettled || isOnHold || isReturn;
@@ -689,6 +698,8 @@ document.addEventListener('DOMContentLoaded', () => {
             displayGross = settledAmountSum;
             displayOrders = settledItemCount;
             totalRefunds = calculatedTotalRefunds;
+            totalRefundBatal = calculatedRefundBatal;
+            totalRefundPaketGagal = calculatedRefundPaketGagal;
             totalNet = displayGross - totalRefunds - (activeDiskonOngkirPenjual + activeDiskonPlatform + activeDiskonVoucherPlatform + activeDiskonBelanjaIklan);
             totalPayout = calculatedTotalPayout;
         }
@@ -810,6 +821,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (pnlRefund) pnlRefund.textContent = `-${formatRupiah(totalRefunds)}`;
         if (pnlRefundPct) pnlRefundPct.textContent = `${((totalRefunds / pctDenom) * 100).toFixed(1)}%`;
+
+        // Refund breakdown detail
+        const elRefundBatal = document.getElementById('pnl-refund-batal');
+        const elRefundBatalPct = document.getElementById('pnl-refund-batal-pct');
+        const elRefundPaketGagal = document.getElementById('pnl-refund-paket-gagal');
+        const elRefundPaketGagalPct = document.getElementById('pnl-refund-paket-gagal-pct');
+        if (elRefundBatal) elRefundBatal.textContent = `-${formatRupiah(totalRefundBatal)}`;
+        if (elRefundBatalPct) elRefundBatalPct.textContent = `${((totalRefundBatal / pctDenom) * 100).toFixed(1)}%`;
+        if (elRefundPaketGagal) elRefundPaketGagal.textContent = `-${formatRupiah(totalRefundPaketGagal)}`;
+        if (elRefundPaketGagalPct) elRefundPaketGagalPct.textContent = `${((totalRefundPaketGagal / pctDenom) * 100).toFixed(1)}%`;
         
         if (pnlNetRevText) pnlNetRevText.textContent = formatRupiah(totalNet);
         if (pnlNetRevPctText) pnlNetRevPctText.textContent = `${((totalNet / pctDenom) * 100).toFixed(1)}%`;

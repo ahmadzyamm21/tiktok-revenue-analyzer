@@ -217,10 +217,20 @@
                                     <td style="text-align: right; color: var(--accent-pink);" id="pnl-ads-discount">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted);" id="pnl-ads-discount-pct">0.0%</td>
                                 </tr>
-                                <tr>
-                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Pengembalian Dana (Refund)</td>
+                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.refund-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); this.querySelector('.toggle-icon-refund').textContent = isHidden ? '▼' : '▶';">
+                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Pengembalian Dana (Refund) <span class="toggle-icon-refund" style="font-size: 10px; margin-left: 5px; color: var(--accent-cyan);">▶</span></td>
                                     <td style="text-align: right; color: var(--accent-pink);" id="pnl-refund-deduction">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted);" id="pnl-refund-pct">0.0%</td>
+                                </tr>
+                                <tr class="refund-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Pesanan Dibatalkan</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-refund-batal">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-refund-batal-pct">0.0%</td>
+                                </tr>
+                                <tr class="refund-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Paket Gagal / Retur</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-refund-paket-gagal">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-refund-paket-gagal-pct">0.0%</td>
                                 </tr>
                                 <tr style="background: rgba(255,255,255,0.02);">
                                     <td style="font-weight: 500; padding-left: 15px; color: var(--accent-cyan);">(=) Pendapatan Bersih (Net Revenue)</td>
