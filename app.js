@@ -540,6 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const payoutInfo = orderPayouts[item.orderId];
                 const statusLower = (item.status || '').toLowerCase();
                 const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
+                const isCancelled = statusLower.includes('batal') || statusLower === 'cancelled' || statusLower.includes('gagal') || statusLower.includes('fail');
                 
                 const resolution = returnResolutions[item.orderId] || 'pending';
                 const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
@@ -548,8 +549,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
                 const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
                 
-                if (!hasResi && !isSettled) return;
+                let isOnHold = false;
+                if (!isSettled && !isCancelled && !statusLower.includes('retur') && !statusLower.includes('refund') && !statusLower.includes('return') && hasResi) {
+                    let parsedShipDate = null;
+                    if (item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-') {
+                        const shipDateVal = item.shippedTime.split(' ')[0];
+                        const dateMatch = shipDateVal.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                        if (dateMatch) {
+                            parsedShipDate = new Date(dateMatch[1], dateMatch[2] - 1, dateMatch[3]);
+                        } else {
+                            const dateMatch2 = shipDateVal.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                            if (dateMatch2) {
+                                parsedShipDate = new Date(dateMatch2[3], dateMatch2[2] - 1, dateMatch2[1]);
+                            }
+                        }
+                    }
+                    if (parsedShipDate) {
+                        const today = new Date();
+                        const diffTime = today - parsedShipDate;
+                        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                        if (diffDays > 10) {
+                            isOnHold = true;
+                        }
+                    }
+                }
 
+                const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || statusLower.includes('retur') || statusLower.includes('refund') || statusLower.includes('return'));
+
+                const shouldInclude = isSettled || isOnHold || isReturn;
+                if (!shouldInclude) return;
+
+                let settlementAmt = 0;
                 if (isSettled) {
                     let fullSettlementAmt = 0;
                     const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
@@ -580,11 +610,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             fullSettlementAmt = itemOriginalPrice;
                         }
                     }
-                    const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
-                    settledAmountSum += settlementAmt;
-                    settledUniqueOrderIds.add(item.orderId);
-                    settledItemCount++;
+                    settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
+                } else if (isOnHold) {
+                    const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 0;
+                    settlementAmt = itemOriginalPrice;
+                } else if (isReturn) {
+                    settlementAmt = 0; // Return payout is 0 unless won (handled in isSettled)
                 }
+
+                settledAmountSum += settlementAmt;
+                settledUniqueOrderIds.add(item.orderId);
+                settledItemCount++;
             });
             displayGross = settledAmountSum;
             displayOrders = settledItemCount;
