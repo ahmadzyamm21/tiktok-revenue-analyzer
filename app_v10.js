@@ -3308,7 +3308,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let fullSettlementAmt = 0;
             if (resolution === 'menang') {
                 if (payoutInfo) {
-                    if (payoutInfo.originalAmount > 0) {
+                    if (payoutInfo.compensation > 0) {
+                        fullSettlementAmt = payoutInfo.compensation;
+                    } else if (payoutInfo.originalAmount > 0) {
                         fullSettlementAmt = payoutInfo.originalAmount;
                     } else if (payoutInfo.amount > 0) {
                         fullSettlementAmt = payoutInfo.amount;
@@ -3588,7 +3590,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let fullSettlementAmt = 0;
             if (resolution === 'menang') {
                 if (payoutInfo) {
-                    if (payoutInfo.originalAmount > 0) {
+                    if (payoutInfo.compensation > 0) {
+                        fullSettlementAmt = payoutInfo.compensation;
+                    } else if (payoutInfo.originalAmount > 0) {
                         fullSettlementAmt = payoutInfo.originalAmount;
                     } else if (payoutInfo.amount > 0) {
                         fullSettlementAmt = payoutInfo.amount;
