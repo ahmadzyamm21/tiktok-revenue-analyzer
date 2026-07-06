@@ -3650,7 +3650,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const totalHpp = (isCancelled || (isReturnedOnly && resolution !== 'rugi')) ? 0 : itemHpp;
-            const netProfit = isSettled ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -itemHpp : 0);
+            const netProfit = (isSettled || payoutInfo) ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -itemHpp : 0);
 
             const itemAdmin = (payoutInfo && payoutInfo.adminFees ? payoutInfo.adminFees : 0) / (orderIdCounts[item.orderId] || 1);
             const itemVoucher = (payoutInfo && payoutInfo.voucher ? payoutInfo.voucher : 0) / (orderIdCounts[item.orderId] || 1);
@@ -3734,9 +3734,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td style="padding: 12px 8px;">${item.qty} Pcs</td>
                     <td style="padding: 12px 8px;"><span class="${statusClass}">${statusStr}</span></td>
-                    <td style="padding: 12px 8px;"><strong class="${isSettled ? 'text-green' : ''}">${isSettled ? formatRupiah(settlementAmt) : '-'}</strong></td>
+                    <td style="padding: 12px 8px;"><strong class="${(isSettled || payoutInfo) ? (settlementAmt >= 0 ? 'text-green' : 'text-pink') : ''}">${(isSettled || payoutInfo) ? formatRupiah(settlementAmt) : '-'}</strong></td>
                     <td style="padding: 12px 8px; color: var(--text-muted);">${formatRupiah(totalHpp)}</td>
-                    <td style="padding: 12px 8px;"><strong class="${isSettled ? (netProfit >= 0 ? 'text-green' : 'text-pink') : ''}">${isSettled ? formatRupiah(netProfit) : '-'}</strong></td>
+                    <td style="padding: 12px 8px;"><strong class="${(isSettled || payoutInfo) ? (netProfit >= 0 ? 'text-green' : 'text-pink') : ''}">${(isSettled || payoutInfo) ? formatRupiah(netProfit) : '-'}</strong></td>
                     <td style="padding: 12px 8px; text-align: center;">
                         <button onclick="toggleOrderDetail('${item.orderId}', '${item.sku.replace(/'/g, "\\'")}', ${idx})" style="background: none; border: none; cursor: pointer; padding: 4px;" title="Lihat Rincian Biaya">
                             <i id="toggle-icon-${idx}" class="fas fa-eye text-cyan" style="font-size: 14px;"></i>
@@ -3765,7 +3765,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span style="color: var(--text-muted); margin: 0 6px;">|</span>
                                 HPP Satuan: <strong style="color: var(--accent-pink);">${formatRupiah(hppVal)}</strong>
                                 <span style="color: var(--text-muted); margin: 0 6px;">|</span>
-                                Dana Cair Bersih: <strong style="color: var(--accent-green);">${isSettled ? formatRupiah(settlementAmt) : 'Rp 0'}</strong>
+                                Dana Cair Bersih: <strong style="color: ${(isSettled || payoutInfo) ? (settlementAmt >= 0 ? 'var(--accent-green)' : 'var(--accent-pink)') : 'var(--text-muted)'};">${(isSettled || payoutInfo) ? formatRupiah(settlementAmt) : 'Rp 0'}</strong>
                             </div>
                         </div>
 
