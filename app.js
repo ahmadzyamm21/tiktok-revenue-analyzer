@@ -3630,6 +3630,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Apply filters
             if (filterStatus === 'settled' && !isSettled) return;
             if (filterStatus === 'pending' && (isSettled || isCancelled || isReturnedOnly)) return;
+            if (filterStatus === 'onhold' && !isOnHold) return;
             if (filterStatus === 'cancelled' && !isCancelled) return;
             if (filterStatus === 'returned' && !isReturnedOnly) return;
             // Exclude rows without resi unless they are settled (cair/menang)
