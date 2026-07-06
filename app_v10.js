@@ -618,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || statusLower.includes('retur') || statusLower.includes('refund') || statusLower.includes('return'));
                 const isBatal = isCancelled;
-                const isPaketGagal = isReturn && (resolution === 'paket_gagal' || resolution === 'kembali');
+                const isPaketGagal = isReturn && (resolution === 'kembali' || resolution === 'rugi');
                 if (isBatal || isPaketGagal) {
                     const price = item.subtotalAfterDiscount || (item.originalPrice * item.qty) || 0;
                     calculatedTotalRefunds += price;
@@ -734,7 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cardNetProfit && kpiNetProfit && kpiNetProfitSubtext) {
             if (activeHpp > 0) {
                 cardNetProfit.style.display = 'flex';
-                const netProfitVal = totalPayout - activeHpp;
+                const netProfitVal = totalPayout - activeHpp - totalAdsSpend;
                 kpiNetProfit.textContent = formatRupiah(netProfitVal);
                 
                 if (netProfitVal < 0) {
