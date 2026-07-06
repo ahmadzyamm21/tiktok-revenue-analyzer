@@ -3206,7 +3206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let csvContent = "\uFEFF"; // UTF-8 BOM for Excel compatibility
-        csvContent += "No,Tanggal Pemesanan,No. Resi (Tracking ID),ID Pesanan,ID Pesanan/Penyesuaian,Nama Produk,SKU,Variasi,Qty,Status,Dana Cair,HPP,Laba Bersih\n";
+        csvContent += "No,Tanggal Pemesanan,No. Resi (Tracking ID),ID Pesanan,ID Pesanan/Penyesuaian,Nama Produk,SKU,Variasi,Qty,Status,Omset,Dana Cair,HPP,Laba Bersih\n";
 
         let returnResolutions = {};
         try {
@@ -3372,6 +3372,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const netProfit = isSettled ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -(item.qty * hppVal) : 0);
 
             const assocIdStr = payoutInfo && payoutInfo.associatedOrderId ? payoutInfo.associatedOrderId : item.orderId;
+            const itemBasePriceVal = (payoutInfo && payoutInfo.subtotalSetelahDiskonPenjual ? payoutInfo.subtotalSetelahDiskonPenjual : 0) / (orderIdCounts[item.orderId] || 1);
+            const itemBasePrice = itemBasePriceVal > 0 ? itemBasePriceVal : itemOriginalPrice;
+            
             const row = [
                 idx + 1,
                 item.date || '',
@@ -3383,6 +3386,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `"${(item.variation || '').replace(/"/g, '""')}"`,
                 item.qty,
                 `"${statusStr}"`,
+                Math.round(itemBasePrice),
                 Math.round(settlementAmt),
                 totalHpp,
                 Math.round(netProfit)
@@ -3778,7 +3782,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 SKU: <strong>${item.sku}</strong>
                             </div>
                             <div style="font-size: 12px; text-align: right;">
-                                Harga Jual: <strong>${formatRupiah(item.subtotalBeforeDiscount || (item.originalPrice * item.qty))}</strong>
+                                Harga Jual (Awal): <strong>${formatRupiah(item.subtotalBeforeDiscount || (item.originalPrice * item.qty))}</strong>
+                                <span style="color: var(--text-muted); margin: 0 6px;">|</span>
+                                Omset Produk: <strong style="color: var(--accent-cyan);">${formatRupiah(Math.round(itemBasePrice))}</strong>
                                 <span style="color: var(--text-muted); margin: 0 6px;">|</span>
                                 HPP Satuan: <strong style="color: var(--accent-pink);">${formatRupiah(hppVal)}</strong>
                                 <span style="color: var(--text-muted); margin: 0 6px;">|</span>
