@@ -1783,6 +1783,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 amount: 0,
                                 originalAmount: 0,
                                 isAppealWon: false,
+                                compensation: 0,
                                 associatedOrderId: '',
                                 date: aggDate,
                                 voucher: 0,
@@ -1836,6 +1837,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                typeVal.includes('reimbursement');
                         if (isAppealWonRow) {
                             tempParsedOrderPayouts[orderId].isAppealWon = true;
+                            tempParsedOrderPayouts[orderId].compensation += settlementVal;
                         }
                         if (assocId) {
                             tempParsedOrderPayouts[orderId].associatedOrderId = (row[colMap.orderId] || '').toString().trim();
@@ -3734,9 +3736,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemBasePrice = itemBasePriceVal > 0 ? itemBasePriceVal : itemOriginalPrice;
             
             const detailFields = [
+                { key: 'originalAmount', name: 'Pencairan Awal (Pesanan)', isDiscount: true },
+                { key: 'refund', name: 'Refund Pengembalian', isDiscount: false },
+                { key: 'compensation', name: 'Kompensasi Platform', isDiscount: true },
+                { key: 'adminFees', name: 'Biaya Admin (Laporan)', isDiscount: false },
+                { key: 'voucher', name: 'Voucher Penjual (Laporan)', isDiscount: false },
+                { key: 'ads', name: 'Biaya Iklan (GMV Max)', isDiscount: false },
+                { key: 'affiliate', name: 'Komisi Afiliasi (Laporan)', isDiscount: false },
+                
                 { key: 'ongkir', name: 'Ongkir' },
                 { key: 'komisiDinamis', name: 'Komisi dinamis' },
-                { key: 'komisiAfiliasi', name: 'Komisi Afiliasi' },
+                { key: 'komisiAfiliasi', name: 'Komisi Afiliasi (Baru)' },
                 { key: 'biayaKomisiPlatform', name: 'Biaya komisi platform' },
                 { key: 'biayaLayananLogistik', name: 'Biaya layanan logistik' },
                 { key: 'biayaPemrosesanPesanan', name: 'Biaya pemrosesan pesanan' },
