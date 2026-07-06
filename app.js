@@ -588,6 +588,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || statusLower.includes('retur') || statusLower.includes('refund') || statusLower.includes('return'));
+                const isBatal = isCancelled;
+                const isPaketGagal = isReturn && (resolution === 'paket_gagal' || resolution === 'kembali');
+                if (isBatal || isPaketGagal) {
+                    const price = item.subtotalAfterDiscount || (item.originalPrice * item.qty) || 0;
+                    calculatedTotalRefunds += price;
+                }
 
                 const shouldInclude = isSettled || isOnHold || isReturn;
                 if (!shouldInclude) return;
@@ -639,10 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     activeDiskonBelanjaIklan += (payoutInfo.diskonBelanjaIklan || 0) / count;
                 }
 
-                if (isCancelled) {
-                    const price = item.subtotalAfterDiscount || (item.originalPrice * item.qty) || 0;
-                    calculatedTotalRefunds += price;
-                }
+
 
                 // Sum payout only for Sudah Cair and appeal won returns
                 const isBandingMenang = resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
