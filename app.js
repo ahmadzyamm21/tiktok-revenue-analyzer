@@ -3275,15 +3275,15 @@ document.addEventListener('DOMContentLoaded', () => {
             let resolution = returnResolutions[item.orderId];
             if (payoutInfo) {
                 if (payoutInfo.isAppealWon) {
-                    resolution = 'menang';
-                } else if (resolution === 'menang') {
+                    resolution = 'menang_balik';
+                } else if (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
                     resolution = 'kembali';
                 }
             }
             if (!resolution) {
                 resolution = 'kembali';
             }
-            const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang';
+            const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
@@ -3306,7 +3306,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
             let fullSettlementAmt = 0;
-            if (resolution === 'menang') {
+            if (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
                 if (payoutInfo) {
                     if (payoutInfo.compensation > 0) {
                         fullSettlementAmt = payoutInfo.compensation;
@@ -3373,11 +3373,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let statusStr = 'Belum Cair';
             let keteranganStr = '-';
 
-            const isReturn = (resolution === 'menang' || isReturnedOnly);
+            const isReturn = (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
             if (isReturn) {
                 statusStr = 'Retur';
-                if (resolution === 'menang') {
-                    keteranganStr = 'Banding Menang';
+                if (resolution === 'menang' || resolution === 'menang_balik') {
+                    keteranganStr = 'Banding Menang (Barang Balik)';
+                } else if (resolution === 'menang_hilang') {
+                    keteranganStr = 'Banding Menang (Barang Hilang/Rusak)';
                 } else if (resolution === 'kembali') {
                     keteranganStr = 'Tidak Mengajukan Banding';
                 } else if (resolution === 'rugi') {
@@ -3401,7 +3403,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-            const totalHpp = (isCancelled || (isReturnedOnly && resolution !== 'rugi')) ? 0 : (item.qty * hppVal);
+            let totalHpp = item.qty * hppVal;
+            if (isCancelled) {
+                totalHpp = 0;
+            } else if (isReturnedOnly || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
+                if (resolution === 'rugi' || resolution === 'menang_hilang') {
+                    totalHpp = item.qty * hppVal;
+                } else {
+                    totalHpp = 0;
+                }
+            }
             const netProfit = (isSettled || payoutInfo) ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -(item.qty * hppVal) : 0);
 
             const assocIdStr = payoutInfo && payoutInfo.associatedOrderId ? payoutInfo.associatedOrderId : item.orderId;
@@ -3557,15 +3568,15 @@ document.addEventListener('DOMContentLoaded', () => {
             let resolution = returnResolutions[item.orderId];
             if (payoutInfo) {
                 if (payoutInfo.isAppealWon) {
-                    resolution = 'menang';
-                } else if (resolution === 'menang') {
+                    resolution = 'menang_balik';
+                } else if (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
                     resolution = 'kembali';
                 }
             }
             if (!resolution) {
                 resolution = 'kembali';
             }
-            const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang';
+            const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
@@ -3588,7 +3599,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
             let fullSettlementAmt = 0;
-            if (resolution === 'menang') {
+            if (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
                 if (payoutInfo) {
                     if (payoutInfo.compensation > 0) {
                         fullSettlementAmt = payoutInfo.compensation;
@@ -3656,12 +3667,15 @@ document.addEventListener('DOMContentLoaded', () => {
             let statusClass = 'status-pill warning';
             let keteranganStr = '-';
 
-            const isReturn = (resolution === 'menang' || isReturnedOnly);
+            const isReturn = (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
             if (isReturn) {
                 statusStr = 'Retur';
-                if (resolution === 'menang') {
+                if (resolution === 'menang' || resolution === 'menang_balik') {
                     statusClass = 'status-pill success';
-                    keteranganStr = 'Banding Menang';
+                    keteranganStr = 'Banding Menang (Barang Balik)';
+                } else if (resolution === 'menang_hilang') {
+                    statusClass = 'status-pill success';
+                    keteranganStr = 'Banding Menang (Barang Hilang/Rusak)';
                 } else if (resolution === 'kembali') {
                     statusClass = 'status-pill info';
                     keteranganStr = 'Tidak Mengajukan Banding';
@@ -3718,16 +3732,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isSettled) {
                 settledOrderIds.add(item.orderId);
                 settledAmountSum += settlementAmt;
-            } else if (isReturnedOnly) {
+            } else if (isReturnedOnly || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
                 returnedOrderIds.add(item.orderId);
-                if (resolution === 'rugi') {
+                if (resolution === 'rugi' || resolution === 'menang_hilang') {
                     returnedHppSum += itemHpp;
                 }
             } else if (isCancelled) {
                 cancelledOrderIds.add(item.orderId);
             }
 
-            const totalHpp = (isCancelled || (isReturnedOnly && resolution !== 'rugi')) ? 0 : itemHpp;
+            let totalHpp = itemHpp;
+            if (isCancelled) {
+                totalHpp = 0;
+            } else if (isReturnedOnly || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
+                if (resolution === 'rugi' || resolution === 'menang_hilang') {
+                    totalHpp = itemHpp;
+                } else {
+                    totalHpp = 0;
+                }
+            }
             const netProfit = (isSettled || payoutInfo) ? (settlementAmt - totalHpp) : (isReturnedOnly && resolution === 'rugi' ? -itemHpp : 0);
 
             const itemAdmin = (payoutInfo && payoutInfo.adminFees ? payoutInfo.adminFees : 0) / (orderIdCounts[item.orderId] || 1);
@@ -3828,7 +3851,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (itemHpp > 0) {
                                 if (isCancelled) {
                                     return `<span style="text-decoration: line-through; opacity: 0.6;">${formatRupiah(itemHpp)}</span> <span style="font-size: 10px; color: var(--text-muted);">(Batal)</span>`;
-                                } else if (isReturnedOnly && resolution === 'kembali') {
+                                } else if ((isReturnedOnly || resolution === 'menang' || resolution === 'menang_balik') && (resolution !== 'rugi' && resolution !== 'menang_hilang')) {
                                     return `<span style="text-decoration: line-through; opacity: 0.6;">${formatRupiah(itemHpp)}</span> <span style="font-size: 10px; color: var(--accent-cyan);">(Kembali)</span>`;
                                 }
                             }
@@ -3884,8 +3907,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <div>
                                             <select onchange="updateReturnResolution('${item.orderId}', this.value)" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #FFF; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-family: inherit; cursor: pointer; outline: none;">
                                                 <option value="pending" ${resolution === 'pending' ? 'selected' : ''}>⏳ Pengembalian Dana (Pending)</option>
-                                                <option value="menang" ${resolution === 'menang' ? 'selected' : ''}>🏆 Ajukan Banding Menang</option>
-                                                <option value="rugi" ${resolution === 'rugi' ? 'selected' : ''}>❌ Ajukan Banding Kalah</option>
+                                                <option value="menang_balik" ${resolution === 'menang' || resolution === 'menang_balik' ? 'selected' : ''}>🏆 Banding Menang (Barang Balik)</option>
+                                                <option value="menang_hilang" ${resolution === 'menang_hilang' ? 'selected' : ''}>🏆 Banding Menang (Barang Hilang/Rusak)</option>
+                                                <option value="rugi" ${resolution === 'rugi' ? 'selected' : ''}>❌ Banding Kalah</option>
                                                 <option value="kembali" ${resolution === 'kembali' ? 'selected' : ''}>📦 Tidak Mengajukan Banding</option>
                                             </select>
                                         </div>
