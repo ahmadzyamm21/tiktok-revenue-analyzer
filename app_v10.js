@@ -588,24 +588,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (payoutInfo) {
                             if (payoutInfo.compensation > 0) {
                                 fullSettlementAmt = payoutInfo.compensation;
+                            } else if (payoutInfo.subtotalSetelahDiskonPenjual > 0) {
+                                fullSettlementAmt = payoutInfo.subtotalSetelahDiskonPenjual;
                             } else if (payoutInfo.originalAmount > 0) {
                                 fullSettlementAmt = payoutInfo.originalAmount;
-                            } else if (payoutInfo.amount > 0) {
-                                fullSettlementAmt = payoutInfo.amount;
                             } else {
-                                const localAdmin = Math.abs(payoutInfo.adminFees || 0) / (orderIdCounts[item.orderId] || 1);
-                                const localVoucher = Math.abs(payoutInfo.voucher || 0) / (orderIdCounts[item.orderId] || 1);
-                                const localAds = Math.abs(payoutInfo.ads || 0) / (orderIdCounts[item.orderId] || 1);
-                                const localAffiliate = Math.abs(payoutInfo.affiliate || 0) / (orderIdCounts[item.orderId] || 1);
-                                const estimatedPayout = itemOriginalPrice - localAdmin - localVoucher - localAds - localAffiliate;
-                                fullSettlementAmt = estimatedPayout > 0 ? estimatedPayout : itemOriginalPrice;
+                                fullSettlementAmt = itemOriginalPrice;
                             }
                         } else {
                             fullSettlementAmt = itemOriginalPrice;
                         }
                     } else {
-                        if (payoutInfo) {
-                            fullSettlementAmt = payoutInfo.amount;
+                        if (payoutInfo && payoutInfo.subtotalSetelahDiskonPenjual > 0) {
+                            fullSettlementAmt = payoutInfo.subtotalSetelahDiskonPenjual;
                         } else {
                             fullSettlementAmt = itemOriginalPrice;
                         }
