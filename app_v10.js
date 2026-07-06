@@ -3296,18 +3296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let fullSettlementAmt = 0;
             if (isSettled) {
                 if (payoutInfo) {
-                    if (payoutInfo.originalAmount > 0) {
-                        fullSettlementAmt = payoutInfo.originalAmount;
-                    } else if (payoutInfo.amount > 0) {
-                        fullSettlementAmt = payoutInfo.amount;
-                    } else {
-                        const localAdmin = (payoutInfo.adminFees ? payoutInfo.adminFees : 0) / (orderIdCounts[item.orderId] || 1);
-                        const localVoucher = (payoutInfo.voucher ? payoutInfo.voucher : 0) / (orderIdCounts[item.orderId] || 1);
-                        const localAds = (payoutInfo.ads ? payoutInfo.ads : 0) / (orderIdCounts[item.orderId] || 1);
-                        const localAffiliate = (payoutInfo.affiliate ? payoutInfo.affiliate : 0) / (orderIdCounts[item.orderId] || 1);
-                        const estimatedPayout = itemOriginalPrice - localAdmin - localVoucher - localAds - localAffiliate;
-                        fullSettlementAmt = estimatedPayout > 0 ? estimatedPayout : itemOriginalPrice;
-                    }
+                    fullSettlementAmt = payoutInfo.amount;
                 } else {
                     fullSettlementAmt = itemOriginalPrice;
                 }
@@ -3546,19 +3535,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let fullSettlementAmt = 0;
             if (isSettled) {
                 if (payoutInfo) {
-                    if (payoutInfo.originalAmount > 0) {
-                        fullSettlementAmt = payoutInfo.originalAmount;
-                    } else if (payoutInfo.amount > 0) {
-                        fullSettlementAmt = payoutInfo.amount;
-                    } else {
-                        // Banding Menang fallback: hitung estimasi dana bersih (Harga - Potongan biaya secara lokal)
-                        const localAdmin = (payoutInfo && payoutInfo.adminFees ? payoutInfo.adminFees : 0) / (orderIdCounts[item.orderId] || 1);
-                        const localVoucher = (payoutInfo && payoutInfo.voucher ? payoutInfo.voucher : 0) / (orderIdCounts[item.orderId] || 1);
-                        const localAds = (payoutInfo && payoutInfo.ads ? payoutInfo.ads : 0) / (orderIdCounts[item.orderId] || 1);
-                        const localAffiliate = (payoutInfo && payoutInfo.affiliate ? payoutInfo.affiliate : 0) / (orderIdCounts[item.orderId] || 1);
-                        const estimatedPayout = itemOriginalPrice - localAdmin - localVoucher - localAds - localAffiliate;
-                        fullSettlementAmt = estimatedPayout > 0 ? estimatedPayout : itemOriginalPrice;
-                    }
+                    fullSettlementAmt = payoutInfo.amount;
                 } else {
                     fullSettlementAmt = itemOriginalPrice;
                 }
