@@ -3299,6 +3299,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusStr = 'Dibatalkan';
             }
 
+            // Exclude rows without resi unless they are settled (cair/menang)
+            if (!hasResi && !isSettled) return;
+
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
             const totalHpp = (isCancelled || (isReturnedOnly && resolution !== 'rugi')) ? 0 : (item.qty * hppVal);
@@ -3505,7 +3508,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filterStatus === 'pending' && (isSettled || isCancelled || isReturnedOnly)) return;
             if (filterStatus === 'cancelled' && !isCancelled) return;
             if (filterStatus === 'returned' && !isReturnedOnly) return;
-
+            // Exclude rows without resi unless they are settled (cair/menang)
+            if (!hasResi && !isSettled) return;
             // Apply search query
             const assocIdStr = payoutInfo && payoutInfo.associatedOrderId ? payoutInfo.associatedOrderId.toLowerCase() : '';
             const matchSearch = !query || 
