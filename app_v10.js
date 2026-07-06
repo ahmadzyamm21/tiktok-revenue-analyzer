@@ -471,8 +471,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            let sumGross = 0;
-            const uniqueOrderIds = new Set();
+            let settledAmountSum = 0;
+            const settledUniqueOrderIds = new Set();
             let returnResolutions = {};
             try {
                 returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
@@ -487,39 +487,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
                 
                 const resolution = returnResolutions[item.orderId] || 'pending';
-                const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
+                const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
                 
                 const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
                 const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
                 const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-                const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
-                                      (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                      (item.returnQty && item.returnQty > 0);
-                const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !isSettled && resolution !== 'menang' && resolution !== 'menang_balik' && resolution !== 'menang_hilang' && resolution !== 'rugi');
-                const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
-                                       statusLower.includes('refund') || 
-                                       statusLower.includes('return') || 
-                                       (isCancelledOnly && item.trackingId) || 
-                                       (payoutInfo && payoutInfo.isReturned) ||
-                                       (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                       (item.returnQty && item.returnQty > 0)) && !isSettled;
                 
-                if (isSettled || isReturnedOnly) {
-                    let itemGross = 0;
-                    if (item.subtotalBeforeDiscount && item.subtotalBeforeDiscount > 0) {
-                        itemGross = item.subtotalBeforeDiscount;
-                    } else if (item.originalPrice && item.originalPrice > 0) {
-                        itemGross = item.originalPrice * item.qty;
+                if (!hasResi && !isSettled) return;
+
+                if (isSettled) {
+                    let fullSettlementAmt = 0;
+                    const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
+                    
+                    if (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
+                        if (payoutInfo) {
+                            if (payoutInfo.compensation > 0) {
+                                fullSettlementAmt = payoutInfo.compensation;
+                            } else if (payoutInfo.originalAmount > 0) {
+                                fullSettlementAmt = payoutInfo.originalAmount;
+                            } else if (payoutInfo.amount > 0) {
+                                fullSettlementAmt = payoutInfo.amount;
+                            } else {
+                                const localAdmin = Math.abs(payoutInfo.adminFees || 0) / (orderIdCounts[item.orderId] || 1);
+                                const localVoucher = Math.abs(payoutInfo.voucher || 0) / (orderIdCounts[item.orderId] || 1);
+                                const localAds = Math.abs(payoutInfo.ads || 0) / (orderIdCounts[item.orderId] || 1);
+                                const localAffiliate = Math.abs(payoutInfo.affiliate || 0) / (orderIdCounts[item.orderId] || 1);
+                                const estimatedPayout = itemOriginalPrice - localAdmin - localVoucher - localAds - localAffiliate;
+                                fullSettlementAmt = estimatedPayout > 0 ? estimatedPayout : itemOriginalPrice;
+                            }
+                        } else {
+                            fullSettlementAmt = itemOriginalPrice;
+                        }
                     } else {
-                        const fullAmt = payoutInfo ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
-                        itemGross = fullAmt / (orderIdCounts[item.orderId] || 1);
+                        if (payoutInfo) {
+                            fullSettlementAmt = payoutInfo.amount;
+                        } else {
+                            fullSettlementAmt = itemOriginalPrice;
+                        }
                     }
-                    sumGross += itemGross;
-                    uniqueOrderIds.add(item.orderId);
+                    const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
+                    settledAmountSum += settlementAmt;
+                    settledUniqueOrderIds.add(item.orderId);
                 }
             });
-            displayGross = sumGross;
-            displayOrders = uniqueOrderIds.size;
+            displayGross = settledAmountSum;
+            displayOrders = settledUniqueOrderIds.size;
         }
 
         const aov = displayOrders > 0 ? displayGross / displayOrders : 0;
