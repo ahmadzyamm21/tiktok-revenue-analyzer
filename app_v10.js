@@ -492,7 +492,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
                 const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
                 const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-                const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
+                const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
+                                      (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
+                                      (item.returnQty && item.returnQty > 0);
+                const isPaketGagal = isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled;
+                const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
                                        statusLower.includes('refund') || 
                                        statusLower.includes('return') || 
                                        (isCancelledOnly && item.trackingId) || 
@@ -3288,20 +3292,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-            const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
+            // Detect 'paket gagal' (failed delivery): status=Dibatalkan + has resi but NO return data
+            const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
+                                  (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
+                                  (item.returnQty && item.returnQty > 0);
+            const isPaketGagal = isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled;
+            const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
                                    (isCancelledOnly && item.trackingId) || 
                                    (payoutInfo && payoutInfo.isReturned) ||
                                    (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                    (item.returnQty && item.returnQty > 0)) && !isSettled;
-            const isCancelled = !isSettled && (isCancelledOnly || 
+            const isCancelled = isPaketGagal || (!isSettled && (isCancelledOnly || 
                                 statusLower.includes('retur') || 
                                 statusLower.includes('refund') || 
                                 statusLower.includes('return') || 
                                 (payoutInfo && payoutInfo.isReturned) ||
                                 (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                (item.returnQty && item.returnQty > 0)) && !hasValidShipment;
+                                (item.returnQty && item.returnQty > 0)) && !hasValidShipment);
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
@@ -3389,7 +3398,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (isCancelled) {
                 statusStr = 'Batal';
-                keteranganStr = hasShipped ? 'Sudah Kirim' : 'Belum Kirim';
+                if (isPaketGagal) {
+                    keteranganStr = 'Paket Gagal';
+                } else {
+                    keteranganStr = hasShipped ? 'Sudah Kirim' : 'Belum Kirim';
+                }
             } else if (isSettled) {
                 statusStr = 'Sudah Cair';
                 keteranganStr = '-';
@@ -3581,20 +3594,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-            const isReturnedOnly = hasValidShipment && (statusLower.includes('retur') || 
+            // Detect 'paket gagal' (failed delivery): status=Dibatalkan + has resi but NO return data
+            const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
+                                  (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
+                                  (item.returnQty && item.returnQty > 0);
+            const isPaketGagal = isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled;
+            const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
                                    (isCancelledOnly && item.trackingId) || 
                                    (payoutInfo && payoutInfo.isReturned) ||
                                    (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                    (item.returnQty && item.returnQty > 0)) && !isSettled;
-            const isCancelled = !isSettled && (isCancelledOnly || 
+            const isCancelled = isPaketGagal || (!isSettled && (isCancelledOnly || 
                                 statusLower.includes('retur') || 
                                 statusLower.includes('refund') || 
                                 statusLower.includes('return') || 
                                 (payoutInfo && payoutInfo.isReturned) ||
                                 (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                (item.returnQty && item.returnQty > 0)) && !hasValidShipment;
+                                (item.returnQty && item.returnQty > 0)) && !hasValidShipment);
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
@@ -3688,7 +3706,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (isCancelled) {
                 statusStr = 'Batal';
-                if (hasShipped) {
+                if (isPaketGagal) {
+                    statusClass = 'status-pill danger';
+                    keteranganStr = 'Paket Gagal';
+                } else if (hasShipped) {
                     statusClass = 'status-pill danger';
                     keteranganStr = 'Sudah Kirim';
                 } else {
