@@ -535,6 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const settledUniqueOrderIds = new Set();
             let settledItemCount = 0;
             let calculatedTotalPayout = 0;
+            let calculatedTotalRefunds = 0;
             activeDiskonPenjual = 0;
             activeDiskonOngkirPenjual = 0;
             activeDiskonPlatform = 0;
@@ -638,6 +639,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     activeDiskonBelanjaIklan += (payoutInfo.diskonBelanjaIklan || 0) / count;
                 }
 
+                if (isCancelled) {
+                    const price = item.subtotalAfterDiscount || (item.originalPrice * item.qty) || 0;
+                    calculatedTotalRefunds += price;
+                }
+
                 // Sum payout only for Sudah Cair and appeal won returns
                 const isBandingMenang = resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
                 const qualifyForNetPayout = isSettled && (!isReturn || isBandingMenang);
@@ -654,6 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             displayGross = settledAmountSum;
             displayOrders = settledItemCount;
+            totalRefunds = calculatedTotalRefunds;
             totalNet = displayGross - totalRefunds - (activeDiskonOngkirPenjual + activeDiskonPlatform + activeDiskonVoucherPlatform + activeDiskonBelanjaIklan);
             totalPayout = calculatedTotalPayout;
         }
