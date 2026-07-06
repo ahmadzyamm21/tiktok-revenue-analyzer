@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalHppFromLogs += (log.hpp || 0);
         });
 
-        const totalNet = totalGross - totalRefunds - totalVouchers;
+        let totalNet = totalGross - totalRefunds - totalVouchers;
         let totalPayout = totalNet - totalAdminFees - totalAdsSpend + totalAdjustments;
         const targetPct = targetRevenue > 0 ? (totalNet / targetRevenue) * 100 : 0;
 
@@ -654,6 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             displayGross = settledAmountSum;
             displayOrders = settledItemCount;
+            totalNet = displayGross - totalRefunds - (activeDiskonOngkirPenjual + activeDiskonPlatform + activeDiskonVoucherPlatform + activeDiskonBelanjaIklan);
             totalPayout = calculatedTotalPayout;
         }
 
