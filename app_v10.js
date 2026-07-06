@@ -1815,10 +1815,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                 biayaCampaignSource: 0,
                                 biayaLayananKhususPlatform: 0,
                                 biayaProgramLayananTerkelola: 0,
-                                biayaAsuransi: 0
+                                biayaAsuransi: 0,
+                                isPaid: false
                             };
                         }
                         tempParsedOrderPayouts[orderId].amount += settlementVal;
+                        const isMainOrderRow = typeVal.includes('pesanan') || typeVal.includes('order') || typeVal.includes('payment') || typeVal.includes('gmv');
+                        if (isMainOrderRow) {
+                            tempParsedOrderPayouts[orderId].isPaid = true;
+                        }
                         if (settlementVal > 0 && typeVal === 'pesanan') {
                             tempParsedOrderPayouts[orderId].originalAmount += settlementVal;
                         }
@@ -3266,7 +3271,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             
             const resolution = returnResolutions[item.orderId] || (payoutInfo && payoutInfo.isAppealWon ? 'menang' : 'pending');
-            const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
+            const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
@@ -3512,7 +3517,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             
             const resolution = returnResolutions[item.orderId] || (payoutInfo && payoutInfo.isAppealWon ? 'menang' : 'pending');
-            const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
+            const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
