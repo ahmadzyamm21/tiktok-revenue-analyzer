@@ -3292,25 +3292,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-            // Detect 'paket gagal' (failed delivery): auto-detect OR manual selection
-            const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
-                                  (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                  (item.returnQty && item.returnQty > 0);
-            const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !isSettled && resolution !== 'menang' && resolution !== 'menang_balik' && resolution !== 'menang_hilang' && resolution !== 'rugi');
-            const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
+            const isCancelled = isCancelledOnly;
+            const isPaketGagal = isCancelledOnly && hasValidShipment;
+            const isReturnedOnly = !isCancelledOnly && hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
-                                   (isCancelledOnly && item.trackingId) || 
                                    (payoutInfo && payoutInfo.isReturned) ||
                                    (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                    (item.returnQty && item.returnQty > 0)) && !isSettled;
-            const isCancelled = isPaketGagal || (!isSettled && (isCancelledOnly || 
-                                statusLower.includes('retur') || 
-                                statusLower.includes('refund') || 
-                                statusLower.includes('return') || 
-                                (payoutInfo && payoutInfo.isReturned) ||
-                                (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                (item.returnQty && item.returnQty > 0)) && !hasValidShipment);
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
@@ -3382,7 +3371,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let statusStr = 'Belum Cair';
             let keteranganStr = '-';
 
-            const isReturn = (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
+            const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
             if (isReturn) {
                 statusStr = 'Retur';
                 if (resolution === 'menang' || resolution === 'menang_balik') {
@@ -3399,7 +3388,17 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (isCancelled) {
                 statusStr = 'Batal';
                 if (isPaketGagal) {
-                    keteranganStr = 'Paket Gagal';
+                    if (resolution === 'menang' || resolution === 'menang_balik') {
+                        keteranganStr = 'Banding Menang (Barang Balik)';
+                    } else if (resolution === 'menang_hilang') {
+                        keteranganStr = 'Banding Menang (Barang Hilang/Rusak)';
+                    } else if (resolution === 'rugi') {
+                        keteranganStr = 'Banding Kalah';
+                    } else if (resolution === 'paket_gagal' || resolution === 'kembali') {
+                        keteranganStr = 'Paket Gagal';
+                    } else {
+                        keteranganStr = 'Paket Gagal (Pending)';
+                    }
                 } else {
                     keteranganStr = hasShipped ? 'Sudah Kirim' : 'Belum Kirim';
                 }
@@ -3417,9 +3416,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const skuInfo = hppSkuDb[item.sku];
             const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
             let totalHpp = item.qty * hppVal;
-            if (isCancelled) {
-                totalHpp = 0;
-            } else if (isReturnedOnly || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
+            if (isCancelled || isReturnedOnly) {
                 if (resolution === 'rugi' || resolution === 'menang_hilang') {
                     totalHpp = item.qty * hppVal;
                 } else {
@@ -3594,25 +3591,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-            // Detect 'paket gagal' (failed delivery): auto-detect OR manual selection
-            const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
-                                  (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                  (item.returnQty && item.returnQty > 0);
-            const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !isSettled && resolution !== 'menang' && resolution !== 'menang_balik' && resolution !== 'menang_hilang' && resolution !== 'rugi');
-            const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
+            const isCancelled = isCancelledOnly;
+            const isPaketGagal = isCancelledOnly && hasValidShipment;
+            const isReturnedOnly = !isCancelledOnly && hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
-                                   (isCancelledOnly && item.trackingId) || 
                                    (payoutInfo && payoutInfo.isReturned) ||
                                    (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                    (item.returnQty && item.returnQty > 0)) && !isSettled;
-            const isCancelled = isPaketGagal || (!isSettled && (isCancelledOnly || 
-                                statusLower.includes('retur') || 
-                                statusLower.includes('refund') || 
-                                statusLower.includes('return') || 
-                                (payoutInfo && payoutInfo.isReturned) ||
-                                (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                (item.returnQty && item.returnQty > 0)) && !hasValidShipment);
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
@@ -3685,7 +3671,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let statusClass = 'status-pill warning';
             let keteranganStr = '-';
 
-            const isReturn = (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
+            const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
             if (isReturn) {
                 statusStr = 'Retur';
                 if (resolution === 'menang' || resolution === 'menang_balik') {
@@ -3708,7 +3694,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 statusStr = 'Batal';
                 if (isPaketGagal) {
                     statusClass = 'status-pill danger';
-                    keteranganStr = 'Paket Gagal';
+                    if (resolution === 'menang' || resolution === 'menang_balik') {
+                        keteranganStr = 'Banding Menang (Barang Balik)';
+                    } else if (resolution === 'menang_hilang') {
+                        keteranganStr = 'Banding Menang (Barang Hilang/Rusak)';
+                    } else if (resolution === 'rugi') {
+                        keteranganStr = 'Banding Kalah';
+                    } else if (resolution === 'paket_gagal' || resolution === 'kembali') {
+                        keteranganStr = 'Paket Gagal';
+                    } else {
+                        keteranganStr = 'Paket Gagal (Pending)';
+                    }
                 } else if (hasShipped) {
                     statusClass = 'status-pill danger';
                     keteranganStr = 'Sudah Kirim';
@@ -3753,19 +3749,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isSettled) {
                 settledOrderIds.add(item.orderId);
                 settledAmountSum += settlementAmt;
-            } else if (isReturnedOnly || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
+            } else if (isReturnedOnly) {
                 returnedOrderIds.add(item.orderId);
-                if (resolution === 'rugi' || resolution === 'menang_hilang') {
+                if (resolution === 'rugi') {
                     returnedHppSum += itemHpp;
                 }
             } else if (isCancelled) {
                 cancelledOrderIds.add(item.orderId);
+                if (isPaketGagal && (resolution === 'rugi' || resolution === 'menang_hilang')) {
+                    returnedHppSum += itemHpp;
+                }
             }
 
             let totalHpp = itemHpp;
-            if (isCancelled) {
-                totalHpp = 0;
-            } else if (isReturnedOnly || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
+            if (isCancelled || isReturnedOnly) {
                 if (resolution === 'rugi' || resolution === 'menang_hilang') {
                     totalHpp = itemHpp;
                 } else {
