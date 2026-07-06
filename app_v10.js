@@ -2087,6 +2087,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 revenueLogs = revenueLogs.filter(oldLog => !existingDatesMap[oldLog.date]);
                 revenueLogs = [...revenueLogs, ...tempParsedLogs];
 
+                // Auto-set analysisMonth to the latest month of the imported logs
+                if (tempParsedLogs.length > 0) {
+                    const latestLog = tempParsedLogs[tempParsedLogs.length - 1];
+                    if (latestLog && latestLog.date) {
+                        analysisMonth = latestLog.date.substring(0, 7);
+                        localStorage.setItem('tiktok_analysis_month', analysisMonth);
+                        loadShopSettings();
+                    }
+                }
+
                 saveLogsToStorage();
 
                 // Save order payouts and items
