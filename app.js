@@ -3317,7 +3317,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 else if (resolution === 'rugi') statusStr = 'Rugi HPP';
                 else statusStr = 'Retur (Pending)';
             } else if (isCancelled) {
-                statusStr = 'Dibatalkan';
+                statusStr = hasShipped ? 'Batal (Sudah Kirim)' : 'Batal (Belum Kirim)';
             }
 
             // Exclude rows without resi unless they are settled (cair/menang)
@@ -3541,8 +3541,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusClass = 'status-pill warning';
                 }
             } else if (isCancelled) {
-                statusStr = 'Dibatalkan';
-                statusClass = 'status-pill danger';
+                if (hasShipped) {
+                    statusStr = 'Batal (Sudah Kirim)';
+                    statusClass = 'status-pill danger';
+                } else {
+                    statusStr = 'Batal (Belum Kirim)';
+                    statusClass = 'status-pill warning';
+                }
             }
 
             // Apply filters
