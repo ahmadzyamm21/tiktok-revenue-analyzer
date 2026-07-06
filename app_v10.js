@@ -616,7 +616,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || statusLower.includes('retur') || statusLower.includes('refund') || statusLower.includes('return'));
+                const isReturnedOnly = !isCancelledOnly && hasValidShipment && (statusLower.includes('retur') || 
+                                       statusLower.includes('refund') || 
+                                       statusLower.includes('return') || 
+                                       (payoutInfo && payoutInfo.isReturned) ||
+                                       (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
+                                       (item.returnQty && item.returnQty > 0)) && !isSettled;
+
+                const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
                 const isBatal = isCancelled;
                 const isPaketGagal = isReturn && (resolution === 'kembali' || resolution === 'rugi');
                 if (isBatal || isPaketGagal) {
