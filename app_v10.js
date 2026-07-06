@@ -3600,7 +3600,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     keteranganStr = 'Pengembalian Dana (Pending)';
                 }
             } else if (isCancelled) {
-                statusStr = 'Batal';
+                statusStr = 'Dibatalkan';
                 if (isPaketGagal) {
                     if (resolution === 'menang' || resolution === 'menang_balik') {
                         keteranganStr = 'Banding Menang (Barang Balik)';
@@ -3905,7 +3905,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     keteranganStr = 'Pengembalian Dana (Pending)';
                 }
             } else if (isCancelled) {
-                statusStr = 'Batal';
+                statusStr = 'Dibatalkan';
                 if (isPaketGagal) {
                     statusClass = 'status-pill danger';
                     if (resolution === 'menang' || resolution === 'menang_balik') {
