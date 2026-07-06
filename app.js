@@ -495,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
                                       (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                       (item.returnQty && item.returnQty > 0);
-                const isPaketGagal = isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled;
+                const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !isSettled && resolution !== 'menang' && resolution !== 'menang_balik' && resolution !== 'menang_hilang' && resolution !== 'rugi');
                 const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
                                        statusLower.includes('refund') || 
                                        statusLower.includes('return') || 
@@ -3296,7 +3296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                   (item.returnQty && item.returnQty > 0);
-            const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled);
+            const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !isSettled && resolution !== 'menang' && resolution !== 'menang_balik' && resolution !== 'menang_hilang' && resolution !== 'rugi');
             const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
@@ -3598,7 +3598,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                   (item.returnQty && item.returnQty > 0);
-            const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled);
+            const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !isSettled && resolution !== 'menang' && resolution !== 'menang_balik' && resolution !== 'menang_hilang' && resolution !== 'rugi');
             const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
