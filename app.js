@@ -3292,11 +3292,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-            // Detect 'paket gagal' (failed delivery): status=Dibatalkan + has resi but NO return data
+            // Detect 'paket gagal' (failed delivery): auto-detect OR manual selection
             const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                   (item.returnQty && item.returnQty > 0);
-            const isPaketGagal = isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled;
+            const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled);
             const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
@@ -3594,11 +3594,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-            // Detect 'paket gagal' (failed delivery): status=Dibatalkan + has resi but NO return data
+            // Detect 'paket gagal' (failed delivery): auto-detect OR manual selection
             const hasReturnData = (payoutInfo && payoutInfo.isReturned) ||
                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
                                   (item.returnQty && item.returnQty > 0);
-            const isPaketGagal = isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled;
+            const isPaketGagal = resolution === 'paket_gagal' || (isCancelledOnly && hasValidShipment && !hasReturnData && !isSettled);
             const isReturnedOnly = !isPaketGagal && hasValidShipment && (statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
@@ -3914,7 +3914,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         <!-- Return Resolution Selector -->
                         ${(() => {
-                            if (isReturnedOnly) {
+                            if (isReturnedOnly || isPaketGagal) {
                                 return `
                                     <div style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.2); padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
                                         <div style="text-align: left;">
@@ -3932,6 +3932,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                                 <option value="menang_hilang" ${resolution === 'menang_hilang' ? 'selected' : ''}>🏆 Banding Menang (Barang Hilang/Rusak)</option>
                                                 <option value="rugi" ${resolution === 'rugi' ? 'selected' : ''}>❌ Banding Kalah</option>
                                                 <option value="kembali" ${resolution === 'kembali' ? 'selected' : ''}>📦 Tidak Mengajukan Banding</option>
+                                                <option value="paket_gagal" ${resolution === 'paket_gagal' ? 'selected' : ''}>🚫 Paket Gagal (Pengiriman Gagal)</option>
                                             </select>
                                         </div>
                                     </div>
