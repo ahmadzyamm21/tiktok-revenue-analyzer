@@ -3309,6 +3309,42 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
 
+            // Check if package is stuck in transit (>10 days)
+            let isOnHold = false;
+            if (!isSettled && !isCancelled && !isReturnedOnly && (statusLower.includes('transit') || statusLower.includes('kirim') || statusLower.includes('perjalanan') || statusLower.includes('shipped'))) {
+                const shipDateVal = item.shippedTime || item.date;
+                let parsedShipDate = null;
+                if (shipDateVal) {
+                    if (shipDateVal instanceof Date) {
+                        parsedShipDate = shipDateVal;
+                    } else {
+                        const d = new Date(shipDateVal);
+                        if (!isNaN(d.getTime())) {
+                            parsedShipDate = d;
+                        } else {
+                            const dateMatch = shipDateVal.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                            if (dateMatch) {
+                                parsedShipDate = new Date(dateMatch[1], dateMatch[2] - 1, dateMatch[3]);
+                            } else {
+                                const dateMatch2 = shipDateVal.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                                if (dateMatch2) {
+                                    parsedShipDate = new Date(dateMatch2[3], dateMatch2[2] - 1, dateMatch2[1]);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (parsedShipDate) {
+                    const today = new Date();
+                    const diffTime = today - parsedShipDate;
+                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                    if (diffDays > 10) {
+                        isOnHold = true;
+                    }
+                }
+            }
+
             let statusStr = 'Belum Cair';
             if (isSettled) {
                 statusStr = resolution === 'menang' ? 'Banding Menang' : 'Sudah Cair';
@@ -3318,6 +3354,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 else statusStr = 'Retur (Pending)';
             } else if (isCancelled) {
                 statusStr = hasShipped ? 'Batal (Sudah Kirim)' : 'Batal (Belum Kirim)';
+            } else if (isOnHold) {
+                statusStr = 'On Hold';
             }
 
             // Exclude rows without resi unless they are settled (cair/menang)
@@ -3518,6 +3556,42 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
             
+            // Check if package is stuck in transit (>10 days)
+            let isOnHold = false;
+            if (!isSettled && !isCancelled && !isReturnedOnly && (statusLower.includes('transit') || statusLower.includes('kirim') || statusLower.includes('perjalanan') || statusLower.includes('shipped'))) {
+                const shipDateVal = item.shippedTime || item.date;
+                let parsedShipDate = null;
+                if (shipDateVal) {
+                    if (shipDateVal instanceof Date) {
+                        parsedShipDate = shipDateVal;
+                    } else {
+                        const d = new Date(shipDateVal);
+                        if (!isNaN(d.getTime())) {
+                            parsedShipDate = d;
+                        } else {
+                            const dateMatch = shipDateVal.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                            if (dateMatch) {
+                                parsedShipDate = new Date(dateMatch[1], dateMatch[2] - 1, dateMatch[3]);
+                            } else {
+                                const dateMatch2 = shipDateVal.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                                if (dateMatch2) {
+                                    parsedShipDate = new Date(dateMatch2[3], dateMatch2[2] - 1, dateMatch2[1]);
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (parsedShipDate) {
+                    const today = new Date();
+                    const diffTime = today - parsedShipDate;
+                    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                    if (diffDays > 10) {
+                        isOnHold = true;
+                    }
+                }
+            }
+
             let statusStr = 'Belum Cair';
             let statusClass = 'status-pill warning';
 
@@ -3548,6 +3622,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusStr = 'Batal (Belum Kirim)';
                     statusClass = 'status-pill warning';
                 }
+            } else if (isOnHold) {
+                statusStr = 'On Hold';
+                statusClass = 'status-pill danger';
             }
 
             // Apply filters
