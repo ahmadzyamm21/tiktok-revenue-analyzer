@@ -3270,7 +3270,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             
-            const resolution = returnResolutions[item.orderId] || 'kembali';
+            let resolution = returnResolutions[item.orderId];
+            if (payoutInfo) {
+                if (payoutInfo.isAppealWon) {
+                    resolution = 'menang';
+                } else if (resolution === 'menang') {
+                    resolution = 'kembali';
+                }
+            }
+            if (!resolution) {
+                resolution = 'kembali';
+            }
             const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
@@ -3540,7 +3550,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusLower = (item.status || '').toLowerCase();
             const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
             
-            const resolution = returnResolutions[item.orderId] || 'kembali';
+            let resolution = returnResolutions[item.orderId];
+            if (payoutInfo) {
+                if (payoutInfo.isAppealWon) {
+                    resolution = 'menang';
+                } else if (resolution === 'menang') {
+                    resolution = 'kembali';
+                }
+            }
+            if (!resolution) {
+                resolution = 'kembali';
+            }
             const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
