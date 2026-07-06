@@ -534,6 +534,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             displayGross = settledAmountSum;
             displayOrders = settledItemCount;
+
+            // Override with exact monthly financial stats from Keuangan file if available (to match Seller Center exactly)
+            let financialStats = {};
+            try {
+                financialStats = JSON.parse(localStorage.getItem('tiktok_financial_payout_stats')) || {};
+            } catch (e) {
+                financialStats = {};
+            }
+            if (financialStats[analysisMonth]) {
+                displayGross = financialStats[analysisMonth].amount;
+                displayOrders = financialStats[analysisMonth].count;
+            }
         }
 
         const aov = displayOrders > 0 ? displayGross / displayOrders : 0;
@@ -1421,6 +1433,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let tempParsedLogs = [];
     let tempParsedWithdrawals = [];
     let tempParsedGmvAds = {};
+    let tempParsedFinancialStats = {};
 
     if (inputExcelFile) {
         inputExcelFile.addEventListener('change', (e) => {
@@ -1433,6 +1446,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tempParsedLogs = [];
             tempParsedWithdrawals = [];
             tempParsedGmvAds = {};
+            tempParsedFinancialStats = {};
 
             const fileNames = files.map(f => f.name).join(', ');
             excelFileStatus.textContent = files.length > 1 ? `${files.length} file dipilih` : files[0].name;
@@ -1653,6 +1667,39 @@ document.addEventListener('DOMContentLoaded', () => {
                         const row = jsonData[r];
                         if (!row || row.length === 0) continue;
 
+                        // Try to clean and parse the payout/settlement date (waktu pembayaran pesanan)
+                        const rawOrderDate = (colMap.date && colMap.date !== -1) ? row[colMap.date] : null;
+                        let orderDateStr = '';
+                        if (rawOrderDate) {
+                            if (rawOrderDate instanceof Date) {
+                                const y = rawOrderDate.getFullYear();
+                                const m = String(rawOrderDate.getMonth() + 1).padStart(2, '0');
+                                const d = String(rawOrderDate.getDate()).padStart(2, '0');
+                                orderDateStr = `${y}-${m}-${d}`;
+                            } else {
+                                const dateMatch = rawOrderDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                                if (dateMatch) {
+                                    orderDateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
+                                } else {
+                                    const slashMatch = rawOrderDate.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                                    if (slashMatch) {
+                                        orderDateStr = `${slashMatch[3]}-${slashMatch[2].padStart(2, '0')}-${slashMatch[1].padStart(2, '0')}`;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Accumulate exact financial payout stats (sum of all rows in Detail pesanan sheet)
+                        const rowSettlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
+                        if (orderDateStr && orderDateStr.includes('-')) {
+                            const monthKey = orderDateStr.substring(0, 7); // e.g. "2026-03"
+                            if (!tempParsedFinancialStats[monthKey]) {
+                                tempParsedFinancialStats[monthKey] = { amount: 0, count: 0 };
+                            }
+                            tempParsedFinancialStats[monthKey].amount += rowSettlementVal;
+                            tempParsedFinancialStats[monthKey].count += 1;
+                        }
+
                         let orderId = colMap.orderId !== -1 ? (row[colMap.orderId] || '').toString().trim() : null;
                         const assocId = (colMap.associatedOrderId && colMap.associatedOrderId !== -1) ? (row[colMap.associatedOrderId] || '').toString().trim() : null;
                         if (assocId) {
@@ -1677,28 +1724,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (!isOrderPayment) {
                             continue; // Discard non-order payments, ads, adjustments, etc.
-                        }
-
-                        // Try to clean and parse the order date (waktu pemesanan)
-                        const rawOrderDate = (colMap.date && colMap.date !== -1) ? row[colMap.date] : null;
-                        let orderDateStr = '';
-                        if (rawOrderDate) {
-                            if (rawOrderDate instanceof Date) {
-                                const y = rawOrderDate.getFullYear();
-                                const m = String(rawOrderDate.getMonth() + 1).padStart(2, '0');
-                                const d = String(rawOrderDate.getDate()).padStart(2, '0');
-                                orderDateStr = `${y}-${m}-${d}`;
-                            } else {
-                                const dateMatch = rawOrderDate.toString().match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
-                                if (dateMatch) {
-                                    orderDateStr = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
-                                } else {
-                                    const slashMatch = rawOrderDate.toString().match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
-                                    if (slashMatch) {
-                                        orderDateStr = `${slashMatch[3]}-${slashMatch[2].padStart(2, '0')}-${slashMatch[1].padStart(2, '0')}`;
-                                    }
-                                }
-                            }
                         }
 
                         // Look up in database to see if we have order details there
@@ -2107,6 +2132,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 dailyGmvAdsDb = { ...dailyGmvAdsDb, ...tempParsedGmvAds };
                 localStorage.setItem('tiktok_daily_gmv_ads', JSON.stringify(dailyGmvAdsDb));
+
+                let financialStats = {};
+                try {
+                    financialStats = JSON.parse(localStorage.getItem('tiktok_financial_payout_stats')) || {};
+                } catch (e) {
+                    financialStats = {};
+                }
+                financialStats = { ...financialStats, ...tempParsedFinancialStats };
+                localStorage.setItem('tiktok_financial_payout_stats', JSON.stringify(financialStats));
 
                 if (tempParsedOrders.length > 0) {
                     const existingKeys = new Set(orderItemsDb.map(item => item.orderId + '_' + (item.product || '') + '_' + (item.sku || '') + '_' + (item.variation || '')));
