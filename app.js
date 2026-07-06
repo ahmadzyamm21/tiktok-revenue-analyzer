@@ -473,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let settledAmountSum = 0;
             const settledUniqueOrderIds = new Set();
+            let settledItemCount = 0;
             let returnResolutions = {};
             try {
                 returnResolutions = JSON.parse(localStorage.getItem('tiktok_return_resolutions')) || {};
@@ -528,10 +529,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
                     settledAmountSum += settlementAmt;
                     settledUniqueOrderIds.add(item.orderId);
+                    settledItemCount++;
                 }
             });
             displayGross = settledAmountSum;
-            displayOrders = settledUniqueOrderIds.size;
+            displayOrders = settledItemCount;
         }
 
         const aov = displayOrders > 0 ? displayGross / displayOrders : 0;
