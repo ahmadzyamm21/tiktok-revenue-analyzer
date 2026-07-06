@@ -542,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         let totalNet = totalGross - totalRefunds - totalVouchers;
-        let totalPayout = totalNet - totalAdminFees - totalAdsSpend + totalAdjustments;
+        let totalPayout = totalNet - totalAdminFees + totalAdjustments;
         const targetPct = targetRevenue > 0 ? (totalNet / targetRevenue) * 100 : 0;
 
         let displayGross = totalGross;
@@ -849,7 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pnlHpp) pnlHpp.textContent = `-${formatRupiah(activeHpp)}`;
         if (pnlHppPct) pnlHppPct.textContent = `${((activeHpp / pctDenom) * 100).toFixed(1)}%`;
         
-        const finalNetProfitVal = totalPayout - activeHpp;
+        const finalNetProfitVal = totalPayout - activeHpp - totalAdsSpend;
         if (pnlNetProfitText) {
             pnlNetProfitText.textContent = formatRupiah(finalNetProfitVal);
             if (finalNetProfitVal < 0) {
