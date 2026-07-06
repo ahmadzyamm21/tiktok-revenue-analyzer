@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function rebuildRevenueLogs() {
-        if (!orderItemsDb || orderItemsDb.length === 0 || !orderPayouts || Object.keys(orderPayouts).length === 0) {
+        if ((!orderItemsDb || orderItemsDb.length === 0) && (!orderPayouts || Object.keys(orderPayouts).length === 0)) {
             return;
         }
 
@@ -297,36 +297,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const dailyAgg = {};
-        const orderIdCounts = {};
-        orderItemsDb.forEach(item => {
-            if (item.date) {
-                orderIdCounts[item.orderId] = (orderIdCounts[item.orderId] || 0) + 1;
+
+        // 1. Map order items by order ID for fast lookup
+        const orderItemsMap = {};
+        (orderItemsDb || []).forEach(item => {
+            if (item.orderId) {
+                if (!orderItemsMap[item.orderId]) {
+                    orderItemsMap[item.orderId] = [];
+                }
+                orderItemsMap[item.orderId].push(item);
             }
         });
 
-        orderItemsDb.forEach(item => {
-            if (!item.date) return;
-            const date = item.date;
-            const payoutInfo = orderPayouts[item.orderId];
-            const statusLower = (item.status || '').toLowerCase();
-            const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
-            
-            const resolution = returnResolutions[item.orderId] || 'pending';
-            const isSettled = (payoutInfo && payoutInfo.amount > 0) || resolution === 'menang';
-            
-            const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
-            const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
-            const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
-            
-            const isReturnedOnly = hasValidShipment && (
-                statusLower.includes('retur') || 
-                statusLower.includes('refund') || 
-                statusLower.includes('return') || 
-                isCancelledOnly ||
-                (payoutInfo && payoutInfo.isReturned)
-            ) && !isSettled;
+        // 2. Aggregate settled orders by actual Payment/Settlement Date from orderPayouts
+        if (orderPayouts) {
+            Object.keys(orderPayouts).forEach(orderId => {
+                const payoutInfo = orderPayouts[orderId];
+                if (!payoutInfo || !payoutInfo.date) return;
 
-            if (isSettled || isReturnedOnly) {
+                const date = payoutInfo.date;
                 if (!dailyAgg[date]) {
                     dailyAgg[date] = {
                         gross: 0,
@@ -342,51 +331,116 @@ document.addEventListener('DOMContentLoaded', () => {
                     };
                 }
                 const agg = dailyAgg[date];
-                
-                let itemGross = 0;
-                if (item.subtotalBeforeDiscount && item.subtotalBeforeDiscount > 0) {
-                    itemGross = item.subtotalBeforeDiscount;
-                } else if (item.originalPrice && item.originalPrice > 0) {
-                    itemGross = item.originalPrice * item.qty;
-                } else {
-                    const fullAmt = payoutInfo ? (payoutInfo.originalAmount || payoutInfo.amount) : 0;
-                    itemGross = fullAmt / (orderIdCounts[item.orderId] || 1);
-                }
-                agg.gross += itemGross;
 
-                // Calculate HPP based on status and return resolutions:
-                // Selesai/completed atau Banding Menang -> yes HPP
-                // Retur tapi barang hilang/rusak (rugi HPP) -> yes HPP
-                // Retur tapi barang kembali ke stok -> no HPP
-                let calculatedHpp = 0;
-                const skuInfo = hppSkuDb[item.sku];
-                const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
-                const itemHpp = (item.qty || 1) * hppVal;
-
-                if (statusLower.includes('selesai') || statusLower.includes('completed') || resolution === 'menang') {
-                    calculatedHpp = itemHpp;
-                } else if (isReturnedOnly && resolution === 'rugi') {
-                    calculatedHpp = itemHpp;
-                }
-                agg.hpp += calculatedHpp;
-
-                if (!agg.uniqueOrders.has(item.orderId)) {
-                    agg.uniqueOrders.add(item.orderId);
+                // Add to unique orders if not already added on this day
+                if (!agg.uniqueOrders.has(orderId)) {
+                    agg.uniqueOrders.add(orderId);
                     agg.orders += 1;
-                    agg.orderIds.push(item.orderId);
+                    agg.orderIds.push(orderId);
 
-                    if (payoutInfo) {
-                        // If Banding Menang, refunds is treated as 0 or not calculated as loss
-                        const refundAmount = resolution === 'menang' ? 0 : (payoutInfo.refund || 0);
-                        agg.refunds += refundAmount;
-                        agg.vouchers += (payoutInfo.voucher || 0);
-                        agg.adminFees += (payoutInfo.adminFees || 0);
-                        agg.adsSpend += (payoutInfo.ads || 0);
-                        agg.adjustments += (payoutInfo.adjustments || 0);
+                    // Add financial details
+                    agg.refunds += (payoutInfo.refund || 0);
+                    agg.vouchers += (payoutInfo.voucher || 0);
+                    agg.adminFees += (payoutInfo.adminFees || 0);
+                    agg.adsSpend += (payoutInfo.ads || 0);
+                    agg.adjustments += (payoutInfo.adjustments || 0);
+                }
+
+                // Add items details (gross and HPP)
+                const items = orderItemsMap[orderId] || [];
+                if (items.length > 0) {
+                    items.forEach(item => {
+                        let itemGross = 0;
+                        if (item.subtotalBeforeDiscount && item.subtotalBeforeDiscount > 0) {
+                            itemGross = item.subtotalBeforeDiscount;
+                        } else if (item.originalPrice && item.originalPrice > 0) {
+                            itemGross = item.originalPrice * item.qty;
+                        } else {
+                            itemGross = (payoutInfo.originalAmount || payoutInfo.amount || 0) / items.length;
+                        }
+                        agg.gross += itemGross;
+
+                        // Calculate HPP: since order is settled, they get standard HPP
+                        const skuInfo = hppSkuDb[item.sku];
+                        const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                        agg.hpp += (item.qty || 1) * hppVal;
+                    });
+                } else {
+                    // Fallback gross if items are not available
+                    agg.gross += (payoutInfo.originalAmount || payoutInfo.amount || 0);
+                }
+            });
+        }
+
+        // 3. Aggregate returned/cancelled/pending (non-settled) orders from orderItemsDb by Order Creation Date
+        if (orderItemsDb) {
+            orderItemsDb.forEach(item => {
+                const payoutInfo = orderPayouts ? orderPayouts[item.orderId] : null;
+                const statusLower = (item.status || '').toLowerCase();
+                const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
+
+                const resolution = returnResolutions[item.orderId] || 'pending';
+                const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || 
+                                  resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
+
+                if (isSettled) return; // Already aggregated under payout date!
+
+                const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
+                const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
+                const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
+
+                const isReturnedOnly = hasValidShipment && (
+                    statusLower.includes('retur') || 
+                    statusLower.includes('refund') || 
+                    statusLower.includes('return') || 
+                    isCancelledOnly ||
+                    (payoutInfo && payoutInfo.isReturned)
+                );
+
+                // We aggregate pending & returned (not settled) orders here
+                if (isReturnedOnly) {
+                    const date = item.date;
+                    if (!date) return;
+
+                    if (!dailyAgg[date]) {
+                        dailyAgg[date] = {
+                            gross: 0,
+                            orders: 0,
+                            refunds: 0,
+                            vouchers: 0,
+                            adminFees: 0,
+                            adsSpend: 0,
+                            adjustments: 0,
+                            hpp: 0,
+                            uniqueOrders: new Set(),
+                            orderIds: []
+                        };
+                    }
+                    const agg = dailyAgg[date];
+
+                    if (!agg.uniqueOrders.has(item.orderId)) {
+                        agg.uniqueOrders.add(item.orderId);
+                        agg.orders += 1;
+                        agg.orderIds.push(item.orderId);
+                    }
+
+                    let itemGross = 0;
+                    if (item.subtotalBeforeDiscount && item.subtotalBeforeDiscount > 0) {
+                        itemGross = item.subtotalBeforeDiscount;
+                    } else if (item.originalPrice && item.originalPrice > 0) {
+                        itemGross = item.originalPrice * item.qty;
+                    }
+                    agg.gross += itemGross;
+
+                    // Calculate HPP only if returned but marked as lost/damaged (seller suffers HPP loss)
+                    if (resolution === 'rugi') {
+                        const skuInfo = hppSkuDb[item.sku];
+                        const hppVal = skuInfo ? (skuInfo.hpp || 0) : 0;
+                        agg.hpp += (item.qty || 1) * hppVal;
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Ensure all dates with GMV ads are present in dailyAgg
         Object.keys(dailyGmvAdsDb).forEach(dateKey => {
