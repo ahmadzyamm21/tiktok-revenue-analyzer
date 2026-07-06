@@ -584,7 +584,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
                 const isCancelled = statusLower.includes('batal') || statusLower === 'cancelled' || statusLower.includes('gagal') || statusLower.includes('fail');
                 
-                const resolution = returnResolutions[item.orderId] || 'pending';
+                let resolution = returnResolutions[item.orderId];
+                if (payoutInfo) {
+                    if (payoutInfo.isAppealWon) {
+                        resolution = 'menang_balik';
+                    } else if (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
+                        resolution = 'kembali';
+                    }
+                }
+                if (!resolution) {
+                    resolution = 'kembali';
+                }
                 const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
                 
                 const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
