@@ -550,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isCancelledOnly = statusLower.includes('batal') || statusLower === 'cancelled';
 
                 const resolution = returnResolutions[item.orderId] || 'pending';
-                const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || 
+                const isSettled = (payoutInfo && (payoutInfo.amount !== 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || 
                                   resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
 
                 if (isSettled) return; // Already aggregated under payout date!
@@ -758,7 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!resolution) {
                     resolution = 'kembali';
                 }
-                const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
+                const isSettled = (payoutInfo && (payoutInfo.amount !== 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
                 
                 const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
                 const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
@@ -863,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Sum payout only for Sudah Cair and appeal won returns
                 const isBandingMenang = resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
-                const qualifyForNetPayout = isSettled && (!isReturn || isBandingMenang);
+                const qualifyForNetPayout = isSettled && (!isReturn || isBandingMenang || (payoutInfo && payoutInfo.amount < 0));
                 if (qualifyForNetPayout) {
                     let itemPayout = 0;
                     if (payoutInfo) {
@@ -3876,7 +3876,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!resolution) {
                 resolution = 'kembali';
             }
-            const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
+            const isSettled = (payoutInfo && (payoutInfo.amount !== 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
@@ -4175,7 +4175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!resolution) {
                 resolution = 'kembali';
             }
-            const isSettled = (payoutInfo && (payoutInfo.amount > 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
+            const isSettled = (payoutInfo && (payoutInfo.amount !== 0 || (payoutInfo.isPaid && !payoutInfo.refund))) || resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang';
             
             const hasResi = item.trackingId && item.trackingId.trim() !== '' && item.trackingId.trim() !== '-';
             const hasShipped = item.shippedTime && item.shippedTime.trim() !== '' && item.shippedTime.trim() !== '-';
