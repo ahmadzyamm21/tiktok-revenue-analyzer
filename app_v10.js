@@ -793,8 +793,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                        statusLower.includes('refund') || 
                                        statusLower.includes('return') || 
                                        (payoutInfo && payoutInfo.isReturned) ||
-                                       (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                       (item.returnQty && item.returnQty > 0)) && !isSettled;
+                                       (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
+                                       (item.returnQty && item.returnQty > 0));
 
                 const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
                 const isBatal = isCancelled;
@@ -3623,7 +3623,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('waktu pesanan dibuat') || h.includes('created time') || h.includes('tanggal order') || h.includes('tanggal pesanan') || h.includes('waktu dibuat')),
                         trackingId: headers.findIndex(h => h.includes('resi') || h.includes('tracking id') || h.includes('no resi') || h.includes('resi id')),
                         settlement: headers.findIndex(h => h.includes('settlement') || h.includes('penyelesaian') || h.includes('dana cair') || h.includes('payout')),
-                        returnType: headers.findIndex(h => h.includes('cancelation/return type') || h.includes('tipe pembatalan/pengembalian') || h.includes('return type')),
+                        returnType: headers.findIndex(h => h.includes('cancelation/return type') || h.includes('tipe pembatalan/pengembalian') || h.includes('return type') || h.includes('status pembatalan') || h.includes('pengembalian')),
                         returnQty: headers.findIndex(h => h.includes('sku quantity of return') || h.includes('jumlah pengembalian sku') || h.includes('return qty') || h.includes('returned quantity') || h.includes('jumlah retur')),
                         shippedTime: headers.findIndex(h => h.includes('shipped time') || h.includes('waktu pengiriman') || h.includes('tanggal pengiriman') || h.includes('waktu dikirim') || h.includes('waktu pengiriman diatur')),
                         originalPrice: headers.findIndex(h => h.includes('sku unit original price') || h.includes('harga asli produk') || h.includes('original price') || h.includes('harga awal') || h.includes('harga asli')),
@@ -3886,8 +3886,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
                                    (payoutInfo && payoutInfo.isReturned) ||
-                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                   (item.returnQty && item.returnQty > 0)) && !isSettled;
+                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
+                                   (item.returnQty && item.returnQty > 0));
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
@@ -4185,8 +4185,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
                                    (payoutInfo && payoutInfo.isReturned) ||
-                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund'))) ||
-                                   (item.returnQty && item.returnQty > 0)) && !isSettled;
+                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
+                                   (item.returnQty && item.returnQty > 0));
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
