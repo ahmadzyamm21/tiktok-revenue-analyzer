@@ -826,11 +826,14 @@ body.theme-shopee .main-content {
 
 /* Header */
 body.theme-shopee .header-title {
-    color: #222222;
+    color: #222222 !important;
+    background: none !important;
+    -webkit-text-fill-color: #222222 !important;
+    -webkit-background-clip: initial !important;
 }
 
 body.theme-shopee .header-subtitle {
-    color: #666666;
+    color: #444444;
 }
 
 /* Cards */
@@ -846,15 +849,17 @@ body.theme-shopee .kpi-card {
 }
 
 body.theme-shopee .kpi-label {
-    color: #888888;
+    color: #444444;
+    font-weight: 600;
 }
 
 body.theme-shopee .kpi-value {
-    color: #222222;
+    color: #111111;
 }
 
 body.theme-shopee .kpi-subtext {
-    color: #999999;
+    color: #555555;
+    font-weight: 500;
 }
 
 body.theme-shopee .kpi-icon-container {
@@ -887,17 +892,18 @@ body.theme-shopee .btn-secondary:hover {
 
 /* Tables */
 body.theme-shopee table {
-    color: #333333;
+    color: #222222;
 }
 
 body.theme-shopee th {
-    color: #888888 !important;
-    border-bottom-color: #E8E8E8 !important;
+    color: #333333 !important;
+    font-weight: 700 !important;
+    border-bottom-color: #D8D8D8 !important;
 }
 
 body.theme-shopee td {
-    color: #333333;
-    border-bottom-color: #F0F0F0 !important;
+    color: #222222;
+    border-bottom-color: #EAEAEA !important;
 }
 
 body.theme-shopee tr:hover {
@@ -906,7 +912,7 @@ body.theme-shopee tr:hover {
 
 /* Section descriptions */
 body.theme-shopee .section-desc {
-    color: #888888;
+    color: #444444;
 }
 
 /* Form elements */
@@ -997,7 +1003,8 @@ body.theme-shopee canvas {
 
 /* Active month badge */
 body.theme-shopee #active-month-badge {
-    background: rgba(238,77,45,0.1) !important;
+    background-color: #FFF5F0 !important;
+    border: 1px solid #FFC5B2 !important;
     color: #EE4D2D !important;
 }
 
