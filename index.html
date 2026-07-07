@@ -19,7 +19,7 @@
     <!-- SheetJS CDN for Excel parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="styles.css?v=1.5.4">
+    <link rel="stylesheet" href="styles.css?v=1.5.5">
 </head>
 <body>
     <div class="app-container">
@@ -152,6 +152,41 @@
                             <span class="kpi-label">Rata-Rata AOV</span>
                             <span class="kpi-value" id="kpi-aov">Rp 0</span>
                             <span class="kpi-subtext" id="kpi-daily-avg">Rata-rata Harian: Rp 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ANALISIS SELISIH & BIAYA PLATFORM -->
+                <div class="card mt-4" style="margin-top: 20px; background: rgba(254, 44, 85, 0.02); border: 1px solid rgba(254, 44, 85, 0.15);">
+                    <h3 style="margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; color: var(--accent-pink);">
+                        <i class="fas fa-calculator"></i> Analisis Potongan & Biaya Penjualan (Selisih Omset vs Pencairan)
+                    </h3>
+                    <p class="section-desc" style="margin-bottom: 15px;">Rincian lengkap dari seluruh potongan, biaya admin, voucher belanja, dan retur yang menjelaskan perbedaan antara Omset Bersih dengan Uang Cair Bersih.</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+                        <!-- Item 1: Biaya Admin -->
+                        <div style="padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); position: relative;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Biaya Admin Platform</div>
+                            <h4 id="breakdown-admin-fees" style="font-size: 18px; margin: 0; color: var(--accent-pink); font-weight: 700;">Rp 0</h4>
+                            <div id="breakdown-admin-pct" style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">0.0% dari omset</div>
+                        </div>
+                        <!-- Item 2: Voucher & Diskon -->
+                        <div style="padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); position: relative;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Voucher & Diskon Toko</div>
+                            <h4 id="breakdown-vouchers" style="font-size: 18px; margin: 0; color: var(--accent-pink); font-weight: 700;">Rp 0</h4>
+                            <div id="breakdown-vouchers-pct" style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">0.0% dari omset</div>
+                        </div>
+                        <!-- Item 3: Retur & Refund -->
+                        <div style="padding: 15px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); position: relative;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Retur & Pengembalian Dana</div>
+                            <h4 id="breakdown-refunds" style="font-size: 18px; margin: 0; color: var(--accent-pink); font-weight: 700;">Rp 0</h4>
+                            <div id="breakdown-refunds-pct" style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">0.0% dari omset</div>
+                        </div>
+                        <!-- Item 4: Total Selisih / Potongan -->
+                        <div style="padding: 15px; border-radius: 8px; background: rgba(254, 44, 85, 0.05); border: 1px solid rgba(254, 44, 85, 0.2); position: relative;">
+                            <div style="font-size: 12px; color: #FFF; margin-bottom: 4px; font-weight: 500;">Total Potongan & Biaya</div>
+                            <h4 id="breakdown-total-diff" style="font-size: 18px; margin: 0; color: var(--accent-pink); font-weight: 800;">Rp 0</h4>
+                            <div id="breakdown-total-diff-pct" style="font-size: 11px; color: #FFF; margin-top: 5px; font-weight: 500;">0.0% dari omset kotor</div>
                         </div>
                     </div>
                 </div>
@@ -1483,6 +1518,6 @@
     </div>
 
     <!-- Custom Script -->
-    <script src="app_v10.js?v=1.5.4"></script>
+    <script src="app_v10.js?v=1.5.5"></script>
 </body>
 </html>

@@ -921,6 +921,36 @@ document.addEventListener('DOMContentLoaded', () => {
             subtext += ` | Penyesuaian: +${formatRupiah(totalAdjustments)}`;
         }
         kpiVoucherDeduction.textContent = subtext;
+
+        // Update new breakdown card elements
+        const breakdownAdminFees = document.getElementById('breakdown-admin-fees');
+        const breakdownAdminPct = document.getElementById('breakdown-admin-pct');
+        const breakdownVouchers = document.getElementById('breakdown-vouchers');
+        const breakdownVouchersPct = document.getElementById('breakdown-vouchers-pct');
+        const breakdownRefunds = document.getElementById('breakdown-refunds');
+        const breakdownRefundsPct = document.getElementById('breakdown-refunds-pct');
+        const breakdownTotalDiff = document.getElementById('breakdown-total-diff');
+        const breakdownTotalDiffPct = document.getElementById('breakdown-total-diff-pct');
+
+        if (breakdownAdminFees) {
+            const totalDeductions = Math.max(0, displayGross - totalPayout);
+            const adminPct = displayGross > 0 ? (totalAdminFees / displayGross) * 100 : 0;
+            const vouchersPct = displayGross > 0 ? (totalVouchers / displayGross) * 100 : 0;
+            const refundsPct = displayGross > 0 ? (totalRefunds / displayGross) * 100 : 0;
+            const totalDiffPct = displayGross > 0 ? (totalDeductions / displayGross) * 100 : 0;
+
+            breakdownAdminFees.textContent = `- ${formatRupiah(totalAdminFees)}`;
+            breakdownAdminPct.textContent = `${adminPct.toFixed(1)}% dari omset`;
+
+            breakdownVouchers.textContent = `- ${formatRupiah(totalVouchers)}`;
+            breakdownVouchersPct.textContent = `${vouchersPct.toFixed(1)}% dari omset`;
+
+            breakdownRefunds.textContent = `- ${formatRupiah(totalRefunds)}`;
+            breakdownRefundsPct.textContent = `${refundsPct.toFixed(1)}% dari omset`;
+
+            breakdownTotalDiff.textContent = `- ${formatRupiah(totalDeductions)}`;
+            breakdownTotalDiffPct.textContent = `${totalDiffPct.toFixed(1)}% dari omset kotor`;
+        }
         
         // Render Net Profit Card dynamically
         const activeHpp = totalHppFromLogs > 0 ? totalHppFromLogs : monthlyHpp;
