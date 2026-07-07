@@ -19,7 +19,7 @@
     <!-- SheetJS CDN for Excel parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="styles.css?v=1.6.0">
+    <link rel="stylesheet" href="styles.css?v=1.6.1">
 </head>
 <body>
     <div class="app-container">
@@ -234,82 +234,37 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td style="font-weight: 600; color: #FFF;">(+) Omset Bersih</td>
+                                    <td style="font-weight: 600; color: #FFF;">(+) Omset Kotor (Gross Sales)</td>
                                     <td style="text-align: right; font-weight: 600; color: #FFF;" id="pnl-gross-rev">Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted);">100.0%</td>
                                 </tr>
-                                <tr>
-                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Diskon Ongkir Penjual</td>
-                                    <td style="text-align: right; color: var(--accent-pink);" id="pnl-seller-shipping-discount">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted);" id="pnl-seller-shipping-discount-pct">0.0%</td>
+                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.deduction-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); this.querySelector('.toggle-icon-deduction').textContent = isHidden ? '▼' : '▶';">
+                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Total Potongan & Biaya <span class="toggle-icon-deduction" style="font-size: 10px; margin-left: 5px; color: var(--accent-cyan);">▶</span></td>
+                                    <td style="text-align: right; color: var(--accent-pink);" id="pnl-total-deductions">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted);" id="pnl-total-deductions-pct">0.0%</td>
                                 </tr>
-                                <tr>
-                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Subsidi Diskon Platform</td>
-                                    <td style="text-align: right; color: var(--accent-pink);" id="pnl-platform-discount">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted);" id="pnl-platform-discount-pct">0.0%</td>
+                                <tr class="deduction-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Admin Platform</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-admin-fees">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-admin-pct">0.0%</td>
                                 </tr>
-                                <tr>
-                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Diskon Voucher Platform</td>
-                                    <td style="text-align: right; color: var(--accent-pink);" id="pnl-platform-voucher">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted);" id="pnl-platform-voucher-pct">0.0%</td>
+                                <tr class="deduction-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Voucher & Diskon Toko</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-seller-voucher">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-seller-voucher-pct">0.0%</td>
                                 </tr>
-                                <tr>
-                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Diskon Belanja Iklan</td>
-                                    <td style="text-align: right; color: var(--accent-pink);" id="pnl-ads-discount">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted);" id="pnl-ads-discount-pct">0.0%</td>
+                                <tr class="deduction-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Retur & Pengembalian Dana</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-refund-deduction">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-refund-pct">0.0%</td>
                                 </tr>
-                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.refund-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); this.querySelector('.toggle-icon-refund').textContent = isHidden ? '▼' : '▶';">
-                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Pengembalian Dana (Refund) <span class="toggle-icon-refund" style="font-size: 10px; margin-left: 5px; color: var(--accent-cyan);">▶</span></td>
-                                    <td style="text-align: right; color: var(--accent-pink);" id="pnl-refund-deduction">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted);" id="pnl-refund-pct">0.0%</td>
-                                </tr>
-                                <tr class="refund-detail-row" style="display: none;">
-                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Pesanan Dibatalkan</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-refund-batal">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-refund-batal-pct">0.0%</td>
-                                </tr>
-                                <tr class="refund-detail-row" style="display: none;">
-                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Paket Gagal / Retur</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-refund-paket-gagal">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-refund-paket-gagal-pct">0.0%</td>
+                                <tr class="deduction-detail-row" style="display: none;">
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Selisih Ongkir & Subsidi Platform</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-shipping-adjustment-deduction">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-shipping-adjustment-pct">0.0%</td>
                                 </tr>
                                 <tr style="background: rgba(255,255,255,0.02);">
-                                    <td style="font-weight: 500; padding-left: 15px; color: var(--accent-cyan);">(=) Pendapatan Bersih (Net Revenue)</td>
-                                    <td style="text-align: right; font-weight: 500; color: var(--accent-cyan);" id="pnl-net-rev">Rp 0</td>
-                                    <td style="text-align: right; font-weight: 500; color: var(--accent-cyan);" id="pnl-net-rev-pct">0.0%</td>
-                                </tr>
-                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.admin-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); this.querySelector('.toggle-icon').textContent = isHidden ? '▼' : '▶';">
-                                    <td style="padding-left: 25px; color: var(--text-muted);">(-) Biaya Admin Platform <span class="toggle-icon" style="font-size: 10px; margin-left: 5px; color: var(--accent-cyan);">▶</span></td>
-                                    <td style="text-align: right; color: var(--accent-pink);" id="pnl-admin-fees">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted);" id="pnl-admin-pct">0.0%</td>
-                                </tr>
-                                <tr class="admin-detail-row" style="display: none;">
-                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Komisi Dinamis</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-komisi-dinamis">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-komisi-dinamis-pct">0.0%</td>
-                                </tr>
-                                <tr class="admin-detail-row" style="display: none;">
-                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Pemrosesan Pesanan</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-pemrosesan">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-pemrosesan-pct">0.0%</td>
-                                </tr>
-                                <tr class="admin-detail-row" style="display: none;">
-                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Komisi Afiliasi</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-komisi-afiliasi">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-komisi-afiliasi-pct">0.0%</td>
-                                </tr>
-                                <tr class="admin-detail-row" style="display: none;">
-                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Layanan Cashback</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-cashback">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-cashback-pct">0.0%</td>
-                                </tr>
-                                <tr class="admin-detail-row" style="display: none;">
-                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Platform</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-biaya-lainnya">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-biaya-lainnya-pct">0.0%</td>
-                                </tr>
-                                <tr style="background: rgba(255,255,255,0.02);">
-                                    <td style="font-weight: 500; padding-left: 15px; color: var(--accent-green);">(=) Pendapatan Bersih Cair (Net Payout)</td>
+                                    <td style="font-weight: 500; padding-left: 15px; color: var(--accent-green);">(=) Dana Cair Bersih (Net Payout)</td>
                                     <td style="text-align: right; font-weight: 500; color: var(--accent-green);" id="pnl-net-payout">Rp 0</td>
                                     <td style="text-align: right; font-weight: 500; color: var(--accent-green);" id="pnl-payout-pct">0.0%</td>
                                 </tr>
@@ -1518,6 +1473,6 @@
     </div>
 
     <!-- Custom Script -->
-    <script src="app_v10.js?v=1.6.0"></script>
+    <script src="app_v10.js?v=1.6.1"></script>
 </body>
 </html>

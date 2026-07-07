@@ -1024,62 +1024,36 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const pctDenom = displayGross > 0 ? displayGross : 1;
         
-        if (pnlSellerVoucher) pnlSellerVoucher.textContent = `-${formatRupiah(activeDiskonPenjual)}`;
-        if (pnlSellerVoucherPct) pnlSellerVoucherPct.textContent = `${((activeDiskonPenjual / pctDenom) * 100).toFixed(1)}%`;
-
-        if (pnlSellerShippingDiscount) pnlSellerShippingDiscount.textContent = `-${formatRupiah(activeDiskonOngkirPenjual)}`;
-        if (pnlSellerShippingDiscountPct) pnlSellerShippingDiscountPct.textContent = `${((activeDiskonOngkirPenjual / pctDenom) * 100).toFixed(1)}%`;
-
-        if (pnlPlatformDiscount) pnlPlatformDiscount.textContent = `-${formatRupiah(activeDiskonPlatform)}`;
-        if (pnlPlatformDiscountPct) pnlPlatformDiscountPct.textContent = `${((activeDiskonPlatform / pctDenom) * 100).toFixed(1)}%`;
-
-        if (pnlPlatformVoucher) pnlPlatformVoucher.textContent = `-${formatRupiah(activeDiskonVoucherPlatform)}`;
-        if (pnlPlatformVoucherPct) pnlPlatformVoucherPct.textContent = `${((activeDiskonVoucherPlatform / pctDenom) * 100).toFixed(1)}%`;
-
-        if (pnlAdsDiscount) pnlAdsDiscount.textContent = `-${formatRupiah(activeDiskonBelanjaIklan)}`;
-        if (pnlAdsDiscountPct) pnlAdsDiscountPct.textContent = `${((activeDiskonBelanjaIklan / pctDenom) * 100).toFixed(1)}%`;
+        const totalDeductions = Math.max(0, displayGross - totalPayout);
+        const totalDiffPct = displayGross > 0 ? (totalDeductions / displayGross) * 100 : 0;
         
-        if (pnlRefund) pnlRefund.textContent = `-${formatRupiah(totalRefunds)}`;
-        if (pnlRefundPct) pnlRefundPct.textContent = `${((totalRefunds / pctDenom) * 100).toFixed(1)}%`;
+        const elPnlTotalDeductions = document.getElementById('pnl-total-deductions');
+        const elPnlTotalDeductionsPct = document.getElementById('pnl-total-deductions-pct');
+        if (elPnlTotalDeductions) elPnlTotalDeductions.textContent = `-${formatRupiah(totalDeductions)}`;
+        if (elPnlTotalDeductionsPct) elPnlTotalDeductionsPct.textContent = `${totalDiffPct.toFixed(1)}%`;
 
-        // Refund breakdown detail
-        const elRefundBatal = document.getElementById('pnl-refund-batal');
-        const elRefundBatalPct = document.getElementById('pnl-refund-batal-pct');
-        const elRefundPaketGagal = document.getElementById('pnl-refund-paket-gagal');
-        const elRefundPaketGagalPct = document.getElementById('pnl-refund-paket-gagal-pct');
-        if (elRefundBatal) elRefundBatal.textContent = `-${formatRupiah(totalRefundBatal)}`;
-        if (elRefundBatalPct) elRefundBatalPct.textContent = `${((totalRefundBatal / pctDenom) * 100).toFixed(1)}%`;
-        if (elRefundPaketGagal) elRefundPaketGagal.textContent = `-${formatRupiah(totalRefundPaketGagal)}`;
-        if (elRefundPaketGagalPct) elRefundPaketGagalPct.textContent = `${((totalRefundPaketGagal / pctDenom) * 100).toFixed(1)}%`;
-        
-        if (pnlNetRevText) pnlNetRevText.textContent = formatRupiah(totalNet);
-        if (pnlNetRevPctText) pnlNetRevPctText.textContent = `${((totalNet / pctDenom) * 100).toFixed(1)}%`;
-        
         if (pnlAdmin) pnlAdmin.textContent = `-${formatRupiah(totalAdminFees)}`;
         if (pnlAdminPct) pnlAdminPct.textContent = `${((totalAdminFees / pctDenom) * 100).toFixed(1)}%`;
 
-        // Admin fee breakdown detail
-        const totalBiayaLainnya = Math.max(0, totalAdminFees - totalKomisiDinamis - totalBiayaPemrosesan - totalKomisiAfiliasi - totalBiayaCashback);
-        const elKomisiDinamis = document.getElementById('pnl-komisi-dinamis');
-        const elKomisiDinamisPct = document.getElementById('pnl-komisi-dinamis-pct');
-        const elBiayaPemrosesan = document.getElementById('pnl-biaya-pemrosesan');
-        const elBiayaPemrosesanPct = document.getElementById('pnl-biaya-pemrosesan-pct');
-        const elKomisiAfiliasi = document.getElementById('pnl-komisi-afiliasi');
-        const elKomisiAfiliasiPct = document.getElementById('pnl-komisi-afiliasi-pct');
-        const elBiayaCashback = document.getElementById('pnl-biaya-cashback');
-        const elBiayaCashbackPct = document.getElementById('pnl-biaya-cashback-pct');
-        const elBiayaLainnya = document.getElementById('pnl-biaya-lainnya');
-        const elBiayaLainnyaPct = document.getElementById('pnl-biaya-lainnya-pct');
-        if (elKomisiDinamis) elKomisiDinamis.textContent = `-${formatRupiah(totalKomisiDinamis)}`;
-        if (elKomisiDinamisPct) elKomisiDinamisPct.textContent = `${((totalKomisiDinamis / pctDenom) * 100).toFixed(1)}%`;
-        if (elBiayaPemrosesan) elBiayaPemrosesan.textContent = `-${formatRupiah(totalBiayaPemrosesan)}`;
-        if (elBiayaPemrosesanPct) elBiayaPemrosesanPct.textContent = `${((totalBiayaPemrosesan / pctDenom) * 100).toFixed(1)}%`;
-        if (elKomisiAfiliasi) elKomisiAfiliasi.textContent = `-${formatRupiah(totalKomisiAfiliasi)}`;
-        if (elKomisiAfiliasiPct) elKomisiAfiliasiPct.textContent = `${((totalKomisiAfiliasi / pctDenom) * 100).toFixed(1)}%`;
-        if (elBiayaCashback) elBiayaCashback.textContent = `-${formatRupiah(totalBiayaCashback)}`;
-        if (elBiayaCashbackPct) elBiayaCashbackPct.textContent = `${((totalBiayaCashback / pctDenom) * 100).toFixed(1)}%`;
-        if (elBiayaLainnya) elBiayaLainnya.textContent = `-${formatRupiah(totalBiayaLainnya)}`;
-        if (elBiayaLainnyaPct) elBiayaLainnyaPct.textContent = `${((totalBiayaLainnya / pctDenom) * 100).toFixed(1)}%`;
+        if (pnlSellerVoucher) pnlSellerVoucher.textContent = `-${formatRupiah(totalVouchers)}`;
+        if (pnlSellerVoucherPct) pnlSellerVoucherPct.textContent = `${((totalVouchers / pctDenom) * 100).toFixed(1)}%`;
+
+        if (pnlRefund) pnlRefund.textContent = `-${formatRupiah(totalRefunds)}`;
+        if (pnlRefundPct) pnlRefundPct.textContent = `${((totalRefunds / pctDenom) * 100).toFixed(1)}%`;
+
+        const shippingAdj = totalDeductions - totalAdminFees - totalVouchers - totalRefunds;
+        const elPnlShippingAdj = document.getElementById('pnl-shipping-adjustment-deduction');
+        const elPnlShippingAdjPct = document.getElementById('pnl-shipping-adjustment-pct');
+        if (elPnlShippingAdj) {
+            if (shippingAdj < 0) {
+                elPnlShippingAdj.textContent = `+${formatRupiah(Math.abs(shippingAdj))}`;
+                elPnlShippingAdj.style.color = 'var(--accent-green)';
+            } else {
+                elPnlShippingAdj.textContent = `-${formatRupiah(shippingAdj)}`;
+                elPnlShippingAdj.style.color = 'var(--accent-pink)';
+            }
+        }
+        if (elPnlShippingAdjPct) elPnlShippingAdjPct.textContent = `${((Math.abs(shippingAdj) / pctDenom) * 100).toFixed(1)}%`;
         
         if (pnlAds) pnlAds.textContent = `-${formatRupiah(totalAdsSpend)}`;
         if (pnlAdsPct) pnlAdsPct.textContent = `${((totalAdsSpend / pctDenom) * 100).toFixed(1)}%`;
