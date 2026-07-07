@@ -681,6 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalBiayaPemrosesan = 0;
         let totalKomisiAfiliasi = 0;
         let totalBiayaCashback = 0;
+        let totalKerugianPayout = 0;
 
         let activeDiskonPenjual = 0;
         let activeDiskonOngkirPenjual = 0;
@@ -723,6 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const settledUniqueOrderIds = new Set();
             let settledItemCount = 0;
             let calculatedTotalPayout = 0;
+            let calculatedTotalKerugianPayout = 0;
             let calculatedTotalRefunds = 0;
             let calculatedRefundBatal = 0;
             let calculatedRefundPaketGagal = 0;
@@ -870,7 +872,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 0;
                         itemPayout = itemOriginalPrice / (orderIdCounts[item.orderId] || 1);
                     }
-                    calculatedTotalPayout += itemPayout;
+                    if (itemPayout < 0) {
+                        calculatedTotalKerugianPayout += Math.abs(itemPayout);
+                    } else {
+                        calculatedTotalPayout += itemPayout;
+                    }
                 }
             });
             displayGross = settledAmountSum;
@@ -880,6 +886,16 @@ document.addEventListener('DOMContentLoaded', () => {
             totalRefundPaketGagal = calculatedRefundPaketGagal;
             totalNet = displayGross - totalRefunds - (activeDiskonOngkirPenjual + activeDiskonPlatform + activeDiskonVoucherPlatform + activeDiskonBelanjaIklan);
             totalPayout = calculatedTotalPayout;
+            totalKerugianPayout = calculatedTotalKerugianPayout;
+        } else {
+            if (orderPayouts) {
+                Object.values(orderPayouts).forEach(p => {
+                    if (p && p.amount < 0 && p.date && p.date.startsWith(analysisMonth)) {
+                        totalKerugianPayout += Math.abs(p.amount);
+                    }
+                });
+            }
+            totalPayout += totalKerugianPayout;
         }
 
         const aov = displayOrders > 0 ? displayGross / displayOrders : 0;
@@ -1048,7 +1064,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pnlHpp) pnlHpp.textContent = `-${formatRupiah(activeHpp)}`;
         if (pnlHppPct) pnlHppPct.textContent = `${((activeHpp / pctDenom) * 100).toFixed(1)}%`;
         
-        const finalNetProfitVal = totalPayout - activeHpp - totalAdsSpend;
+        // Render P&L Kerugian Payout row
+        const pnlKerugian = document.getElementById('pnl-kerugian-payout');
+        const pnlKerugianPct = document.getElementById('pnl-kerugian-payout-pct');
+        const rowPnlKerugian = document.getElementById('row-pnl-kerugian');
+
+        if (rowPnlKerugian) {
+            if (totalKerugianPayout > 0) {
+                rowPnlKerugian.style.display = 'table-row';
+                if (pnlKerugian) pnlKerugian.textContent = `-${formatRupiah(totalKerugianPayout)}`;
+                if (pnlKerugianPct) pnlKerugianPct.textContent = `${((totalKerugianPayout / pctDenom) * 100).toFixed(1)}%`;
+            } else {
+                rowPnlKerugian.style.display = 'none';
+            }
+        }
+
+        const finalNetProfitVal = totalPayout - totalKerugianPayout - activeHpp - totalAdsSpend;
         if (pnlNetProfitText) {
             pnlNetProfitText.textContent = formatRupiah(finalNetProfitVal);
             if (finalNetProfitVal < 0) {
