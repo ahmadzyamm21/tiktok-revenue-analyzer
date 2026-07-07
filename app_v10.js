@@ -3546,7 +3546,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let headerIndex = -1;
                     for (let r = 0; r < Math.min(20, jsonData.length); r++) {
                         const row = jsonData[r];
-                        if (row && row.some(cell => cell && (cell.toString().toLowerCase().includes('id pesanan') || cell.toString().toLowerCase().includes('order id')))) {
+                        if (row && row.some(cell => cell && (cell.toString().toLowerCase().includes('id pesanan') || cell.toString().toLowerCase().includes('order id') || cell.toString().toLowerCase().includes('no. pesanan')))) {
                             headerIndex = r;
                             break;
                         }
