@@ -799,14 +799,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
                 const isBatal = isCancelled;
                 const isPaketGagal = isReturn && (resolution === 'kembali' || resolution === 'rugi');
-                if (isBatal || isPaketGagal) {
+                if (isPaketGagal) {
                     const price = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 0;
                     calculatedTotalRefunds += price;
-                    if (isPaketGagal) {
-                        calculatedRefundPaketGagal += price;
-                    } else {
-                        calculatedRefundBatal += price;
-                    }
+                    calculatedRefundPaketGagal += price;
                 }
 
                 const shouldInclude = isSettled || isOnHold || isReturn;
