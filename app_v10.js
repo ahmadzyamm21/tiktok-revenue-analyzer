@@ -801,8 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isPaketGagal = isReturn && (resolution === 'kembali' || resolution === 'rugi');
                 if (isPaketGagal) {
                     const price = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 0;
-                    calculatedTotalRefunds += price;
-                    calculatedRefundPaketGagal += price;
+                    calculatedTotalKerugianPayout += price;
                 }
 
                 const shouldInclude = isSettled || isOnHold || isReturn;
