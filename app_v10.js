@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadShopSettings();
 
         // Re-render logs table
-        renderLogsTable();
+        renderDailyLogs();
 
         // Recalculate metrics & update charts
         calculateMetrics();
