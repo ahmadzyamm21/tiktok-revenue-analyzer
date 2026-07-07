@@ -119,6 +119,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------------------------------------
     // Utility functions
     // ------------------------------------------
+    function parseExcelNumber(val, isPlatformShopee = false) {
+        if (val === null || val === undefined) return 0;
+        if (typeof val === 'number') return val;
+        let str = val.toString().trim();
+        if (!str) return 0;
+        
+        if (isPlatformShopee) {
+            // Shopee uses dots as thousands separators and commas as decimal separators.
+            // E.g., "165.375" -> "165375", "165.375,50" -> "165375.50"
+            // We strip all dots, then replace any commas with dots.
+            str = str.replace(/\./g, '').replace(/,/g, '.');
+        } else {
+            // TikTok uses standard international format where comma is thousands separator.
+            str = str.replace(/,/g, '');
+        }
+        return parseFloat(str) || 0;
+    }
+
     function formatRupiah(value) {
         return 'Rp ' + Math.round(value).toLocaleString('id-ID');
     }
@@ -2092,7 +2110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         // Accumulate exact financial payout stats (sum of all rows in Detail pesanan sheet)
-                        const rowSettlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
+                        const rowSettlementVal = colMap.settlement !== -1 ? parseExcelNumber(row[colMap.settlement], isShopee) : 0;
                         if (orderDateStr && orderDateStr.includes('-')) {
                             const monthKey = orderDateStr.substring(0, 7); // e.g. "2026-03"
                             if (!tempParsedFinancialStats[monthKey]) {
@@ -2209,26 +2227,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         let biayaAsuransiVal = 0;
 
                         if (isShopee) {
-                            grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
-                            settlementVal = parseFloat(row[colMap.settlement]) || 0;
+                            grossVal = Math.max(0, parseExcelNumber(row[colMap.gross], isShopee));
+                            settlementVal = parseExcelNumber(row[colMap.settlement], isShopee);
                             
-                            const totalDiscountVal = Math.abs(parseFloat(row[colMap.voucher]) || 0);
-                            const sellerVoucherVal = Math.abs(parseFloat(row[colMap.sellerVoucher]) || 0);
-                            const voucherCoFundVal = colMap.voucherCoFund !== -1 ? Math.abs(parseFloat(row[colMap.voucherCoFund]) || 0) : 0;
-                            const cashbackCoinsVal = colMap.cashbackCoins !== -1 ? Math.abs(parseFloat(row[colMap.cashbackCoins]) || 0) : 0;
-                            const promoOngkirVal = colMap.promoOngkirPenjual !== -1 ? Math.abs(parseFloat(row[colMap.promoOngkirPenjual]) || 0) : 0;
+                            const totalDiscountVal = Math.abs(parseExcelNumber(row[colMap.voucher], isShopee));
+                            const sellerVoucherVal = Math.abs(parseExcelNumber(row[colMap.sellerVoucher], isShopee));
+                            const voucherCoFundVal = colMap.voucherCoFund !== -1 ? Math.abs(parseExcelNumber(row[colMap.voucherCoFund], isShopee)) : 0;
+                            const cashbackCoinsVal = colMap.cashbackCoins !== -1 ? Math.abs(parseExcelNumber(row[colMap.cashbackCoins], isShopee)) : 0;
+                            const promoOngkirVal = colMap.promoOngkirPenjual !== -1 ? Math.abs(parseExcelNumber(row[colMap.promoOngkirPenjual], isShopee)) : 0;
                             
                             voucherVal = totalDiscountVal + sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
-                            refundVal = colMap.refund !== -1 ? Math.abs(parseFloat(row[colMap.refund]) || 0) : 0;
+                            refundVal = colMap.refund !== -1 ? Math.abs(parseExcelNumber(row[colMap.refund], isShopee)) : 0;
 
-                            const adminVal = colMap.admin !== -1 ? Math.abs(parseFloat(row[colMap.admin]) || 0) : 0;
-                            const serviceVal = colMap.service !== -1 ? Math.abs(parseFloat(row[colMap.service]) || 0) : 0;
-                            const processVal = colMap.process !== -1 ? Math.abs(parseFloat(row[colMap.process]) || 0) : 0;
-                            const amsVal = colMap.ams !== -1 ? Math.abs(parseFloat(row[colMap.ams]) || 0) : 0;
-                            const premiVal = colMap.premi !== -1 ? Math.abs(parseFloat(row[colMap.premi]) || 0) : 0;
-                            const hematOngkirVal = colMap.hematOngkir !== -1 ? Math.abs(parseFloat(row[colMap.hematOngkir]) || 0) : 0;
-                            const trxVal = colMap.biayaTransaksi !== -1 ? Math.abs(parseFloat(row[colMap.biayaTransaksi]) || 0) : 0;
-                            const campVal = colMap.biayaKampanye !== -1 ? Math.abs(parseFloat(row[colMap.biayaKampanye]) || 0) : 0;
+                            const adminVal = colMap.admin !== -1 ? Math.abs(parseExcelNumber(row[colMap.admin], isShopee)) : 0;
+                            const serviceVal = colMap.service !== -1 ? Math.abs(parseExcelNumber(row[colMap.service], isShopee)) : 0;
+                            const processVal = colMap.process !== -1 ? Math.abs(parseExcelNumber(row[colMap.process], isShopee)) : 0;
+                            const amsVal = colMap.ams !== -1 ? Math.abs(parseExcelNumber(row[colMap.ams], isShopee)) : 0;
+                            const premiVal = colMap.premi !== -1 ? Math.abs(parseExcelNumber(row[colMap.premi], isShopee)) : 0;
+                            const hematOngkirVal = colMap.hematOngkir !== -1 ? Math.abs(parseExcelNumber(row[colMap.hematOngkir], isShopee)) : 0;
+                            const trxVal = colMap.biayaTransaksi !== -1 ? Math.abs(parseExcelNumber(row[colMap.biayaTransaksi], isShopee)) : 0;
+                            const campVal = colMap.biayaKampanye !== -1 ? Math.abs(parseExcelNumber(row[colMap.biayaKampanye], isShopee)) : 0;
 
                             adminFeesVal = adminVal + serviceVal + processVal + amsVal + premiVal + hematOngkirVal + trxVal + campVal;
                             
@@ -2238,40 +2256,40 @@ document.addEventListener('DOMContentLoaded', () => {
                             biayaLayananCashbackBonusVal = serviceVal; // Biaya Layanan Shopee
                             biayaLayananKhususPlatformVal = premiVal + hematOngkirVal + trxVal + campVal; // Biaya lainnya
                         } else {
-                            grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
-                            settlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
-                            voucherVal = Math.abs(parseFloat(colMap.voucher !== -1 ? row[colMap.voucher] : 0) || 0);
-                            refundVal = Math.abs(parseFloat(row[colMap.refund]) || 0);
-                            affCommission = Math.abs(parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
-                            adsCost = Math.abs(parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
-                            adminFeesVal = Math.abs(parseFloat(colMap.adminFees !== -1 ? row[colMap.adminFees] : 0) || 0);
+                            grossVal = Math.max(0, parseExcelNumber(row[colMap.gross], isShopee));
+                            settlementVal = colMap.settlement !== -1 ? parseExcelNumber(row[colMap.settlement], isShopee) : 0;
+                            voucherVal = Math.abs(parseExcelNumber(colMap.voucher !== -1 ? row[colMap.voucher] : 0, isShopee));
+                            refundVal = Math.abs(parseExcelNumber(row[colMap.refund], isShopee));
+                            affCommission = Math.abs(parseExcelNumber(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0, isShopee));
+                            adsCost = Math.abs(parseExcelNumber(colMap.ads !== -1 ? row[colMap.ads] : 0, isShopee));
+                            adminFeesVal = Math.abs(parseExcelNumber(colMap.adminFees !== -1 ? row[colMap.adminFees] : 0, isShopee));
                             
                             // Extract detailed values (TikTok)
-                            ongkirVal = Math.abs(parseFloat(colMap.ongkir !== -1 ? row[colMap.ongkir] : 0) || 0);
-                            komisiDinamisVal = Math.abs(parseFloat(colMap.komisiDinamis !== -1 ? row[colMap.komisiDinamis] : 0) || 0);
-                            komisiAfiliasiVal = Math.abs(parseFloat(colMap.komisiAfiliasi !== -1 ? row[colMap.komisiAfiliasi] : 0) || 0);
-                            biayaKomisiPlatformVal = Math.abs(parseFloat(colMap.biayaKomisiPlatform !== -1 ? row[colMap.biayaKomisiPlatform] : 0) || 0);
-                            biayaLayananLogistikVal = Math.abs(parseFloat(colMap.biayaLayananLogistik !== -1 ? row[colMap.biayaLayananLogistik] : 0) || 0);
-                            biayaPemrosesanPesananVal = Math.abs(parseFloat(colMap.biayaPemrosesanPesanan !== -1 ? row[colMap.biayaPemrosesanPesanan] : 0) || 0);
-                            biayaKomisiSebelumDiskonVal = Math.abs(parseFloat(colMap.biayaKomisiSebelumDiskon !== -1 ? row[colMap.biayaKomisiSebelumDiskon] : 0) || 0);
-                            diskonBelanjaIklanVal = Math.abs(parseFloat(colMap.diskonBelanjaIklan !== -1 ? row[colMap.diskonBelanjaIklan] : 0) || 0);
-                            biayaLayananCashbackBonusVal = Math.abs(parseFloat(colMap.biayaLayananCashbackBonus !== -1 ? row[colMap.biayaLayananCashbackBonus] : 0) || 0);
-                            biayaLayananPreOrderVal = Math.abs(parseFloat(colMap.biayaLayananPreOrder !== -1 ? row[colMap.biayaLayananPreOrder] : 0) || 0);
-                            biayaLayananMallVal = Math.abs(parseFloat(colMap.biayaLayananMall !== -1 ? row[colMap.biayaLayananMall] : 0) || 0);
-                            biayaPembayaranVal = Math.abs(parseFloat(colMap.biayaPembayaran !== -1 ? row[colMap.biayaPembayaran] : 0) || 0);
-                            diskonKomisiLainnyaVal = Math.abs(parseFloat(colMap.diskonKomisiLainnya !== -1 ? row[colMap.diskonKomisiLainnya] : 0) || 0);
-                            handlingFeeInstallmentVal = Math.abs(parseFloat(colMap.handlingFeeInstallment !== -1 ? row[colMap.handlingFeeInstallment] : 0) || 0);
-                            subsidiOngkirVal = Math.abs(parseFloat(colMap.subsidiOngkir !== -1 ? row[colMap.subsidiOngkir] : 0) || 0);
-                            biayaProgramBebasOngkirVal = Math.abs(parseFloat(colMap.biayaProgramBebasOngkir !== -1 ? row[colMap.biayaProgramBebasOngkir] : 0) || 0);
-                            biayaLayananKhususLiveVal = Math.abs(parseFloat(colMap.biayaLayananKhususLive !== -1 ? row[colMap.biayaLayananKhususLive] : 0) || 0);
-                            biayaAksesKeuntunganEksklusifVal = Math.abs(parseFloat(colMap.biayaAksesKeuntunganEksklusif !== -1 ? row[colMap.biayaAksesKeuntunganEksklusif] : 0) || 0);
-                            biayaProgramEamsVal = Math.abs(parseFloat(colMap.biayaProgramEams !== -1 ? row[colMap.biayaProgramEams] : 0) || 0);
-                            biayaBrandsCrazyDealVal = Math.abs(parseFloat(colMap.biayaBrandsCrazyDeal !== -1 ? row[colMap.biayaBrandsCrazyDeal] : 0) || 0);
-                            biayaPayLaterVal = Math.abs(parseFloat(colMap.biayaPayLater !== -1 ? row[colMap.biayaPayLater] : 0) || 0);
-                            biayaCampaignSourceVal = Math.abs(parseFloat(colMap.biayaCampaignSource !== -1 ? row[colMap.biayaCampaignSource] : 0) || 0);
-                            biayaLayananKhususPlatformVal = Math.abs(parseFloat(colMap.biayaLayananKhususPlatform !== -1 ? row[colMap.biayaLayananKhususPlatform] : 0) || 0);
-                            biayaProgramLayananTerkelolaVal = Math.abs(parseFloat(colMap.biayaProgramLayananTerkelola !== -1 ? row[colMap.biayaProgramLayananTerkelola] : 0) || 0);
-                            biayaAsuransiVal = Math.abs(parseFloat(colMap.biayaAsuransi !== -1 ? row[colMap.biayaAsuransi] : 0) || 0);
+                            ongkirVal = Math.abs(parseExcelNumber(colMap.ongkir !== -1 ? row[colMap.ongkir] : 0, isShopee));
+                            komisiDinamisVal = Math.abs(parseExcelNumber(colMap.komisiDinamis !== -1 ? row[colMap.komisiDinamis] : 0, isShopee));
+                            komisiAfiliasiVal = Math.abs(parseExcelNumber(colMap.komisiAfiliasi !== -1 ? row[colMap.komisiAfiliasi] : 0, isShopee));
+                            biayaKomisiPlatformVal = Math.abs(parseExcelNumber(colMap.biayaKomisiPlatform !== -1 ? row[colMap.biayaKomisiPlatform] : 0, isShopee));
+                            biayaLayananLogistikVal = Math.abs(parseExcelNumber(colMap.biayaLayananLogistik !== -1 ? row[colMap.biayaLayananLogistik] : 0, isShopee));
+                            biayaPemrosesanPesananVal = Math.abs(parseExcelNumber(colMap.biayaPemrosesanPesanan !== -1 ? row[colMap.biayaPemrosesanPesanan] : 0, isShopee));
+                            biayaKomisiSebelumDiskonVal = Math.abs(parseExcelNumber(colMap.biayaKomisiSebelumDiskon !== -1 ? row[colMap.biayaKomisiSebelumDiskon] : 0, isShopee));
+                            diskonBelanjaIklanVal = Math.abs(parseExcelNumber(colMap.diskonBelanjaIklan !== -1 ? row[colMap.diskonBelanjaIklan] : 0, isShopee));
+                            biayaLayananCashbackBonusVal = Math.abs(parseExcelNumber(colMap.biayaLayananCashbackBonus !== -1 ? row[colMap.biayaLayananCashbackBonus] : 0, isShopee));
+                            biayaLayananPreOrderVal = Math.abs(parseExcelNumber(colMap.biayaLayananPreOrder !== -1 ? row[colMap.biayaLayananPreOrder] : 0, isShopee));
+                            biayaLayananMallVal = Math.abs(parseExcelNumber(colMap.biayaLayananMall !== -1 ? row[colMap.biayaLayananMall] : 0, isShopee));
+                            biayaPembayaranVal = Math.abs(parseExcelNumber(colMap.biayaPembayaran !== -1 ? row[colMap.biayaPembayaran] : 0, isShopee));
+                            diskonKomisiLainnyaVal = Math.abs(parseExcelNumber(colMap.diskonKomisiLainnya !== -1 ? row[colMap.diskonKomisiLainnya] : 0, isShopee));
+                            handlingFeeInstallmentVal = Math.abs(parseExcelNumber(colMap.handlingFeeInstallment !== -1 ? row[colMap.handlingFeeInstallment] : 0, isShopee));
+                            subsidiOngkirVal = Math.abs(parseExcelNumber(colMap.subsidiOngkir !== -1 ? row[colMap.subsidiOngkir] : 0, isShopee));
+                            biayaProgramBebasOngkirVal = Math.abs(parseExcelNumber(colMap.biayaProgramBebasOngkir !== -1 ? row[colMap.biayaProgramBebasOngkir] : 0, isShopee));
+                            biayaLayananKhususLiveVal = Math.abs(parseExcelNumber(colMap.biayaLayananKhususLive !== -1 ? row[colMap.biayaLayananKhususLive] : 0, isShopee));
+                            biayaAksesKeuntunganEksklusifVal = Math.abs(parseExcelNumber(colMap.biayaAksesKeuntunganEksklusif !== -1 ? row[colMap.biayaAksesKeuntunganEksklusif] : 0, isShopee));
+                            biayaProgramEamsVal = Math.abs(parseExcelNumber(colMap.biayaProgramEams !== -1 ? row[colMap.biayaProgramEams] : 0, isShopee));
+                            biayaBrandsCrazyDealVal = Math.abs(parseExcelNumber(colMap.biayaBrandsCrazyDeal !== -1 ? row[colMap.biayaBrandsCrazyDeal] : 0, isShopee));
+                            biayaPayLaterVal = Math.abs(parseExcelNumber(colMap.biayaPayLater !== -1 ? row[colMap.biayaPayLater] : 0, isShopee));
+                            biayaCampaignSourceVal = Math.abs(parseExcelNumber(colMap.biayaCampaignSource !== -1 ? row[colMap.biayaCampaignSource] : 0, isShopee));
+                            biayaLayananKhususPlatformVal = Math.abs(parseExcelNumber(colMap.biayaLayananKhususPlatform !== -1 ? row[colMap.biayaLayananKhususPlatform] : 0, isShopee));
+                            biayaProgramLayananTerkelolaVal = Math.abs(parseExcelNumber(colMap.biayaProgramLayananTerkelola !== -1 ? row[colMap.biayaProgramLayananTerkelola] : 0, isShopee));
+                            biayaAsuransiVal = Math.abs(parseExcelNumber(colMap.biayaAsuransi !== -1 ? row[colMap.biayaAsuransi] : 0, isShopee));
                         }
 
                         const grossHeader = headers[colMap.gross] || '';
@@ -2369,15 +2387,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempParsedOrderPayouts[orderId].diskonBelanjaIklan += diskonBelanjaIklanVal;
                         tempParsedOrderPayouts[orderId].biayaLayananCashbackBonus += biayaLayananCashbackBonusVal;
                         
-                        const diskonPlatformVal = Math.abs(parseFloat(colMap.diskonPlatform !== -1 ? row[colMap.diskonPlatform] : 0) || 0);
-                        const diskonOngkirPenjualVal = Math.abs(parseFloat(colMap.diskonOngkirPenjual !== -1 ? row[colMap.diskonOngkirPenjual] : 0) || 0);
-                        const diskonVoucherPlatformVal = Math.abs(parseFloat(colMap.diskonVoucherPlatform !== -1 ? row[colMap.diskonVoucherPlatform] : 0) || 0);
+                        const diskonPlatformVal = Math.abs(parseExcelNumber(colMap.diskonPlatform !== -1 ? row[colMap.diskonPlatform] : 0, isShopee));
+                        const diskonOngkirPenjualVal = Math.abs(parseExcelNumber(colMap.diskonOngkirPenjual !== -1 ? row[colMap.diskonOngkirPenjual] : 0, isShopee));
+                        const diskonVoucherPlatformVal = Math.abs(parseExcelNumber(colMap.diskonVoucherPlatform !== -1 ? row[colMap.diskonVoucherPlatform] : 0, isShopee));
 
                         tempParsedOrderPayouts[orderId].diskonPlatform += diskonPlatformVal;
                         tempParsedOrderPayouts[orderId].diskonOngkirPenjual += diskonOngkirPenjualVal;
                         tempParsedOrderPayouts[orderId].diskonVoucherPlatform += diskonVoucherPlatformVal;
                         
-                        const subtotalSetelahDiskonPenjualVal = colMap.subtotalSetelahDiskonPenjual !== -1 ? (parseFloat(row[colMap.subtotalSetelahDiskonPenjual]) || 0) : 0;
+                        const subtotalSetelahDiskonPenjualVal = colMap.subtotalSetelahDiskonPenjual !== -1 ? parseExcelNumber(row[colMap.subtotalSetelahDiskonPenjual], isShopee) : 0;
                         tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual = (tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual || 0) + subtotalSetelahDiskonPenjualVal;
                         
                         tempParsedOrderPayouts[orderId].biayaLayananPreOrder += biayaLayananPreOrderVal;
@@ -3568,6 +3586,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
+                    const isOrderShopee = (typeof currentPlatform !== 'undefined' && currentPlatform === 'shopee') || headers.includes('no. pesanan') || headers.includes('harga awal');
                     const colMap = {
                         orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id') || h.includes('no. pesanan') || h === 'pesanan'),
                         status: headers.findIndex(h => (h.includes('status pesanan') || h.includes('order status') || h === 'status') && !h.includes('pembayaran')),
@@ -3619,8 +3638,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const returnTypeVal = colMap.returnType !== -1 ? (row[colMap.returnType] || '').toString().toLowerCase().trim() : '';
                         const returnQtyVal = colMap.returnQty !== -1 ? parseInt(row[colMap.returnQty]) || 0 : 0;
                         const shippedTimeVal = colMap.shippedTime !== -1 ? (row[colMap.shippedTime] || '').toString().trim() : '';
-                        const originalPriceVal = colMap.originalPrice !== -1 ? parseFloat(row[colMap.originalPrice]) || 0 : 0;
-                        const subtotalBeforeDiscountVal = colMap.subtotalBeforeDiscount !== -1 ? parseFloat(row[colMap.subtotalBeforeDiscount]) || 0 : 0;
+                        const originalPriceVal = colMap.originalPrice !== -1 ? parseExcelNumber(row[colMap.originalPrice], isOrderShopee) : 0;
+                        const subtotalBeforeDiscountVal = colMap.subtotalBeforeDiscount !== -1 ? parseExcelNumber(row[colMap.subtotalBeforeDiscount], isOrderShopee) : 0;
                         const rawDate = colMap.createdTime !== -1 ? row[colMap.createdTime] : null;
 
                         let dateStr = '';
@@ -3671,7 +3690,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
 
                         if (hasSettlementCol) {
-                            const settlementVal = parseFloat(row[colMap.settlement]) || 0;
+                            const settlementVal = parseExcelNumber(row[colMap.settlement], isOrderShopee);
                             if (settlementVal > 0) {
                                 if (!tempParsedOrderPayouts[orderIdVal]) {
                                     tempParsedOrderPayouts[orderIdVal] = { amount: 0, originalAmount: 0, associatedOrderId: '', date: dateStr };
