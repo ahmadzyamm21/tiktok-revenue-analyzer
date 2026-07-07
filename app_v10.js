@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let orderPayouts = JSON.parse(localStorage.getItem('tiktok_order_payouts')) || {};
     let dailyGmvAdsDb = JSON.parse(localStorage.getItem('tiktok_daily_gmv_ads')) || {};
     let analysisMonth = localStorage.getItem('tiktok_analysis_month') || '2026-05';
+    let currentPlatform = localStorage.getItem('tiktok_current_platform') || 'tiktok';
 
     let revenueTrendChart = null;
     let channelDonutChart = null;
@@ -138,7 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
             settingsLogoPreviewImg.src = currentLogoBase64;
             settingsLogoPreviewImg.style.display = 'block';
         } else {
-            shopLogoContainer.innerHTML = `<i class="fas fa-store text-cyan" id="shop-logo-icon" style="font-size: 16px;"></i>`;
+            if (typeof currentPlatform !== 'undefined' && currentPlatform === 'shopee') {
+                shopLogoContainer.innerHTML = `<i class="fas fa-shopping-bag" style="color: var(--accent-pink); font-size: 16px;"></i>`;
+            } else {
+                shopLogoContainer.innerHTML = `<i class="fab fa-tiktok" style="color: var(--accent-cyan); font-size: 16px;"></i>`;
+            }
             settingsLogoPreviewIcon.style.display = 'block';
             settingsLogoPreviewImg.style.display = 'none';
         }
@@ -167,6 +172,71 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // ------------------------------------------
+    // Platform Switcher (TikTok / Shopee)
+    // ------------------------------------------
+    function applyPlatformTheme(platform) {
+        currentPlatform = platform;
+        localStorage.setItem('tiktok_current_platform', platform);
+        
+        // Update button active state
+        document.querySelectorAll('.platform-btn').forEach(btn => {
+            if (btn.getAttribute('data-platform') === platform) {
+                btn.classList.add('active');
+                btn.style.background = platform === 'shopee' ? 'var(--accent-pink)' : 'var(--accent-cyan)';
+                btn.style.color = '#000';
+            } else {
+                btn.classList.remove('active');
+                btn.style.background = 'transparent';
+                btn.style.color = 'var(--text-muted)';
+            }
+        });
+
+        // Apply theme color variables
+        if (platform === 'shopee') {
+            document.documentElement.style.setProperty('--accent-cyan', '#F53D2D'); // Shopee Red/Orange
+            document.documentElement.style.setProperty('--accent-pink', '#FF5722'); // Shopee Orange
+            
+            // If default title, change to Shopee default
+            if (shopName === 'My TikTok Shop' || shopNameDisplay.textContent === 'My TikTok Shop' || shopNameDisplay.textContent === 'My Shopee Store') {
+                shopNameDisplay.textContent = 'My Shopee Store';
+            }
+            if (!currentLogoBase64) {
+                shopLogoContainer.innerHTML = '<i class="fas fa-shopping-bag" style="color: var(--accent-pink); font-size: 16px;"></i>';
+            }
+        } else {
+            document.documentElement.style.setProperty('--accent-cyan', '#25F4EE'); // TikTok Cyan
+            document.documentElement.style.setProperty('--accent-pink', '#FE2C55'); // TikTok Pink
+            
+            if (shopName === 'My TikTok Shop' || shopNameDisplay.textContent === 'My Shopee Store' || shopNameDisplay.textContent === 'My TikTok Shop') {
+                shopNameDisplay.textContent = 'My TikTok Shop';
+            }
+            if (!currentLogoBase64) {
+                shopLogoContainer.innerHTML = '<i class="fab fa-tiktok" style="color: var(--accent-cyan); font-size: 16px;"></i>';
+            }
+        }
+
+        // Re-render/recalculate dashboard metrics and charts to use the new colors
+        if (typeof calculateMetrics === 'function') {
+            calculateMetrics();
+        }
+        if (typeof updateCharts === 'function') {
+            updateCharts();
+        }
+    }
+
+    // Bind click events to platform buttons
+    document.querySelectorAll('.platform-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const platform = btn.getAttribute('data-platform');
+            applyPlatformTheme(platform);
+            showToast(`Beralih ke tampilan ${platform === 'shopee' ? 'Shopee' : 'TikTok Shop'}!`, 'success');
+        });
+    });
+
+    // Apply platform theme on initial load
+    applyPlatformTheme(currentPlatform);
 
     // Modal Control
     if (btnOpenSettings) btnOpenSettings.addEventListener('click', () => settingsModal.classList.add('show'));
@@ -1324,8 +1394,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         {
                             label: 'Omset Kotor',
                             data: grossData,
-                            borderColor: '#25F4EE',
-                            backgroundColor: 'rgba(37, 244, 238, 0.05)',
+                            borderColor: currentPlatform === 'shopee' ? '#F53D2D' : '#25F4EE',
+                            backgroundColor: currentPlatform === 'shopee' ? 'rgba(245, 61, 45, 0.05)' : 'rgba(37, 244, 238, 0.05)',
                             borderWidth: 2,
                             tension: 0.3,
                             fill: true
@@ -1384,7 +1454,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     labels: ['Ads', 'Affiliate', 'Live Shopping', 'Video Organic'],
                     datasets: [{
                         data: hasData ? [adsTotal, affTotal, liveTotal, videoTotal] : [25, 25, 25, 25],
-                        backgroundColor: hasData ? ['#FE2C55', '#25F4EE', '#00FF87', '#FFAA00'] : ['#2A2F3D', '#222530', '#1C1F28', '#14161C'],
+                        backgroundColor: hasData ? (currentPlatform === 'shopee' ? ['#FF5722', '#F53D2D', '#00FF87', '#FFAA00'] : ['#FE2C55', '#25F4EE', '#00FF87', '#FFAA00']) : ['#2A2F3D', '#222530', '#1C1F28', '#14161C'],
                         borderWidth: 2,
                         borderColor: donutBorderColor
                     }]
