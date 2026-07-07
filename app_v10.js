@@ -800,7 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isBatal = isCancelled;
                 const isPaketGagal = isReturn && (resolution === 'kembali' || resolution === 'rugi');
                 if (isBatal || isPaketGagal) {
-                    const price = item.subtotalAfterDiscount || (item.originalPrice * item.qty) || 0;
+                    const price = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 0;
                     calculatedTotalRefunds += price;
                     if (isPaketGagal) {
                         calculatedRefundPaketGagal += price;
