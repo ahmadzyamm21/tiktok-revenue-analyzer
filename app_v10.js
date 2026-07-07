@@ -814,31 +814,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let settlementAmt = 0;
                 if (isSettled) {
-                    let fullSettlementAmt = 0;
                     const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
                     
                     if (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
                         if (payoutInfo) {
                             if (payoutInfo.compensation > 0) {
-                                fullSettlementAmt = payoutInfo.compensation;
+                                settlementAmt = payoutInfo.compensation / (orderIdCounts[item.orderId] || 1);
                             } else if (payoutInfo.subtotalSetelahDiskonPenjual > 0) {
-                                fullSettlementAmt = payoutInfo.subtotalSetelahDiskonPenjual;
+                                settlementAmt = payoutInfo.subtotalSetelahDiskonPenjual / (orderIdCounts[item.orderId] || 1);
                             } else if (payoutInfo.originalAmount > 0) {
-                                fullSettlementAmt = payoutInfo.originalAmount;
+                                settlementAmt = payoutInfo.originalAmount / (orderIdCounts[item.orderId] || 1);
                             } else {
-                                fullSettlementAmt = itemOriginalPrice;
+                                settlementAmt = itemOriginalPrice;
                             }
                         } else {
-                            fullSettlementAmt = itemOriginalPrice;
+                            settlementAmt = itemOriginalPrice;
                         }
                     } else {
                         if (payoutInfo && payoutInfo.subtotalSetelahDiskonPenjual > 0) {
-                            fullSettlementAmt = payoutInfo.subtotalSetelahDiskonPenjual;
+                            settlementAmt = payoutInfo.subtotalSetelahDiskonPenjual / (orderIdCounts[item.orderId] || 1);
                         } else {
-                            fullSettlementAmt = itemOriginalPrice;
+                            settlementAmt = itemOriginalPrice;
                         }
                     }
-                    settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
                 } else if (isOnHold) {
                     const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 0;
                     settlementAmt = itemOriginalPrice;
@@ -4192,34 +4190,33 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
-            let fullSettlementAmt = 0;
+            let settlementAmt = 0;
             if (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang') {
                 if (payoutInfo) {
                     if (payoutInfo.compensation > 0) {
-                        fullSettlementAmt = payoutInfo.compensation;
+                        settlementAmt = payoutInfo.compensation / (orderIdCounts[item.orderId] || 1);
                     } else if (payoutInfo.originalAmount > 0) {
-                        fullSettlementAmt = payoutInfo.originalAmount;
+                        settlementAmt = payoutInfo.originalAmount / (orderIdCounts[item.orderId] || 1);
                     } else if (payoutInfo.amount > 0) {
-                        fullSettlementAmt = payoutInfo.amount;
+                        settlementAmt = payoutInfo.amount / (orderIdCounts[item.orderId] || 1);
                     } else {
                         const localAdmin = Math.abs(payoutInfo.adminFees || 0) / (orderIdCounts[item.orderId] || 1);
                         const localVoucher = Math.abs(payoutInfo.voucher || 0) / (orderIdCounts[item.orderId] || 1);
                         const localAds = Math.abs(payoutInfo.ads || 0) / (orderIdCounts[item.orderId] || 1);
                         const localAffiliate = Math.abs(payoutInfo.affiliate || 0) / (orderIdCounts[item.orderId] || 1);
                         const estimatedPayout = itemOriginalPrice - localAdmin - localVoucher - localAds - localAffiliate;
-                        fullSettlementAmt = estimatedPayout > 0 ? estimatedPayout : itemOriginalPrice;
+                        settlementAmt = estimatedPayout > 0 ? estimatedPayout : itemOriginalPrice;
                     }
                 } else {
-                    fullSettlementAmt = itemOriginalPrice;
+                    settlementAmt = itemOriginalPrice;
                 }
             } else {
                 if (payoutInfo) {
-                    fullSettlementAmt = payoutInfo.amount;
+                    settlementAmt = payoutInfo.amount / (orderIdCounts[item.orderId] || 1);
                 } else if (isSettled) {
-                    fullSettlementAmt = itemOriginalPrice;
+                    settlementAmt = itemOriginalPrice;
                 }
             }
-            const settlementAmt = fullSettlementAmt / (orderIdCounts[item.orderId] || 1);
             
             // Check if package is stuck in transit (>10 days)
             let isOnHold = false;
