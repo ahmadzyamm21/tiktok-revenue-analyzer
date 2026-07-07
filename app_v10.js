@@ -2,6 +2,32 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("TikTok Revenue & Omset Analyzer v1.3.0 loaded (Laporan Pencairan Resi active).");
     // ------------------------------------------
+    // Platform Storage Mapper
+    // ------------------------------------------
+    let currentPlatform = window.localStorage.getItem('tiktok_current_platform') || 'tiktok';
+
+    function getPlatformKey(key) {
+        if (key === 'tiktok_current_platform') return 'tiktok_current_platform';
+        if (key === 'shop_name') {
+            return currentPlatform === 'shopee' ? 'shopee_shop_name' : 'shop_name';
+        }
+        if (key === 'shop_logo_base64') {
+            return currentPlatform === 'shopee' ? 'shopee_shop_logo_base64' : 'shop_logo_base64';
+        }
+        if (key.startsWith('tiktok_')) {
+            const base = key.substring(7);
+            return currentPlatform === 'shopee' ? `shopee_${base}` : `tiktok_${base}`;
+        }
+        return currentPlatform === 'shopee' ? `shopee_${key}` : `tiktok_${key}`;
+    }
+
+    const localStorage = {
+        getItem: (key) => window.localStorage.getItem(getPlatformKey(key)),
+        setItem: (key, val) => window.localStorage.setItem(getPlatformKey(key), val),
+        removeItem: (key) => window.localStorage.removeItem(getPlatformKey(key))
+    };
+
+    // ------------------------------------------
     // State variables
     // ------------------------------------------
     let revenueLogs = JSON.parse(localStorage.getItem('tiktok_revenue_logs')) || [];
@@ -13,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let orderPayouts = JSON.parse(localStorage.getItem('tiktok_order_payouts')) || {};
     let dailyGmvAdsDb = JSON.parse(localStorage.getItem('tiktok_daily_gmv_ads')) || {};
     let analysisMonth = localStorage.getItem('tiktok_analysis_month') || '2026-05';
-    let currentPlatform = localStorage.getItem('tiktok_current_platform') || 'tiktok';
 
     let revenueTrendChart = null;
     let channelDonutChart = null;
@@ -178,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------------------------------------
     function applyPlatformTheme(platform) {
         currentPlatform = platform;
-        localStorage.setItem('tiktok_current_platform', platform);
         
         // Update button active state
         document.querySelectorAll('.platform-btn').forEach(btn => {
@@ -198,10 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.style.setProperty('--accent-cyan', '#F53D2D'); // Shopee Red/Orange
             document.documentElement.style.setProperty('--accent-pink', '#FF5722'); // Shopee Orange
             
-            // If default title, change to Shopee default
-            if (shopName === 'My TikTok Shop' || shopNameDisplay.textContent === 'My TikTok Shop' || shopNameDisplay.textContent === 'My Shopee Store') {
-                shopNameDisplay.textContent = 'My Shopee Store';
-            }
             if (!currentLogoBase64) {
                 shopLogoContainer.innerHTML = '<i class="fas fa-shopping-bag" style="color: var(--accent-pink); font-size: 16px;"></i>';
             }
@@ -209,28 +229,71 @@ document.addEventListener('DOMContentLoaded', () => {
             document.documentElement.style.setProperty('--accent-cyan', '#25F4EE'); // TikTok Cyan
             document.documentElement.style.setProperty('--accent-pink', '#FE2C55'); // TikTok Pink
             
-            if (shopName === 'My TikTok Shop' || shopNameDisplay.textContent === 'My Shopee Store' || shopNameDisplay.textContent === 'My TikTok Shop') {
-                shopNameDisplay.textContent = 'My TikTok Shop';
-            }
             if (!currentLogoBase64) {
                 shopLogoContainer.innerHTML = '<i class="fab fa-tiktok" style="color: var(--accent-cyan); font-size: 16px;"></i>';
             }
         }
 
-        // Re-render/recalculate dashboard metrics and charts to use the new colors
-        if (typeof calculateMetrics === 'function') {
-            calculateMetrics();
+        // Apply logo from currentLogoBase64 if present
+        if (currentLogoBase64) {
+            shopLogoContainer.innerHTML = `<img src="${currentLogoBase64}" style="width: 100%; height: 100%; object-fit: cover;">`;
         }
-        if (typeof updateCharts === 'function') {
-            updateCharts();
+
+        // Update uploader card labels
+        const uploaderTitle = document.getElementById('uploader-card-title');
+        const uploaderDesc = document.getElementById('uploader-card-desc');
+        const file1Label = document.getElementById('uploader-file-1-label');
+        const file2Label = document.getElementById('uploader-file-2-label');
+        
+        if (platform === 'shopee') {
+            if (uploaderTitle) uploaderTitle.innerHTML = '<i class="fas fa-file-excel"></i> Pengunggah Transaksi Excel Shopee';
+            if (uploaderDesc) uploaderDesc.textContent = 'Unggah file hasil penjualan bulanan / laporan penghasilan Shopee Anda (.xlsx) untuk mengisi data harian secara instan.';
+            if (file1Label) file1Label.innerHTML = '1. File Laporan Keuangan (Income) <span style="font-size: 10px; color: var(--accent-pink); font-weight: normal;">— bisa pilih beberapa file sekaligus</span>';
+            if (file2Label) file2Label.textContent = '2. File Daftar Pesanan (orders)';
+        } else {
+            if (uploaderTitle) uploaderTitle.innerHTML = '<i class="fas fa-file-excel"></i> Pengunggah Transaksi Excel TikTok';
+            if (uploaderDesc) uploaderDesc.textContent = 'Unggah file hasil penjualan bulanan / laporan penyelesaian detail pesanan TikTok Shop Anda (.xlsx atau .csv) untuk mengisi data harian secara instan.';
+            if (file1Label) file1Label.innerHTML = '1. File Laporan Keuangan (Settlement) <span style="font-size: 10px; color: var(--accent-cyan); font-weight: normal;">— bisa pilih beberapa file sekaligus</span>';
+            if (file2Label) file2Label.textContent = '2. File Daftar Pesanan (Order List - SKU)';
         }
+
+        // Load settings to populate inputs and titles
+        loadShopSettings();
+
+        // Re-render logs table
+        renderLogsTable();
+
+        // Recalculate metrics & update charts
+        calculateMetrics();
+        updateCharts();
+    }
+
+    function switchPlatform(newPlatform) {
+        currentPlatform = newPlatform;
+        window.localStorage.setItem('tiktok_current_platform', newPlatform);
+        
+        // Reload all state variables from the new platform storage (via our shadowed localStorage)
+        revenueLogs = JSON.parse(localStorage.getItem('tiktok_revenue_logs')) || [];
+        targetRevenue = parseFloat(localStorage.getItem('tiktok_target_revenue')) || (newPlatform === 'shopee' ? 50000000 : 100000000);
+        shopName = localStorage.getItem('shop_name') || (newPlatform === 'shopee' ? 'My Shopee Store' : 'My TikTok Shop');
+        currentLogoBase64 = localStorage.getItem('shop_logo_base64') || null;
+        withdrawalsList = JSON.parse(localStorage.getItem('tiktok_withdrawals')) || [];
+        orderItemsDb = JSON.parse(localStorage.getItem('tiktok_order_items')) || [];
+        orderPayouts = JSON.parse(localStorage.getItem('tiktok_order_payouts')) || {};
+        dailyGmvAdsDb = JSON.parse(localStorage.getItem('tiktok_daily_gmv_ads')) || {};
+        analysisMonth = localStorage.getItem('tiktok_analysis_month') || '2026-05';
+        hppSkuDb = JSON.parse(localStorage.getItem('tiktok_sku_hpp')) || {};
+        monthlyHpp = parseFloat(localStorage.getItem('tiktok_monthly_hpp')) || 0;
+
+        // Apply platform theme colors, logo, and text labels
+        applyPlatformTheme(newPlatform);
     }
 
     // Bind click events to platform buttons
     document.querySelectorAll('.platform-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const platform = btn.getAttribute('data-platform');
-            applyPlatformTheme(platform);
+            switchPlatform(platform);
             showToast(`Beralih ke tampilan ${platform === 'shopee' ? 'Shopee' : 'TikTok Shop'}!`, 'success');
         });
     });
@@ -1881,6 +1944,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
                     const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
+                    const isShopee = (typeof currentPlatform !== 'undefined' && currentPlatform === 'shopee') || headers.includes('harga asli produk') || headers.includes('total penghasilan');
                     
                     function findColIdx(keywords, excludeKeywords = []) {
                         return headers.findIndex(h => {
@@ -1892,62 +1956,92 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }
 
-                    // Column mapping function (highly precise for TikTok Shop reports)
-                    const colMap = {
-                        orderId: findColIdx(['id pesanan/penyesuaian', 'id pesanan', 'order id'], ['terkait', 'associated', 'referensi', 'reference']),
-                        type: findColIdx(['jenis transaksi', 'transaction type', 'tipe', 'status']),
-                        date: findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) !== -1 
-                            ? findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) 
-                            : findColIdx(['waktu pemesanan', 'tanggal pemesanan', 'date', 'tanggal']),
-                        createdTime: findColIdx(['waktu pemesanan', 'tanggal pemesanan', 'created time', 'order date', 'order time']),
-                        gross: findColIdx(['subtotal sebelum diskon', 'subtotal before discount', 'original price']) !== -1 
-                            ? findColIdx(['subtotal sebelum diskon', 'subtotal before discount', 'original price']) 
-                            : findColIdx(['jumlah penyelesaian', 'total pendapatan', 'pendapatan', 'gross']),
-                        settlement: findColIdx(['jumlah penyelesaian pembayaran', 'jumlah penyelesaian', 'payout amount', 'settlement amount']),
-                        voucher: findColIdx(['diskon penjual', 'seller discount', 'diskon voucher yang ditanggung penjual'], ['subtotal', 'pengembalian']),
-                        refund: findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) !== -1 
-                            ? findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) 
-                            : findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual']) !== -1
-                                ? findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual'])
-                                : findColIdx(['pengembalian dana', 'refund', 'retur']),
-                        adminFees: findColIdx(['total biaya', 'platform fee', 'biaya platform', 'admin fee'], ['ongkir', 'logistik', 'produk']),
-                        ads: findColIdx(['biaya iklan gmv max', 'ads cost', 'biaya iklan gmv']),
-                        affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi']),
-                        associatedOrderId: findColIdx(['id pesanan terkait', 'associated order id', 'id pesanan referensi', 'reference order id']),
-                        
-                        // Detail Columns
-                        ongkir: findColIdx(['ongkir'], ['ongkir yang', 'pengembalian']),
-                        komisiDinamis: findColIdx(['komisi dinamis']),
-                        komisiAfiliasi: findColIdx(['komisi afiliasi']),
-                        biayaKomisiPlatform: findColIdx(['biaya komisi platform']),
-                        biayaLayananLogistik: findColIdx(['biaya layanan logistik']),
-                        biayaPemrosesanPesanan: findColIdx(['biaya pemrosesan pesanan']),
-                        biayaKomisiSebelumDiskon: findColIdx(['biaya komisi sebelum diskon']),
-                        diskonBelanjaIklan: findColIdx(['diskon (dari belanja iklan)']),
-                        biayaLayananCashbackBonus: findColIdx(['biaya layanan cashback bonus']),
-                        subtotalSetelahDiskonPenjual: findColIdx(['subtotal setelah diskon penjual', 'subtotal after seller discount']),
-                        diskonPlatform: findColIdx(['diskon platform', 'platform discount', 'subsidi platform']),
-                        diskonOngkirPenjual: findColIdx(['diskon ongkir dari penjual', 'seller shipping discount', 'diskon ongkir penjual']),
-                        diskonVoucherPlatform: findColIdx(['diskon voucher yang ditanggung platform', 'platform voucher discount']),
-                        
-                        // Newly added possible fee columns
-                        biayaLayananPreOrder: findColIdx(['biaya layanan pre-order']),
-                        biayaLayananMall: findColIdx(['biaya layanan mall']),
-                        biayaPembayaran: findColIdx(['biaya pembayaran']),
-                        diskonKomisiLainnya: findColIdx(['diskon komisi lainnya']),
-                        handlingFeeInstallment: findColIdx(['handling fee']),
-                        subsidiOngkir: findColIdx(['subsidi ongkir']),
-                        biayaProgramBebasOngkir: findColIdx(['biaya layanan program bebas ongkir', 'bebas ongkir']),
-                        biayaLayananKhususLive: findColIdx(['biaya layanan khusus live']),
-                        biayaAksesKeuntunganEksklusif: findColIdx(['biaya akses keuntungan eksklusif']),
-                        biayaProgramEams: findColIdx(['biaya layanan program eams']),
-                        biayaBrandsCrazyDeal: findColIdx(['biaya layanan brands crazy deal', 'flash sale']),
-                        biayaPayLater: findColIdx(['biaya program paylater']),
-                        biayaCampaignSource: findColIdx(['biaya sumber daya campaign']),
-                        biayaLayananKhususPlatform: findColIdx(['biaya layanan khusus platform']),
-                        biayaProgramLayananTerkelola: findColIdx(['program layanan terkelola']),
-                        biayaAsuransi: findColIdx(['biaya asuransi'])
-                    };
+                    // Column mapping function (highly precise for TikTok & Shopee Shop reports)
+                    let colMap = {};
+                    if (isShopee) {
+                        colMap = {
+                            orderId: findColIdx(['no. pesanan', 'order id']),
+                            type: -1,
+                            date: findColIdx(['waktu pesanan dibuat', 'created time']),
+                            createdTime: findColIdx(['waktu pesanan dibuat', 'created time']),
+                            gross: findColIdx(['harga asli produk', 'original price']),
+                            settlement: findColIdx(['total penghasilan', 'total payout', 'payout']),
+                            voucher: findColIdx(['total diskon produk', 'product discount']),
+                            sellerVoucher: findColIdx(['voucher disponsor oleh penjual', 'seller voucher', 'voucher disponsori penjual']),
+                            refund: findColIdx(['jumlah pengembalian dana ke pembeli', 'refund to buyer']),
+                            adminFees: -1,
+                            
+                            // Fee columns
+                            admin: findColIdx(['biaya administrasi', 'admin fee']),
+                            service: findColIdx(['biaya layanan', 'service fee']),
+                            process: findColIdx(['biaya proses pesanan', 'transaction fee']),
+                            ams: findColIdx(['biaya komisi ams', 'ams fee']),
+                            premi: findColIdx(['premi']),
+                            hematOngkir: findColIdx(['biaya program hemat biaya kirim', 'hemat ongkir']),
+                            biayaTransaksi: findColIdx(['biaya transaksi']),
+                            biayaKampanye: findColIdx(['biaya kampanye']),
+                            
+                            // Other voucher/discount columns
+                            voucherCoFund: findColIdx(['voucher co-fund']),
+                            cashbackCoins: findColIdx(['cashback koin disponsori penjual', 'cashback koin penjual']),
+                            promoOngkirPenjual: findColIdx(['promo gratis ongkir dari penjual'])
+                        };
+                    } else {
+                        colMap = {
+                            orderId: findColIdx(['id pesanan/penyesuaian', 'id pesanan', 'order id'], ['terkait', 'associated', 'referensi', 'reference']),
+                            type: findColIdx(['jenis transaksi', 'transaction type', 'tipe', 'status']),
+                            date: findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) !== -1 
+                                ? findColIdx(['waktu pembayaran pesanan', 'waktu pembayaran', 'tanggal pembayaran', 'payment time']) 
+                                : findColIdx(['waktu pemesanan', 'tanggal pemesanan', 'date', 'tanggal']),
+                            createdTime: findColIdx(['waktu pemesanan', 'tanggal pemesanan', 'created time', 'order date', 'order time']),
+                            gross: findColIdx(['subtotal sebelum diskon', 'subtotal before discount', 'original price']) !== -1 
+                                ? findColIdx(['subtotal sebelum diskon', 'subtotal before discount', 'original price']) 
+                                : findColIdx(['jumlah penyelesaian', 'total pendapatan', 'pendapatan', 'gross']),
+                            settlement: findColIdx(['jumlah penyelesaian pembayaran', 'jumlah penyelesaian', 'payout amount', 'settlement amount']),
+                            voucher: findColIdx(['diskon penjual', 'seller discount', 'diskon voucher yang ditanggung penjual'], ['subtotal', 'pengembalian']),
+                            refund: findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) !== -1 
+                                ? findColIdx(['pengembalian dana setelah diskon', 'refund after seller discount', 'subtotal pengembalian dana setelah diskon penjual']) 
+                                : findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual']) !== -1
+                                    ? findColIdx(['pengembalian dana sebelum diskon', 'refund before seller discount', 'subtotal pengembalian dana sebelum diskon penjual'])
+                                    : findColIdx(['pengembalian dana', 'refund', 'retur']),
+                            adminFees: findColIdx(['total biaya', 'platform fee', 'biaya platform', 'admin fee'], ['ongkir', 'logistik', 'produk']),
+                            ads: findColIdx(['biaya iklan gmv max', 'ads cost', 'biaya iklan gmv']),
+                            affiliate: findColIdx(['komisi afiliasi', 'komisi mitra', 'affiliate', 'komisi']),
+                            associatedOrderId: findColIdx(['id pesanan terkait', 'associated order id', 'id pesanan referensi', 'reference order id']),
+                            
+                            // Detail Columns
+                            ongkir: findColIdx(['ongkir'], ['ongkir yang', 'pengembalian']),
+                            komisiDinamis: findColIdx(['komisi dinamis']),
+                            komisiAfiliasi: findColIdx(['komisi afiliasi']),
+                            biayaKomisiPlatform: findColIdx(['biaya komisi platform']),
+                            biayaLayananLogistik: findColIdx(['biaya layanan logistik']),
+                            biayaPemrosesanPesanan: findColIdx(['biaya pemrosesan pesanan']),
+                            biayaKomisiSebelumDiskon: findColIdx(['biaya komisi sebelum diskon']),
+                            diskonBelanjaIklan: findColIdx(['diskon (dari belanja iklan)']),
+                            biayaLayananCashbackBonus: findColIdx(['biaya layanan cashback bonus']),
+                            subtotalSetelahDiskonPenjual: findColIdx(['subtotal setelah diskon penjual', 'subtotal after seller discount']),
+                            diskonPlatform: findColIdx(['diskon platform', 'platform discount', 'subsidi platform']),
+                            diskonOngkirPenjual: findColIdx(['diskon ongkir dari penjual', 'seller shipping discount', 'diskon ongkir penjual']),
+                            diskonVoucherPlatform: findColIdx(['diskon voucher yang ditanggung platform', 'platform voucher discount']),
+                            
+                            biayaLayananPreOrder: findColIdx(['biaya layanan pre-order']),
+                            biayaLayananMall: findColIdx(['biaya layanan mall']),
+                            biayaPembayaran: findColIdx(['biaya pembayaran']),
+                            diskonKomisiLainnya: findColIdx(['diskon komisi lainnya']),
+                            handlingFeeInstallment: findColIdx(['handling fee']),
+                            subsidiOngkir: findColIdx(['subsidi ongkir']),
+                            biayaProgramBebasOngkir: findColIdx(['biaya layanan program bebas ongkir', 'bebas ongkir']),
+                            biayaLayananKhususLive: findColIdx(['biaya layanan khusus live']),
+                            biayaAksesKeuntunganEksklusif: findColIdx(['biaya akses keuntungan eksklusif']),
+                            biayaProgramEams: findColIdx(['biaya layanan program eams']),
+                            biayaBrandsCrazyDeal: findColIdx(['biaya layanan brands crazy deal', 'flash sale']),
+                            biayaPayLater: findColIdx(['biaya program paylater']),
+                            biayaCampaignSource: findColIdx(['biaya sumber daya campaign']),
+                            biayaLayananKhususPlatform: findColIdx(['biaya layanan khusus platform']),
+                            biayaProgramLayananTerkelola: findColIdx(['program layanan terkelola']),
+                            biayaAsuransi: findColIdx(['biaya asuransi'])
+                        };
+                    }
 
                     if (colMap.date === -1 || colMap.gross === -1 || colMap.orderId === -1) {
                         previewDetails.innerHTML = `
@@ -2069,40 +2163,106 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const dayData = dailyAggregates[aggDate];
                         
-                        let grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
-                        const settlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
-                        const voucherVal = Math.abs(parseFloat(colMap.voucher !== -1 ? row[colMap.voucher] : 0) || 0);
-                        const refundVal = Math.abs(parseFloat(row[colMap.refund]) || 0);
-                        const affCommission = Math.abs(parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
-                        const adsCost = Math.abs(parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
-                        const adminFeesVal = Math.abs(parseFloat(colMap.adminFees !== -1 ? row[colMap.adminFees] : 0) || 0);
-                        
-                        // Extract detailed values
-                        const ongkirVal = Math.abs(parseFloat(colMap.ongkir !== -1 ? row[colMap.ongkir] : 0) || 0);
-                        const komisiDinamisVal = Math.abs(parseFloat(colMap.komisiDinamis !== -1 ? row[colMap.komisiDinamis] : 0) || 0);
-                        const komisiAfiliasiVal = Math.abs(parseFloat(colMap.komisiAfiliasi !== -1 ? row[colMap.komisiAfiliasi] : 0) || 0);
-                        const biayaKomisiPlatformVal = Math.abs(parseFloat(colMap.biayaKomisiPlatform !== -1 ? row[colMap.biayaKomisiPlatform] : 0) || 0);
-                        const biayaLayananLogistikVal = Math.abs(parseFloat(colMap.biayaLayananLogistik !== -1 ? row[colMap.biayaLayananLogistik] : 0) || 0);
-                        const biayaPemrosesanPesananVal = Math.abs(parseFloat(colMap.biayaPemrosesanPesanan !== -1 ? row[colMap.biayaPemrosesanPesanan] : 0) || 0);
-                        const biayaKomisiSebelumDiskonVal = Math.abs(parseFloat(colMap.biayaKomisiSebelumDiskon !== -1 ? row[colMap.biayaKomisiSebelumDiskon] : 0) || 0);
-                        const diskonBelanjaIklanVal = Math.abs(parseFloat(colMap.diskonBelanjaIklan !== -1 ? row[colMap.diskonBelanjaIklan] : 0) || 0);
-                        const biayaLayananCashbackBonusVal = Math.abs(parseFloat(colMap.biayaLayananCashbackBonus !== -1 ? row[colMap.biayaLayananCashbackBonus] : 0) || 0);
-                        const biayaLayananPreOrderVal = Math.abs(parseFloat(colMap.biayaLayananPreOrder !== -1 ? row[colMap.biayaLayananPreOrder] : 0) || 0);
-                        const biayaLayananMallVal = Math.abs(parseFloat(colMap.biayaLayananMall !== -1 ? row[colMap.biayaLayananMall] : 0) || 0);
-                        const biayaPembayaranVal = Math.abs(parseFloat(colMap.biayaPembayaran !== -1 ? row[colMap.biayaPembayaran] : 0) || 0);
-                        const diskonKomisiLainnyaVal = Math.abs(parseFloat(colMap.diskonKomisiLainnya !== -1 ? row[colMap.diskonKomisiLainnya] : 0) || 0);
-                        const handlingFeeInstallmentVal = Math.abs(parseFloat(colMap.handlingFeeInstallment !== -1 ? row[colMap.handlingFeeInstallment] : 0) || 0);
-                        const subsidiOngkirVal = Math.abs(parseFloat(colMap.subsidiOngkir !== -1 ? row[colMap.subsidiOngkir] : 0) || 0);
-                        const biayaProgramBebasOngkirVal = Math.abs(parseFloat(colMap.biayaProgramBebasOngkir !== -1 ? row[colMap.biayaProgramBebasOngkir] : 0) || 0);
-                        const biayaLayananKhususLiveVal = Math.abs(parseFloat(colMap.biayaLayananKhususLive !== -1 ? row[colMap.biayaLayananKhususLive] : 0) || 0);
-                        const biayaAksesKeuntunganEksklusifVal = Math.abs(parseFloat(colMap.biayaAksesKeuntunganEksklusif !== -1 ? row[colMap.biayaAksesKeuntunganEksklusif] : 0) || 0);
-                        const biayaProgramEamsVal = Math.abs(parseFloat(colMap.biayaProgramEams !== -1 ? row[colMap.biayaProgramEams] : 0) || 0);
-                        const biayaBrandsCrazyDealVal = Math.abs(parseFloat(colMap.biayaBrandsCrazyDeal !== -1 ? row[colMap.biayaBrandsCrazyDeal] : 0) || 0);
-                        const biayaPayLaterVal = Math.abs(parseFloat(colMap.biayaPayLater !== -1 ? row[colMap.biayaPayLater] : 0) || 0);
-                        const biayaCampaignSourceVal = Math.abs(parseFloat(colMap.biayaCampaignSource !== -1 ? row[colMap.biayaCampaignSource] : 0) || 0);
-                        const biayaLayananKhususPlatformVal = Math.abs(parseFloat(colMap.biayaLayananKhususPlatform !== -1 ? row[colMap.biayaLayananKhususPlatform] : 0) || 0);
-                        const biayaProgramLayananTerkelolaVal = Math.abs(parseFloat(colMap.biayaProgramLayananTerkelola !== -1 ? row[colMap.biayaProgramLayananTerkelola] : 0) || 0);
-                        const biayaAsuransiVal = Math.abs(parseFloat(colMap.biayaAsuransi !== -1 ? row[colMap.biayaAsuransi] : 0) || 0);
+                        let grossVal = 0;
+                        let settlementVal = 0;
+                        let voucherVal = 0;
+                        let refundVal = 0;
+                        let affCommission = 0;
+                        let adsCost = 0;
+                        let adminFeesVal = 0;
+
+                        // Detailed sub-fees
+                        let ongkirVal = 0;
+                        let komisiDinamisVal = 0;
+                        let komisiAfiliasiVal = 0;
+                        let biayaKomisiPlatformVal = 0;
+                        let biayaLayananLogistikVal = 0;
+                        let biayaPemrosesanPesananVal = 0;
+                        let biayaKomisiSebelumDiskonVal = 0;
+                        let diskonBelanjaIklanVal = 0;
+                        let biayaLayananCashbackBonusVal = 0;
+                        let biayaLayananPreOrderVal = 0;
+                        let biayaLayananMallVal = 0;
+                        let biayaPembayaranVal = 0;
+                        let diskonKomisiLainnyaVal = 0;
+                        let handlingFeeInstallmentVal = 0;
+                        let subsidiOngkirVal = 0;
+                        let biayaProgramBebasOngkirVal = 0;
+                        let biayaLayananKhususLiveVal = 0;
+                        let biayaAksesKeuntunganEksklusifVal = 0;
+                        let biayaProgramEamsVal = 0;
+                        let biayaBrandsCrazyDealVal = 0;
+                        let biayaPayLaterVal = 0;
+                        let biayaCampaignSourceVal = 0;
+                        let biayaLayananKhususPlatformVal = 0;
+                        let biayaProgramLayananTerkelolaVal = 0;
+                        let biayaAsuransiVal = 0;
+
+                        if (isShopee) {
+                            grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
+                            settlementVal = parseFloat(row[colMap.settlement]) || 0;
+                            
+                            const totalDiscountVal = Math.abs(parseFloat(row[colMap.voucher]) || 0);
+                            const sellerVoucherVal = Math.abs(parseFloat(row[colMap.sellerVoucher]) || 0);
+                            const voucherCoFundVal = colMap.voucherCoFund !== -1 ? Math.abs(parseFloat(row[colMap.voucherCoFund]) || 0) : 0;
+                            const cashbackCoinsVal = colMap.cashbackCoins !== -1 ? Math.abs(parseFloat(row[colMap.cashbackCoins]) || 0) : 0;
+                            const promoOngkirVal = colMap.promoOngkirPenjual !== -1 ? Math.abs(parseFloat(row[colMap.promoOngkirPenjual]) || 0) : 0;
+                            
+                            voucherVal = totalDiscountVal + sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
+                            refundVal = colMap.refund !== -1 ? Math.abs(parseFloat(row[colMap.refund]) || 0) : 0;
+
+                            const adminVal = colMap.admin !== -1 ? Math.abs(parseFloat(row[colMap.admin]) || 0) : 0;
+                            const serviceVal = colMap.service !== -1 ? Math.abs(parseFloat(row[colMap.service]) || 0) : 0;
+                            const processVal = colMap.process !== -1 ? Math.abs(parseFloat(row[colMap.process]) || 0) : 0;
+                            const amsVal = colMap.ams !== -1 ? Math.abs(parseFloat(row[colMap.ams]) || 0) : 0;
+                            const premiVal = colMap.premi !== -1 ? Math.abs(parseFloat(row[colMap.premi]) || 0) : 0;
+                            const hematOngkirVal = colMap.hematOngkir !== -1 ? Math.abs(parseFloat(row[colMap.hematOngkir]) || 0) : 0;
+                            const trxVal = colMap.biayaTransaksi !== -1 ? Math.abs(parseFloat(row[colMap.biayaTransaksi]) || 0) : 0;
+                            const campVal = colMap.biayaKampanye !== -1 ? Math.abs(parseFloat(row[colMap.biayaKampanye]) || 0) : 0;
+
+                            adminFeesVal = adminVal + serviceVal + processVal + amsVal + premiVal + hematOngkirVal + trxVal + campVal;
+                            
+                            komisiDinamisVal = adminVal; // Biaya Administrasi Shopee
+                            biayaPemrosesanPesananVal = processVal; // Biaya Proses Pesanan Shopee
+                            komisiAfiliasiVal = amsVal; // Biaya Komisi AMS Shopee
+                            biayaLayananCashbackBonusVal = serviceVal; // Biaya Layanan Shopee
+                            biayaLayananKhususPlatformVal = premiVal + hematOngkirVal + trxVal + campVal; // Biaya lainnya
+                        } else {
+                            grossVal = Math.max(0, parseFloat(row[colMap.gross]) || 0);
+                            settlementVal = colMap.settlement !== -1 ? (parseFloat(row[colMap.settlement]) || 0) : 0;
+                            voucherVal = Math.abs(parseFloat(colMap.voucher !== -1 ? row[colMap.voucher] : 0) || 0);
+                            refundVal = Math.abs(parseFloat(row[colMap.refund]) || 0);
+                            affCommission = Math.abs(parseFloat(colMap.affiliate !== -1 ? row[colMap.affiliate] : 0) || 0);
+                            adsCost = Math.abs(parseFloat(colMap.ads !== -1 ? row[colMap.ads] : 0) || 0);
+                            adminFeesVal = Math.abs(parseFloat(colMap.adminFees !== -1 ? row[colMap.adminFees] : 0) || 0);
+                            
+                            // Extract detailed values (TikTok)
+                            ongkirVal = Math.abs(parseFloat(colMap.ongkir !== -1 ? row[colMap.ongkir] : 0) || 0);
+                            komisiDinamisVal = Math.abs(parseFloat(colMap.komisiDinamis !== -1 ? row[colMap.komisiDinamis] : 0) || 0);
+                            komisiAfiliasiVal = Math.abs(parseFloat(colMap.komisiAfiliasi !== -1 ? row[colMap.komisiAfiliasi] : 0) || 0);
+                            biayaKomisiPlatformVal = Math.abs(parseFloat(colMap.biayaKomisiPlatform !== -1 ? row[colMap.biayaKomisiPlatform] : 0) || 0);
+                            biayaLayananLogistikVal = Math.abs(parseFloat(colMap.biayaLayananLogistik !== -1 ? row[colMap.biayaLayananLogistik] : 0) || 0);
+                            biayaPemrosesanPesananVal = Math.abs(parseFloat(colMap.biayaPemrosesanPesanan !== -1 ? row[colMap.biayaPemrosesanPesanan] : 0) || 0);
+                            biayaKomisiSebelumDiskonVal = Math.abs(parseFloat(colMap.biayaKomisiSebelumDiskon !== -1 ? row[colMap.biayaKomisiSebelumDiskon] : 0) || 0);
+                            diskonBelanjaIklanVal = Math.abs(parseFloat(colMap.diskonBelanjaIklan !== -1 ? row[colMap.diskonBelanjaIklan] : 0) || 0);
+                            biayaLayananCashbackBonusVal = Math.abs(parseFloat(colMap.biayaLayananCashbackBonus !== -1 ? row[colMap.biayaLayananCashbackBonus] : 0) || 0);
+                            biayaLayananPreOrderVal = Math.abs(parseFloat(colMap.biayaLayananPreOrder !== -1 ? row[colMap.biayaLayananPreOrder] : 0) || 0);
+                            biayaLayananMallVal = Math.abs(parseFloat(colMap.biayaLayananMall !== -1 ? row[colMap.biayaLayananMall] : 0) || 0);
+                            biayaPembayaranVal = Math.abs(parseFloat(colMap.biayaPembayaran !== -1 ? row[colMap.biayaPembayaran] : 0) || 0);
+                            diskonKomisiLainnyaVal = Math.abs(parseFloat(colMap.diskonKomisiLainnya !== -1 ? row[colMap.diskonKomisiLainnya] : 0) || 0);
+                            handlingFeeInstallmentVal = Math.abs(parseFloat(colMap.handlingFeeInstallment !== -1 ? row[colMap.handlingFeeInstallment] : 0) || 0);
+                            subsidiOngkirVal = Math.abs(parseFloat(colMap.subsidiOngkir !== -1 ? row[colMap.subsidiOngkir] : 0) || 0);
+                            biayaProgramBebasOngkirVal = Math.abs(parseFloat(colMap.biayaProgramBebasOngkir !== -1 ? row[colMap.biayaProgramBebasOngkir] : 0) || 0);
+                            biayaLayananKhususLiveVal = Math.abs(parseFloat(colMap.biayaLayananKhususLive !== -1 ? row[colMap.biayaLayananKhususLive] : 0) || 0);
+                            biayaAksesKeuntunganEksklusifVal = Math.abs(parseFloat(colMap.biayaAksesKeuntunganEksklusif !== -1 ? row[colMap.biayaAksesKeuntunganEksklusif] : 0) || 0);
+                            biayaProgramEamsVal = Math.abs(parseFloat(colMap.biayaProgramEams !== -1 ? row[colMap.biayaProgramEams] : 0) || 0);
+                            biayaBrandsCrazyDealVal = Math.abs(parseFloat(colMap.biayaBrandsCrazyDeal !== -1 ? row[colMap.biayaBrandsCrazyDeal] : 0) || 0);
+                            biayaPayLaterVal = Math.abs(parseFloat(colMap.biayaPayLater !== -1 ? row[colMap.biayaPayLater] : 0) || 0);
+                            biayaCampaignSourceVal = Math.abs(parseFloat(colMap.biayaCampaignSource !== -1 ? row[colMap.biayaCampaignSource] : 0) || 0);
+                            biayaLayananKhususPlatformVal = Math.abs(parseFloat(colMap.biayaLayananKhususPlatform !== -1 ? row[colMap.biayaLayananKhususPlatform] : 0) || 0);
+                            biayaProgramLayananTerkelolaVal = Math.abs(parseFloat(colMap.biayaProgramLayananTerkelola !== -1 ? row[colMap.biayaProgramLayananTerkelola] : 0) || 0);
+                            biayaAsuransiVal = Math.abs(parseFloat(colMap.biayaAsuransi !== -1 ? row[colMap.biayaAsuransi] : 0) || 0);
+                        }
 
                         const grossHeader = headers[colMap.gross] || '';
                         if (grossHeader.includes('pendapatan') || grossHeader.includes('penyelesaian') || grossHeader.includes('payout')) {
@@ -3399,20 +3559,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const headers = jsonData[headerIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
                     const colMap = {
-                        orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id')),
+                        orderId: headers.findIndex(h => h.includes('id pesanan') || h.includes('order id') || h.includes('no. pesanan') || h === 'pesanan'),
                         status: headers.findIndex(h => (h.includes('status pesanan') || h.includes('order status') || h === 'status') && !h.includes('pembayaran')),
-                        sku: headers.findIndex(h => h.includes('seller sku') || (h.includes('sku') && !h.includes('id'))),
+                        sku: headers.findIndex(h => h.includes('seller sku') || h.includes('sku induk') || (h.includes('sku') && !h.includes('id'))),
                         product: headers.findIndex(h => h.includes('nama produk') || h.includes('product name') || h === 'produk'),
-                        variation: headers.findIndex(h => h.includes('variasi') || h.includes('variation')),
-                        qty: headers.findIndex(h => h.includes('jumlah') || h.includes('quantity') || h === 'qty'),
-                        createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('created time') || h.includes('tanggal order') || h.includes('tanggal pesanan')),
+                        variation: headers.findIndex(h => h.includes('variasi') || h.includes('variation') || h.includes('nama variasi')),
+                        qty: headers.findIndex(h => h.includes('jumlah') || h.includes('quantity') || h === 'qty' || h.includes('jumlah produk')),
+                        createdTime: headers.findIndex(h => h.includes('waktu pemesanan') || h.includes('waktu pesanan dibuat') || h.includes('created time') || h.includes('tanggal order') || h.includes('tanggal pesanan') || h.includes('waktu dibuat')),
                         trackingId: headers.findIndex(h => h.includes('resi') || h.includes('tracking id') || h.includes('no resi') || h.includes('resi id')),
                         settlement: headers.findIndex(h => h.includes('settlement') || h.includes('penyelesaian') || h.includes('dana cair') || h.includes('payout')),
                         returnType: headers.findIndex(h => h.includes('cancelation/return type') || h.includes('tipe pembatalan/pengembalian') || h.includes('return type')),
-                        returnQty: headers.findIndex(h => h.includes('sku quantity of return') || h.includes('jumlah pengembalian sku') || h.includes('return qty')),
-                        shippedTime: headers.findIndex(h => h.includes('shipped time') || h.includes('waktu pengiriman') || h.includes('tanggal pengiriman') || h.includes('waktu dikirim')),
+                        returnQty: headers.findIndex(h => h.includes('sku quantity of return') || h.includes('jumlah pengembalian sku') || h.includes('return qty') || h.includes('returned quantity') || h.includes('jumlah retur')),
+                        shippedTime: headers.findIndex(h => h.includes('shipped time') || h.includes('waktu pengiriman') || h.includes('tanggal pengiriman') || h.includes('waktu dikirim') || h.includes('waktu pengiriman diatur')),
                         originalPrice: headers.findIndex(h => h.includes('sku unit original price') || h.includes('harga asli produk') || h.includes('original price') || h.includes('harga awal') || h.includes('harga asli')),
-                        subtotalBeforeDiscount: headers.findIndex(h => h.includes('sku subtotal before discount') || h.includes('harga jual produk') || h.includes('subtotal sebelum diskon') || h.includes('subtotal before discount') || h.includes('harga sebelum diskon'))
+                        subtotalBeforeDiscount: headers.findIndex(h => h.includes('sku subtotal before discount') || h.includes('harga jual produk') || h.includes('subtotal sebelum diskon') || h.includes('subtotal before discount') || h.includes('harga sebelum diskon') || h.includes('subtotal pesanan'))
                     };
 
                     if (colMap.orderId === -1 || colMap.sku === -1) {
