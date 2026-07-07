@@ -204,31 +204,41 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyPlatformTheme(platform) {
         currentPlatform = platform;
         
+        // Toggle body theme class for light/dark switch
+        if (platform === 'shopee') {
+            document.body.classList.add('theme-shopee');
+        } else {
+            document.body.classList.remove('theme-shopee');
+            // Reset CSS variables back to TikTok dark defaults
+            document.documentElement.style.removeProperty('--accent-cyan');
+            document.documentElement.style.removeProperty('--accent-pink');
+            document.documentElement.style.removeProperty('--accent-green');
+            document.documentElement.style.removeProperty('--accent-orange');
+            document.documentElement.style.removeProperty('--bg-primary');
+            document.documentElement.style.removeProperty('--bg-secondary');
+            document.documentElement.style.removeProperty('--bg-sidebar');
+            document.documentElement.style.removeProperty('--bg-card');
+            document.documentElement.style.removeProperty('--border-color');
+            document.documentElement.style.removeProperty('--text-primary');
+            document.documentElement.style.removeProperty('--text-secondary');
+            document.documentElement.style.removeProperty('--text-muted');
+        }
+
         // Update button active state
         document.querySelectorAll('.platform-btn').forEach(btn => {
             if (btn.getAttribute('data-platform') === platform) {
                 btn.classList.add('active');
-                btn.style.background = platform === 'shopee' ? 'var(--accent-pink)' : 'var(--accent-cyan)';
-                btn.style.color = '#000';
             } else {
                 btn.classList.remove('active');
-                btn.style.background = 'transparent';
-                btn.style.color = 'var(--text-muted)';
             }
         });
 
-        // Apply theme color variables
+        // Apply logo icon based on platform
         if (platform === 'shopee') {
-            document.documentElement.style.setProperty('--accent-cyan', '#F53D2D'); // Shopee Red/Orange
-            document.documentElement.style.setProperty('--accent-pink', '#FF5722'); // Shopee Orange
-            
             if (!currentLogoBase64) {
-                shopLogoContainer.innerHTML = '<i class="fas fa-shopping-bag" style="color: var(--accent-pink); font-size: 16px;"></i>';
+                shopLogoContainer.innerHTML = '<i class="fas fa-shopping-bag" style="color: #EE4D2D; font-size: 16px;"></i>';
             }
         } else {
-            document.documentElement.style.setProperty('--accent-cyan', '#25F4EE'); // TikTok Cyan
-            document.documentElement.style.setProperty('--accent-pink', '#FE2C55'); // TikTok Pink
-            
             if (!currentLogoBase64) {
                 shopLogoContainer.innerHTML = '<i class="fab fa-tiktok" style="color: var(--accent-cyan); font-size: 16px;"></i>';
             }
@@ -248,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (platform === 'shopee') {
             if (uploaderTitle) uploaderTitle.innerHTML = '<i class="fas fa-file-excel"></i> Pengunggah Transaksi Excel Shopee';
             if (uploaderDesc) uploaderDesc.textContent = 'Unggah file hasil penjualan bulanan / laporan penghasilan Shopee Anda (.xlsx) untuk mengisi data harian secara instan.';
-            if (file1Label) file1Label.innerHTML = '1. File Laporan Keuangan (Income) <span style="font-size: 10px; color: var(--accent-pink); font-weight: normal;">— bisa pilih beberapa file sekaligus</span>';
+            if (file1Label) file1Label.innerHTML = '1. File Laporan Keuangan (Income) <span style="font-size: 10px; color: #EE4D2D; font-weight: normal;">— bisa pilih beberapa file sekaligus</span>';
             if (file2Label) file2Label.textContent = '2. File Daftar Pesanan (orders)';
         } else {
             if (uploaderTitle) uploaderTitle.innerHTML = '<i class="fas fa-file-excel"></i> Pengunggah Transaksi Excel TikTok';

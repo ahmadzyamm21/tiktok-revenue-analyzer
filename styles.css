@@ -723,3 +723,307 @@ input:focus, select:focus {
     color: #FFF !important;
 }
 
+/* ==========================================
+   SHOPEE LIGHT THEME
+   ========================================== */
+body.theme-shopee {
+    --bg-primary: #F5F5F5;
+    --bg-secondary: #FFFFFF;
+    --bg-sidebar: #FFFFFF;
+    --bg-card: rgba(255, 255, 255, 0.95);
+    --border-color: rgba(0, 0, 0, 0.08);
+
+    --text-primary: #222222;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+
+    --accent-cyan: #EE4D2D;
+    --accent-pink: #F7471C;
+    --accent-green: #26AA99;
+    --accent-orange: #F57224;
+}
+
+body.theme-shopee {
+    background-color: #F5F5F5;
+    color: #222222;
+}
+
+/* Sidebar */
+body.theme-shopee .sidebar {
+    background-color: #FFFFFF;
+    border-right: 1px solid #E8E8E8;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+}
+
+body.theme-shopee .shop-badge {
+    background: #FFF5F0;
+    border-color: #FDDDD1;
+}
+
+body.theme-shopee .shop-badge:hover {
+    background: #FFE8DB;
+    border-color: #EE4D2D;
+}
+
+body.theme-shopee .shop-title {
+    color: #222222;
+}
+
+body.theme-shopee .shop-status {
+    color: #888888;
+}
+
+body.theme-shopee .shop-logo {
+    background: #FFF0EB;
+}
+
+body.theme-shopee .menu-item {
+    color: #555555;
+}
+
+body.theme-shopee .menu-item:hover {
+    color: #EE4D2D;
+    background: #FFF5F0;
+}
+
+body.theme-shopee .menu-item.active {
+    color: #EE4D2D;
+    background: linear-gradient(135deg, rgba(238,77,45,0.1) 0%, rgba(238,77,45,0.03) 100%);
+    border-left-color: #EE4D2D;
+    font-weight: 600;
+}
+
+body.theme-shopee .sidebar-footer {
+    border-top-color: #E8E8E8;
+    color: #999999;
+}
+
+body.theme-shopee .developer-tag {
+    color: #EE4D2D;
+}
+
+/* Platform button overrides for light theme */
+body.theme-shopee .platform-btn {
+    color: #888 !important;
+    border-color: #DDD !important;
+}
+
+body.theme-shopee .platform-btn:hover:not(.active) {
+    background: #FFF5F0 !important;
+    color: #EE4D2D !important;
+}
+
+body.theme-shopee .platform-btn.active {
+    background: #EE4D2D !important;
+    color: #FFF !important;
+    border-color: #EE4D2D !important;
+}
+
+/* Main Content */
+body.theme-shopee .main-content {
+    background-color: #F5F5F5;
+}
+
+/* Header */
+body.theme-shopee .header-title {
+    color: #222222;
+}
+
+body.theme-shopee .header-subtitle {
+    color: #666666;
+}
+
+/* Cards */
+body.theme-shopee .card {
+    background: #FFFFFF;
+    border: 1px solid #E8E8E8;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+body.theme-shopee .kpi-card {
+    background: #FFFFFF;
+    border: 1px solid #E8E8E8;
+}
+
+body.theme-shopee .kpi-label {
+    color: #888888;
+}
+
+body.theme-shopee .kpi-value {
+    color: #222222;
+}
+
+body.theme-shopee .kpi-subtext {
+    color: #999999;
+}
+
+body.theme-shopee .kpi-icon-container {
+    background: rgba(238,77,45,0.08) !important;
+    color: #EE4D2D !important;
+}
+
+/* Buttons */
+body.theme-shopee .btn-cyan {
+    background: #EE4D2D;
+    border-color: #EE4D2D;
+    color: #FFFFFF;
+}
+
+body.theme-shopee .btn-cyan:hover {
+    background: #D73211;
+    border-color: #D73211;
+}
+
+body.theme-shopee .btn-secondary {
+    background: #FFFFFF;
+    border-color: #CCCCCC;
+    color: #555555;
+}
+
+body.theme-shopee .btn-secondary:hover {
+    background: #F5F5F5;
+    border-color: #999999;
+}
+
+/* Tables */
+body.theme-shopee table {
+    color: #333333;
+}
+
+body.theme-shopee th {
+    color: #888888 !important;
+    border-bottom-color: #E8E8E8 !important;
+}
+
+body.theme-shopee td {
+    color: #333333;
+    border-bottom-color: #F0F0F0 !important;
+}
+
+body.theme-shopee tr:hover {
+    background: #FFF8F5 !important;
+}
+
+/* Section descriptions */
+body.theme-shopee .section-desc {
+    color: #888888;
+}
+
+/* Form elements */
+body.theme-shopee input[type="text"],
+body.theme-shopee input[type="number"],
+body.theme-shopee input[type="date"],
+body.theme-shopee input[type="month"],
+body.theme-shopee select,
+body.theme-shopee textarea {
+    background: #FFFFFF !important;
+    border: 1px solid #DDDDDD !important;
+    color: #333333 !important;
+}
+
+body.theme-shopee input:focus,
+body.theme-shopee select:focus,
+body.theme-shopee textarea:focus {
+    border-color: #EE4D2D !important;
+    box-shadow: 0 0 0 2px rgba(238,77,45,0.15) !important;
+}
+
+/* Badges */
+body.theme-shopee .badge-selesai,
+body.theme-shopee .badge-success {
+    background: rgba(38,170,153,0.1) !important;
+    color: #26AA99 !important;
+}
+
+body.theme-shopee .badge-batal,
+body.theme-shopee .badge-danger {
+    background: rgba(238,77,45,0.1) !important;
+    color: #EE4D2D !important;
+}
+
+/* Toast */
+body.theme-shopee .toast {
+    background: #333333;
+    color: #FFFFFF;
+}
+
+/* Scrollbar */
+body.theme-shopee ::-webkit-scrollbar-track {
+    background: #F0F0F0;
+}
+
+body.theme-shopee ::-webkit-scrollbar-thumb {
+    background: #CCCCCC;
+}
+
+body.theme-shopee ::-webkit-scrollbar-thumb:hover {
+    background: #AAAAAA;
+}
+
+/* Modal */
+body.theme-shopee .modal-overlay {
+    background: rgba(0,0,0,0.3);
+}
+
+body.theme-shopee .modal-content,
+body.theme-shopee .settings-modal-content {
+    background: #FFFFFF !important;
+    border: 1px solid #E8E8E8 !important;
+    color: #333333 !important;
+}
+
+body.theme-shopee .modal-content h2,
+body.theme-shopee .modal-content h3,
+body.theme-shopee .settings-modal-content h2,
+body.theme-shopee .settings-modal-content h3 {
+    color: #222222 !important;
+}
+
+body.theme-shopee .modal-content label,
+body.theme-shopee .settings-modal-content label {
+    color: #555555 !important;
+}
+
+/* Uploader card in Shopee theme */
+body.theme-shopee .card[style*="dashed"] {
+    border-color: #EE4D2D !important;
+    background: #FFF8F5 !important;
+}
+
+/* Chart areas */
+body.theme-shopee canvas {
+    filter: none;
+}
+
+/* Active month badge */
+body.theme-shopee #active-month-badge {
+    background: rgba(238,77,45,0.1) !important;
+    color: #EE4D2D !important;
+}
+
+/* Search inputs */
+body.theme-shopee .search-input,
+body.theme-shopee input[type="search"] {
+    background: #FFFFFF !important;
+    border-color: #DDDDDD !important;
+    color: #333333 !important;
+}
+
+/* Status badges */
+body.theme-shopee [style*="background: rgba(37, 244, 238"] {
+    background: rgba(238,77,45,0.1) !important;
+}
+
+body.theme-shopee [style*="color: var(--accent-cyan)"] {
+    color: #EE4D2D !important;
+}
+
+/* Simulator layout */
+body.theme-shopee .simulator-layout .card {
+    background: #FFFFFF;
+}
+
+/* Print styles for Shopee theme */
+body.theme-shopee h3 {
+    color: #222222;
+}
