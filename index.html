@@ -19,7 +19,7 @@
     <!-- SheetJS CDN for Excel parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="styles.css?v=1.6.2">
+    <link rel="stylesheet" href="styles.css?v=1.6.3">
 </head>
 <body>
     <div class="app-container">
@@ -215,28 +215,44 @@
                                     <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-admin-fees">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-admin-pct">0.0%</td>
                                 </tr>
+
                                 <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
-                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Komisi Dinamis (Admin Fee)</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-komisi-dinamis">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-komisi-dinamis-pct">0.0%</td>
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Komisi AMS</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-komisi-ams">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-komisi-ams-pct">0.0%</td>
                                 </tr>
                                 <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
-                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Pemrosesan Pesanan</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-pemrosesan">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-pemrosesan-pct">0.0%</td>
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Administrasi</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-administrasi">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-administrasi-pct">0.0%</td>
                                 </tr>
                                 <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
-                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Komisi Afiliasi</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-komisi-afiliasi">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-komisi-afiliasi-pct">0.0%</td>
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Layanan</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-layanan">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-layanan-pct">0.0%</td>
                                 </tr>
                                 <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
-                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Layanan Cashback</td>
-                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-cashback">-Rp 0</td>
-                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-cashback-pct">0.0%</td>
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Proses Pesanan</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-proses-pesanan">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-proses-pesanan-pct">0.0%</td>
                                 </tr>
                                 <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
-                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Platform Lainnya</td>
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Premi</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-premi">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-premi-pct">0.0%</td>
+                                </tr>
+                                <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Program Hemat Biaya Kirim</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-program-hemat">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-program-hemat-pct">0.0%</td>
+                                </tr>
+                                <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Transaksi</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-transaksi">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-transaksi-pct">0.0%</td>
+                                </tr>
+                                <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Lainnya / Penyesuaian</td>
                                     <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-lainnya">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-lainnya-pct">0.0%</td>
                                 </tr>
@@ -1465,6 +1481,6 @@
     </div>
 
     <!-- Custom Script -->
-    <script src="app_v10.js?v=1.6.2"></script>
+    <script src="app_v10.js?v=1.6.3"></script>
 </body>
 </html>

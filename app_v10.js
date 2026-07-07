@@ -491,6 +491,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         biayaPemrosesan: 0,
                         komisiAfiliasi: 0,
                         biayaCashback: 0,
+                        premi: 0,
+                        biayaProgramHemat: 0,
+                        biayaTransaksi: 0,
+                        biayaCampaign: 0,
                         uniqueOrders: new Set(),
                         orderIds: []
                     };
@@ -514,6 +518,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     agg.biayaPemrosesan += (payoutInfo.biayaPemrosesanPesanan || 0);
                     agg.komisiAfiliasi += (payoutInfo.komisiAfiliasi || 0);
                     agg.biayaCashback += (payoutInfo.biayaLayananCashbackBonus || 0);
+                    agg.premi += (payoutInfo.premi || 0);
+                    agg.biayaProgramHemat += (payoutInfo.biayaProgramBebasOngkir || 0);
+                    agg.biayaTransaksi += (payoutInfo.biayaPayLater || 0);
+                    agg.biayaCampaign += (payoutInfo.biayaCampaignSource || 0);
                 }
 
                 // Add items details (gross and HPP)
@@ -654,6 +662,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 biayaPemrosesan: agg.biayaPemrosesan,
                 komisiAfiliasi: agg.komisiAfiliasi,
                 biayaCashback: agg.biayaCashback,
+                premi: agg.premi,
+                biayaProgramHemat: agg.biayaProgramHemat,
+                biayaTransaksi: agg.biayaTransaksi,
+                biayaCampaign: agg.biayaCampaign,
                 orderIds: agg.orderIds,
                 channels: { ads: 30, affiliate: 25, live: 25, video: 20 }
             };
@@ -681,6 +693,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalBiayaPemrosesan = 0;
         let totalKomisiAfiliasi = 0;
         let totalBiayaCashback = 0;
+        let totalPremi = 0;
+        let totalBiayaProgramHemat = 0;
+        let totalBiayaTransaksi = 0;
+        let totalBiayaCampaign = 0;
         let totalKerugianPayout = 0;
 
         let activeDiskonPenjual = 0;
@@ -703,6 +719,10 @@ document.addEventListener('DOMContentLoaded', () => {
             totalBiayaPemrosesan += (log.biayaPemrosesan || 0);
             totalKomisiAfiliasi += (log.komisiAfiliasi || 0);
             totalBiayaCashback += (log.biayaCashback || 0);
+            totalPremi += (log.premi || 0);
+            totalBiayaProgramHemat += (log.biayaProgramHemat || 0);
+            totalBiayaTransaksi += (log.biayaTransaksi || 0);
+            totalBiayaCampaign += (log.biayaCampaign || 0);
         });
 
         let totalNet = totalGross - totalRefunds - totalVouchers;
@@ -1036,26 +1056,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pnlAdminPct) pnlAdminPct.textContent = `${((totalAdminFees / pctDenom) * 100).toFixed(1)}%`;
 
         // Populate admin fee details
-        const totalBiayaLainnya = Math.max(0, totalAdminFees - totalKomisiDinamis - totalBiayaPemrosesan - totalKomisiAfiliasi - totalBiayaCashback);
-        const elKomisiDinamis = document.getElementById('pnl-komisi-dinamis');
-        const elKomisiDinamisPct = document.getElementById('pnl-komisi-dinamis-pct');
-        const elBiayaPemrosesan = document.getElementById('pnl-biaya-pemrosesan');
-        const elBiayaPemrosesanPct = document.getElementById('pnl-biaya-pemrosesan-pct');
-        const elKomisiAfiliasi = document.getElementById('pnl-komisi-afiliasi');
-        const elKomisiAfiliasiPct = document.getElementById('pnl-komisi-afiliasi-pct');
-        const elBiayaCashback = document.getElementById('pnl-biaya-cashback');
-        const elBiayaCashbackPct = document.getElementById('pnl-biaya-cashback-pct');
+        const elBiayaKomisiAms = document.getElementById('pnl-biaya-komisi-ams');
+        const elBiayaKomisiAmsPct = document.getElementById('pnl-biaya-komisi-ams-pct');
+        const elBiayaAdministrasi = document.getElementById('pnl-biaya-administrasi');
+        const elBiayaAdministrasiPct = document.getElementById('pnl-biaya-administrasi-pct');
+        const elBiayaLayanan = document.getElementById('pnl-biaya-layanan');
+        const elBiayaLayananPct = document.getElementById('pnl-biaya-layanan-pct');
+        const elBiayaProsesPesanan = document.getElementById('pnl-biaya-proses-pesanan');
+        const elBiayaProsesPesananPct = document.getElementById('pnl-biaya-proses-pesanan-pct');
+        const elPremi = document.getElementById('pnl-premi');
+        const elPremiPct = document.getElementById('pnl-premi-pct');
+        const elBiayaProgramHemat = document.getElementById('pnl-biaya-program-hemat');
+        const elBiayaProgramHematPct = document.getElementById('pnl-biaya-program-hemat-pct');
+        const elBiayaTransaksi = document.getElementById('pnl-biaya-transaksi');
+        const elBiayaTransaksiPct = document.getElementById('pnl-biaya-transaksi-pct');
         const elBiayaLainnya = document.getElementById('pnl-biaya-lainnya');
         const elBiayaLainnyaPct = document.getElementById('pnl-biaya-lainnya-pct');
 
-        if (elKomisiDinamis) elKomisiDinamis.textContent = `-${formatRupiah(totalKomisiDinamis)}`;
-        if (elKomisiDinamisPct) elKomisiDinamisPct.textContent = `${((totalKomisiDinamis / pctDenom) * 100).toFixed(1)}%`;
-        if (elBiayaPemrosesan) elBiayaPemrosesan.textContent = `-${formatRupiah(totalBiayaPemrosesan)}`;
-        if (elBiayaPemrosesanPct) elBiayaPemrosesanPct.textContent = `${((totalBiayaPemrosesan / pctDenom) * 100).toFixed(1)}%`;
-        if (elKomisiAfiliasi) elKomisiAfiliasi.textContent = `-${formatRupiah(totalKomisiAfiliasi)}`;
-        if (elKomisiAfiliasiPct) elKomisiAfiliasiPct.textContent = `${((totalKomisiAfiliasi / pctDenom) * 100).toFixed(1)}%`;
-        if (elBiayaCashback) elBiayaCashback.textContent = `-${formatRupiah(totalBiayaCashback)}`;
-        if (elBiayaCashbackPct) elBiayaCashbackPct.textContent = `${((totalBiayaCashback / pctDenom) * 100).toFixed(1)}%`;
+        // Note: totalBiayaLainnya includes any remaining difference, e.g. campaign or pre-order
+        const totalBiayaLainnya = Math.max(0, totalAdminFees - totalKomisiAfiliasi - totalKomisiDinamis - totalBiayaCashback - totalBiayaPemrosesan - totalPremi - totalBiayaProgramHemat - totalBiayaTransaksi);
+
+        if (elBiayaKomisiAms) elBiayaKomisiAms.textContent = `-${formatRupiah(totalKomisiAfiliasi)}`;
+        if (elBiayaKomisiAmsPct) elBiayaKomisiAmsPct.textContent = `${((totalKomisiAfiliasi / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaAdministrasi) elBiayaAdministrasi.textContent = `-${formatRupiah(totalKomisiDinamis)}`;
+        if (elBiayaAdministrasiPct) elBiayaAdministrasiPct.textContent = `${((totalKomisiDinamis / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaLayanan) elBiayaLayanan.textContent = `-${formatRupiah(totalBiayaCashback)}`;
+        if (elBiayaLayananPct) elBiayaLayananPct.textContent = `${((totalBiayaCashback / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaProsesPesanan) elBiayaProsesPesanan.textContent = `-${formatRupiah(totalBiayaPemrosesan)}`;
+        if (elBiayaProsesPesananPct) elBiayaProsesPesananPct.textContent = `${((totalBiayaPemrosesan / pctDenom) * 100).toFixed(1)}%`;
+        if (elPremi) elPremi.textContent = `-${formatRupiah(totalPremi)}`;
+        if (elPremiPct) elPremiPct.textContent = `${((totalPremi / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaProgramHemat) elBiayaProgramHemat.textContent = `-${formatRupiah(totalBiayaProgramHemat)}`;
+        if (elBiayaProgramHematPct) elBiayaProgramHematPct.textContent = `${((totalBiayaProgramHemat / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaTransaksi) elBiayaTransaksi.textContent = `-${formatRupiah(totalBiayaTransaksi)}`;
+        if (elBiayaTransaksiPct) elBiayaTransaksiPct.textContent = `${((totalBiayaTransaksi / pctDenom) * 100).toFixed(1)}%`;
         if (elBiayaLainnya) elBiayaLainnya.textContent = `-${formatRupiah(totalBiayaLainnya)}`;
         if (elBiayaLainnyaPct) elBiayaLainnyaPct.textContent = `${((totalBiayaLainnya / pctDenom) * 100).toFixed(1)}%`;
 
@@ -2584,6 +2618,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             adminFees: agg.adminFees,
                             adsSpend: agg.adsSpend + gmvAdsVal,
                             adjustments: agg.adjustments,
+                            komisiDinamis: agg.komisiDinamis,
+                            biayaPemrosesan: agg.biayaPemrosesan,
+                            komisiAfiliasi: agg.komisiAfiliasi,
+                            biayaCashback: agg.biayaCashback,
+                            premi: agg.premi,
+                            biayaProgramHemat: agg.biayaProgramHemat,
+                            biayaTransaksi: agg.biayaTransaksi,
+                            biayaCampaign: agg.biayaCampaign,
                             orderIds: agg.orderIds,
                             channels: {
                                 ads: adsPct,
