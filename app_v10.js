@@ -495,6 +495,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         biayaProgramHemat: 0,
                         biayaTransaksi: 0,
                         biayaCampaign: 0,
+                        gratisOngkirXtra: 0,
+                        promoXtra: 0,
                         uniqueOrders: new Set(),
                         orderIds: []
                     };
@@ -522,6 +524,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     agg.biayaProgramHemat += (payoutInfo.biayaProgramBebasOngkir || 0);
                     agg.biayaTransaksi += (payoutInfo.biayaPayLater || 0);
                     agg.biayaCampaign += (payoutInfo.biayaCampaignSource || 0);
+                    agg.gratisOngkirXtra += (payoutInfo.gratisOngkirXtra || 0);
+                    agg.promoXtra += (payoutInfo.promoXtra || 0);
                 }
 
                 // Add items details (gross and HPP)
@@ -666,6 +670,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 biayaProgramHemat: agg.biayaProgramHemat,
                 biayaTransaksi: agg.biayaTransaksi,
                 biayaCampaign: agg.biayaCampaign,
+                gratisOngkirXtra: agg.gratisOngkirXtra,
+                promoXtra: agg.promoXtra,
                 orderIds: agg.orderIds,
                 channels: { ads: 30, affiliate: 25, live: 25, video: 20 }
             };
@@ -697,6 +703,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalBiayaProgramHemat = 0;
         let totalBiayaTransaksi = 0;
         let totalBiayaCampaign = 0;
+        let totalGratisOngkirXtra = 0;
+        let totalPromoXtra = 0;
         let totalKerugianPayout = 0;
 
         let activeDiskonPenjual = 0;
@@ -723,6 +731,8 @@ document.addEventListener('DOMContentLoaded', () => {
             totalBiayaProgramHemat += (log.biayaProgramHemat || 0);
             totalBiayaTransaksi += (log.biayaTransaksi || 0);
             totalBiayaCampaign += (log.biayaCampaign || 0);
+            totalGratisOngkirXtra += (log.gratisOngkirXtra || 0);
+            totalPromoXtra += (log.promoXtra || 0);
         });
 
         let totalNet = totalGross - totalRefunds - totalVouchers;
@@ -1082,6 +1092,37 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elBiayaAdministrasiPct) elBiayaAdministrasiPct.textContent = `${((totalKomisiDinamis / pctDenom) * 100).toFixed(1)}%`;
         if (elBiayaLayanan) elBiayaLayanan.textContent = `-${formatRupiah(totalBiayaCashback)}`;
         if (elBiayaLayananPct) elBiayaLayananPct.textContent = `${((totalBiayaCashback / pctDenom) * 100).toFixed(1)}%`;
+
+        // Detailed seller fee components under Biaya Layanan
+        const elLayananGratisOngkir = document.getElementById('pnl-layanan-gratis-ongkir');
+        const elLayananGratisOngkirPct = document.getElementById('pnl-layanan-gratis-ongkir-pct');
+        const elLayananPromoXtra = document.getElementById('pnl-layanan-promo-xtra');
+        const elLayananPromoXtraPct = document.getElementById('pnl-layanan-promo-xtra-pct');
+
+        if (elLayananGratisOngkir) elLayananGratisOngkir.textContent = `-${formatRupiah(totalGratisOngkirXtra)}`;
+        if (elLayananGratisOngkirPct) elLayananGratisOngkirPct.textContent = `${((totalGratisOngkirXtra / pctDenom) * 100).toFixed(1)}%`;
+        if (elLayananPromoXtra) elLayananPromoXtra.textContent = `-${formatRupiah(totalPromoXtra)}`;
+        if (elLayananPromoXtraPct) elLayananPromoXtraPct.textContent = `${((totalPromoXtra / pctDenom) * 100).toFixed(1)}%`;
+
+        // Dynamic toggle visibility for Biaya Layanan sub-rows based on availability
+        const rowBiayaLayanan = document.querySelector('[onclick*="layanan-detail-row"]');
+        const toggleIconLayanan = document.querySelector('.toggle-icon-layanan');
+        if (totalGratisOngkirXtra === 0 && totalPromoXtra === 0) {
+            if (toggleIconLayanan) toggleIconLayanan.style.display = 'none';
+            if (rowBiayaLayanan) {
+                rowBiayaLayanan.style.cursor = 'default';
+                rowBiayaLayanan.setAttribute('data-disabled', 'true');
+            }
+            // Auto hide any open sub-rows if empty
+            document.querySelectorAll('.layanan-detail-row').forEach(function(r){ r.style.display = 'none'; });
+        } else {
+            if (toggleIconLayanan) toggleIconLayanan.style.display = 'inline-block';
+            if (rowBiayaLayanan) {
+                rowBiayaLayanan.style.cursor = 'pointer';
+                rowBiayaLayanan.removeAttribute('data-disabled');
+            }
+        }
+
         if (elBiayaProsesPesanan) elBiayaProsesPesanan.textContent = `-${formatRupiah(totalBiayaPemrosesan)}`;
         if (elBiayaProsesPesananPct) elBiayaProsesPesananPct.textContent = `${((totalBiayaPemrosesan / pctDenom) * 100).toFixed(1)}%`;
         if (elPremi) elPremi.textContent = `-${formatRupiah(totalPremi)}`;
@@ -2006,14 +2047,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Extracted Keuangan parsing logic into a reusable function
     function parseKeuanganWorkbook(workbook, allDailyAggregates, fileName) {
+        // Parse detailed Seller Fee sheet if present (for Shopee)
+        const sellerFeeDetails = {};
+        const sellerFeeSheet = workbook.Sheets['Seller Fee'];
+        if (sellerFeeSheet) {
+            updateSheetRange(sellerFeeSheet);
+            const sfJson = XLSX.utils.sheet_to_json(sellerFeeSheet, { header: 1 });
+            if (sfJson && sfJson.length > 2) {
+                let sfHeaderIndex = -1;
+                for (let r = 0; r < Math.min(10, sfJson.length); r++) {
+                    const row = sfJson[r];
+                    if (row && row.some(cell => cell && cell.toString().toLowerCase().includes('no. pesanan'))) {
+                        sfHeaderIndex = r;
+                        break;
+                    }
+                }
+                if (sfHeaderIndex !== -1) {
+                    const sfHeaders = sfJson[sfHeaderIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
+                    const orderIdCol = sfHeaders.findIndex(h => h.includes('no. pesanan') || h.includes('order id'));
+                    
+                    const gratisOngkirIndices = [];
+                    const promoXtraIndices = [];
+                    sfHeaders.forEach((h, idx) => {
+                        if (h.includes('gratis ongkir xtra') || h.includes('gratis ongkir ekstra')) {
+                            gratisOngkirIndices.push(idx);
+                        }
+                        if (h.includes('promo xtra') || h.includes('promo ekstra') || h.includes('promo xtra+')) {
+                            promoXtraIndices.push(idx);
+                        }
+                    });
+                    
+                    for (let r = sfHeaderIndex + 1; r < sfJson.length; r++) {
+                        const row = sfJson[r];
+                        if (!row || row.length === 0) continue;
+                        
+                        const orderId = orderIdCol !== -1 ? (row[orderIdCol] || '').toString().trim() : '';
+                        const rowType = (row[1] || '').toString().trim(); // Column B
+                        
+                        if (orderId && rowType.toLowerCase() === 'order') {
+                            let gratisOngkirSum = 0;
+                            gratisOngkirIndices.forEach(idx => {
+                                gratisOngkirSum += Math.abs(parseFloat(row[idx]) || 0);
+                            });
+                            
+                            let promoXtraSum = 0;
+                            promoXtraIndices.forEach(idx => {
+                                promoXtraSum += Math.abs(parseFloat(row[idx]) || 0);
+                            });
+                            
+                            if (!sellerFeeDetails[orderId]) {
+                                sellerFeeDetails[orderId] = { gratisOngkirXtra: 0, promoXtra: 0 };
+                            }
+                            sellerFeeDetails[orderId].gratisOngkirXtra += gratisOngkirSum;
+                            sellerFeeDetails[orderId].promoXtra += promoXtraSum;
+                        }
+                    }
+                }
+            }
+        }
 
-                    // Dynamic Multi-Sheet Scanner to automatically find the correct sheet & header row
-                    let targetSheetName = '';
-                    let jsonData = null;
-                    let headerIndex = -1;
-                    let bestHeaderMatchCount = 0;
+        // Dynamic Multi-Sheet Scanner to automatically find the correct sheet & header row
+        let targetSheetName = '';
+        let jsonData = null;
+        let headerIndex = -1;
+        let bestHeaderMatchCount = 0;
 
-                    for (let s = 0; s < workbook.SheetNames.length; s++) {
+        for (let s = 0; s < workbook.SheetNames.length; s++) {
                         const sheetName = workbook.SheetNames[s];
                         const worksheet = workbook.Sheets[sheetName];
                         updateSheetRange(worksheet);
@@ -2386,6 +2485,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         dayData.vouchers += voucherVal;
                         dayData.refunds += refundVal;
                         dayData.adminFees += adminFeesVal;
+
+                        if (!dayData.komisiDinamis) {
+                            dayData.komisiDinamis = 0;
+                            dayData.biayaPemrosesan = 0;
+                            dayData.komisiAfiliasi = 0;
+                            dayData.biayaCashback = 0;
+                            dayData.premi = 0;
+                            dayData.biayaProgramHemat = 0;
+                            dayData.biayaTransaksi = 0;
+                            dayData.biayaCampaign = 0;
+                            dayData.gratisOngkirXtra = 0;
+                            dayData.promoXtra = 0;
+                        }
+                        dayData.komisiDinamis += komisiDinamisVal;
+                        dayData.biayaPemrosesan += biayaPemrosesanPesananVal;
+                        dayData.komisiAfiliasi += komisiAfiliasiVal;
+                        dayData.biayaCashback += biayaLayananCashbackBonusVal;
+                        dayData.premi += premiVal;
+                        dayData.biayaProgramHemat += hematOngkirVal;
+                        dayData.biayaTransaksi += trxVal;
+                        dayData.biayaCampaign += campVal;
+                        if (sellerFeeDetails && sellerFeeDetails[orderId]) {
+                            dayData.gratisOngkirXtra += sellerFeeDetails[orderId].gratisOngkirXtra;
+                            dayData.promoXtra += sellerFeeDetails[orderId].promoXtra;
+                        }
                         
                         dayData.uniqueOrders.add(orderId);
                         if (!dayData.orderIds.includes(orderId)) {
@@ -2432,6 +2556,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 biayaLayananKhususPlatform: 0,
                                 biayaProgramLayananTerkelola: 0,
                                 biayaAsuransi: 0,
+                                gratisOngkirXtra: 0,
+                                promoXtra: 0,
                                 isPaid: false
                             };
                         }          }
@@ -2499,6 +2625,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempParsedOrderPayouts[orderId].biayaLayananKhususPlatform += biayaLayananKhususPlatformVal;
                         tempParsedOrderPayouts[orderId].biayaProgramLayananTerkelola += biayaProgramLayananTerkelolaVal;
                         tempParsedOrderPayouts[orderId].biayaAsuransi += biayaAsuransiVal;
+
+                        if (sellerFeeDetails && sellerFeeDetails[orderId]) {
+                            tempParsedOrderPayouts[orderId].gratisOngkirXtra += sellerFeeDetails[orderId].gratisOngkirXtra;
+                            tempParsedOrderPayouts[orderId].promoXtra += sellerFeeDetails[orderId].promoXtra;
+                        }
 
                         dayData.ordersTotalWeight += 1;
                         if (adsCost > 0) dayData.adsShareSum += 1;
@@ -2626,6 +2757,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             biayaProgramHemat: agg.biayaProgramHemat,
                             biayaTransaksi: agg.biayaTransaksi,
                             biayaCampaign: agg.biayaCampaign,
+                            gratisOngkirXtra: agg.gratisOngkirXtra,
+                            promoXtra: agg.promoXtra,
                             orderIds: agg.orderIds,
                             channels: {
                                 ads: adsPct,

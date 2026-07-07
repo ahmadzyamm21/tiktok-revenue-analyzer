@@ -19,7 +19,7 @@
     <!-- SheetJS CDN for Excel parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="styles.css?v=1.6.3">
+    <link rel="stylesheet" href="styles.css?v=1.6.4">
 </head>
 <body>
     <div class="app-container">
@@ -205,12 +205,12 @@
                                     <td style="text-align: right; font-weight: 600; color: #FFF;" id="pnl-gross-rev">Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted);">100.0%</td>
                                 </tr>
-                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.deduction-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); if (!isHidden) { document.querySelectorAll('.admin-detail-row').forEach(function(r){ r.style.display = 'none'; }); if (document.querySelector('.toggle-icon-admin')) document.querySelector('.toggle-icon-admin').textContent = '▶'; } this.querySelector('.toggle-icon-deduction').textContent = isHidden ? '▼' : '▶';">
+                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.deduction-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); if (!isHidden) { document.querySelectorAll('.admin-detail-row, .layanan-detail-row').forEach(function(r){ r.style.display = 'none'; }); if (document.querySelector('.toggle-icon-admin')) document.querySelector('.toggle-icon-admin').textContent = '▶'; if (document.querySelector('.toggle-icon-layanan')) document.querySelector('.toggle-icon-layanan').textContent = '▶'; } this.querySelector('.toggle-icon-deduction').textContent = isHidden ? '▼' : '▶';">
                                     <td style="padding-left: 25px; color: var(--text-muted);">(-) Total Potongan & Biaya <span class="toggle-icon-deduction" style="font-size: 10px; margin-left: 5px; color: var(--accent-cyan);">▶</span></td>
                                     <td style="text-align: right; color: var(--accent-pink);" id="pnl-total-deductions">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted);" id="pnl-total-deductions-pct">0.0%</td>
                                 </tr>
-                                <tr class="deduction-detail-row" style="display: none; cursor: pointer; background: rgba(255,255,255,0.01);" onclick="var rows = document.querySelectorAll('.admin-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); this.querySelector('.toggle-icon-admin').textContent = isHidden ? '▼' : '▶'; event.stopPropagation();">
+                                <tr class="deduction-detail-row" style="display: none; cursor: pointer; background: rgba(255,255,255,0.01);" onclick="var rows = document.querySelectorAll('.admin-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); if (!isHidden) { document.querySelectorAll('.layanan-detail-row').forEach(function(r){ r.style.display = 'none'; }); if (document.querySelector('.toggle-icon-layanan')) document.querySelector('.toggle-icon-layanan').textContent = '▶'; } this.querySelector('.toggle-icon-admin').textContent = isHidden ? '▼' : '▶'; event.stopPropagation();">
                                     <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Biaya Admin Platform <span class="toggle-icon-admin" style="font-size: 8px; margin-left: 3px; color: var(--accent-cyan);">▶</span></td>
                                     <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-admin-fees">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-admin-pct">0.0%</td>
@@ -226,10 +226,20 @@
                                     <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-administrasi">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-administrasi-pct">0.0%</td>
                                 </tr>
-                                <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
-                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Layanan</td>
+                                <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005); cursor: pointer;" onclick="if (this.getAttribute('data-disabled') === 'true') { event.stopPropagation(); return; } var rows = document.querySelectorAll('.layanan-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); this.querySelector('.toggle-icon-layanan').textContent = isHidden ? '▼' : '▶'; event.stopPropagation();">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Layanan <span class="toggle-icon-layanan" style="font-size: 7px; margin-left: 3px; color: var(--accent-cyan);">▶</span></td>
                                     <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-layanan">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-layanan-pct">0.0%</td>
+                                </tr>
+                                <tr class="layanan-detail-row" style="display: none; background: rgba(255,255,255,0.002);">
+                                    <td style="padding-left: 85px; color: var(--text-muted); font-size: 10px;">* Gratis Ongkir XTRA</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 10px;" id="pnl-layanan-gratis-ongkir">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 10px;" id="pnl-layanan-gratis-ongkir-pct">0.0%</td>
+                                </tr>
+                                <tr class="layanan-detail-row" style="display: none; background: rgba(255,255,255,0.002);">
+                                    <td style="padding-left: 85px; color: var(--text-muted); font-size: 10px;">* Promo XTRA</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 10px;" id="pnl-layanan-promo-xtra">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 10px;" id="pnl-layanan-promo-xtra-pct">0.0%</td>
                                 </tr>
                                 <tr class="admin-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
                                     <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Biaya Proses Pesanan</td>
@@ -1481,6 +1491,6 @@
     </div>
 
     <!-- Custom Script -->
-    <script src="app_v10.js?v=1.6.3"></script>
+    <script src="app_v10.js?v=1.6.4"></script>
 </body>
 </html>
