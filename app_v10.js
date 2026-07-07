@@ -1070,13 +1070,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const rowPnlKerugian = document.getElementById('row-pnl-kerugian');
 
         if (rowPnlKerugian) {
-            if (totalKerugianPayout > 0) {
-                rowPnlKerugian.style.display = 'table-row';
-                if (pnlKerugian) pnlKerugian.textContent = `-${formatRupiah(totalKerugianPayout)}`;
-                if (pnlKerugianPct) pnlKerugianPct.textContent = `${((totalKerugianPayout / pctDenom) * 100).toFixed(1)}%`;
-            } else {
-                rowPnlKerugian.style.display = 'none';
-            }
+            rowPnlKerugian.style.display = 'table-row';
+            if (pnlKerugian) pnlKerugian.textContent = `-${formatRupiah(totalKerugianPayout)}`;
+            if (pnlKerugianPct) pnlKerugianPct.textContent = `${((totalKerugianPayout / pctDenom) * 100).toFixed(1)}%`;
         }
 
         const finalNetProfitVal = totalPayout - totalKerugianPayout - activeHpp - totalAdsSpend;
