@@ -1943,11 +1943,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 row.forEach(cell => {
                                     if (cell === null || cell === undefined) return;
                                     const cellStr = cell.toString().toLowerCase().trim();
-                                    if (cellStr.includes('id pesanan') || cellStr.includes('order id')) matchCount += 2;
-                                    if (cellStr.includes('jenis transaksi') || cellStr.includes('transaction type')) matchCount += 2;
-                                    if (cellStr.includes('waktu pemesanan') || cellStr.includes('waktu pembayaran') || cellStr.includes('date')) matchCount += 1;
-                                    if (cellStr.includes('jumlah penyelesaian') || cellStr.includes('total pendapatan') || cellStr.includes('revenue') || cellStr.includes('payout')) matchCount += 1;
-                                    if (cellStr.includes('diskon penjual') || cellStr.includes('voucher')) matchCount += 1;
+                                    if (cellStr.includes('id pesanan') || cellStr.includes('order id') || cellStr.includes('no. pesanan')) matchCount += 2;
+                                    if (cellStr.includes('jenis transaksi') || cellStr.includes('transaction type') || cellStr.includes('tipe transaksi')) matchCount += 2;
+                                    if (cellStr.includes('waktu pemesanan') || cellStr.includes('waktu pembayaran') || cellStr.includes('date') || cellStr.includes('tanggal') || cellStr.includes('waktu pesanan dibuat') || cellStr.includes('tanggal dana dilepaskan')) matchCount += 1;
+                                    if (cellStr.includes('jumlah penyelesaian') || cellStr.includes('total pendapatan') || cellStr.includes('revenue') || cellStr.includes('payout') || cellStr.includes('total penghasilan') || cellStr.includes('penghasilan')) matchCount += 1;
+                                    if (cellStr.includes('diskon penjual') || cellStr.includes('voucher') || cellStr.includes('diskon')) matchCount += 1;
                                 });
 
                                 if (matchCount > bestHeaderMatchCount) {
