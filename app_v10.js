@@ -4335,7 +4335,9 @@ document.addEventListener('DOMContentLoaded', () => {
             totalOrderIds.add(item.orderId);
             if (isSettled) {
                 settledOrderIds.add(item.orderId);
-                settledAmountSum += settlementAmt;
+                if (settlementAmt > 0) {
+                    settledAmountSum += settlementAmt;
+                }
             } else if (isReturnedOnly) {
                 returnedOrderIds.add(item.orderId);
                 if (resolution === 'rugi') {
