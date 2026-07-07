@@ -1457,9 +1457,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!trendCanvas || !donutCanvas) return;
 
-            const isLight = document.body.classList.contains('light-theme');
-            const textColor = isLight ? '#64748B' : '#90A0B7';
-            const gridColor = isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.03)';
+            const isLight = document.body.classList.contains('light-theme') || document.body.classList.contains('theme-shopee');
+            const textColor = isLight ? '#334155' : '#90A0B7';
+            const gridColor = isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.03)';
             const donutBorderColor = isLight ? '#FFFFFF' : '#0A0D14';
 
             // Destroy previous instances
@@ -1545,7 +1545,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     labels: ['Ads', 'Affiliate', 'Live Shopping', 'Video Organic'],
                     datasets: [{
                         data: hasData ? [adsTotal, affTotal, liveTotal, videoTotal] : [25, 25, 25, 25],
-                        backgroundColor: hasData ? (currentPlatform === 'shopee' ? ['#FF5722', '#F53D2D', '#00FF87', '#FFAA00'] : ['#FE2C55', '#25F4EE', '#00FF87', '#FFAA00']) : ['#2A2F3D', '#222530', '#1C1F28', '#14161C'],
+                        backgroundColor: hasData ? (currentPlatform === 'shopee' ? ['#EE4D2D', '#FF7A59', '#FFAA00', '#FFC2A6'] : ['#FE2C55', '#25F4EE', '#00FF87', '#FFAA00']) : (isLight ? ['#F0F0F0', '#E5E5E5', '#DADADA', '#D0D0D0'] : ['#2A2F3D', '#222530', '#1C1F28', '#14161C']),
                         borderWidth: 2,
                         borderColor: donutBorderColor
                     }]

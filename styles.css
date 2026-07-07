@@ -1030,7 +1030,40 @@ body.theme-shopee .simulator-layout .card {
     background: #FFFFFF;
 }
 
-/* Print styles for Shopee theme */
-body.theme-shopee h3 {
-    color: #222222;
+/* Heading styles for Shopee theme */
+body.theme-shopee h1,
+body.theme-shopee h2,
+body.theme-shopee h3,
+body.theme-shopee h4,
+body.theme-shopee h5,
+body.theme-shopee h6 {
+    color: #222222 !important;
+}
+
+/* Force dark text for elements with inline white style when in Shopee light theme */
+body.theme-shopee td[style*="color: #FFF"],
+body.theme-shopee td[style*="color: #fff"],
+body.theme-shopee td[style*="color: white"],
+body.theme-shopee div[style*="color: #FFF"],
+body.theme-shopee div[style*="color: #fff"],
+body.theme-shopee div[style*="color: white"],
+body.theme-shopee strong[style*="color: #FFF"],
+body.theme-shopee strong[style*="color: #fff"],
+body.theme-shopee strong[style*="color: white"],
+body.theme-shopee h4[style*="color: #FFF"],
+body.theme-shopee h4[style*="color: #fff"],
+body.theme-shopee h3[style*="color: #FFF"],
+body.theme-shopee h3[style*="color: #fff"],
+body.theme-shopee span[style*="color: #FFF"],
+body.theme-shopee span[style*="color: #fff"] {
+    color: #222222 !important;
+}
+
+/* Progress ring background line for light theme */
+body.theme-shopee .progress-ring-bg {
+    stroke: rgba(0, 0, 0, 0.06) !important;
+}
+
+body.theme-shopee .progress-ring-text {
+    color: #222222 !important;
 }
