@@ -2064,15 +2064,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (sfHeaderIndex !== -1) {
                     const sfHeaders = sfJson[sfHeaderIndex].map(h => h ? h.toString().toLowerCase().trim() : '');
-                    const orderIdCol = sfHeaders.findIndex(h => h.includes('no. pesanan') || h.includes('order id'));
+                    const orderIdCol = sfHeaders.findIndex(h => h && (h.includes('no. pesanan') || h.includes('order id')));
                     
                     const gratisOngkirIndices = [];
                     const promoXtraIndices = [];
                     sfHeaders.forEach((h, idx) => {
-                        if (h.includes('gratis ongkir xtra') || h.includes('gratis ongkir ekstra')) {
+                        if (h && (h.includes('gratis ongkir xtra') || h.includes('gratis ongkir ekstra'))) {
                             gratisOngkirIndices.push(idx);
                         }
-                        if (h.includes('promo xtra') || h.includes('promo ekstra') || h.includes('promo xtra+')) {
+                        if (h && (h.includes('promo xtra') || h.includes('promo ekstra') || h.includes('promo xtra+'))) {
                             promoXtraIndices.push(idx);
                         }
                     });
@@ -2409,6 +2409,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         let biayaLayananKhususPlatformVal = 0;
                         let biayaProgramLayananTerkelolaVal = 0;
                         let biayaAsuransiVal = 0;
+                        let premiVal = 0;
+                        let hematOngkirVal = 0;
+                        let trxVal = 0;
+                        let campVal = 0;
 
                         if (isShopee) {
                             grossVal = Math.max(0, parseExcelNumber(row[colMap.gross], isShopee));
@@ -2427,10 +2431,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             const serviceVal = colMap.service !== -1 ? Math.abs(parseExcelNumber(row[colMap.service], isShopee)) : 0;
                             const processVal = colMap.process !== -1 ? Math.abs(parseExcelNumber(row[colMap.process], isShopee)) : 0;
                             const amsVal = colMap.ams !== -1 ? Math.abs(parseExcelNumber(row[colMap.ams], isShopee)) : 0;
-                            const premiVal = colMap.premi !== -1 ? Math.abs(parseExcelNumber(row[colMap.premi], isShopee)) : 0;
-                            const hematOngkirVal = colMap.hematOngkir !== -1 ? Math.abs(parseExcelNumber(row[colMap.hematOngkir], isShopee)) : 0;
-                            const trxVal = colMap.biayaTransaksi !== -1 ? Math.abs(parseExcelNumber(row[colMap.biayaTransaksi], isShopee)) : 0;
-                            const campVal = colMap.biayaKampanye !== -1 ? Math.abs(parseExcelNumber(row[colMap.biayaKampanye], isShopee)) : 0;
+                            premiVal = colMap.premi !== -1 ? Math.abs(parseExcelNumber(row[colMap.premi], isShopee)) : 0;
+                            hematOngkirVal = colMap.hematOngkir !== -1 ? Math.abs(parseExcelNumber(row[colMap.hematOngkir], isShopee)) : 0;
+                            trxVal = colMap.biayaTransaksi !== -1 ? Math.abs(parseExcelNumber(row[colMap.biayaTransaksi], isShopee)) : 0;
+                            campVal = colMap.biayaKampanye !== -1 ? Math.abs(parseExcelNumber(row[colMap.biayaKampanye], isShopee)) : 0;
 
                             adminFeesVal = adminVal + serviceVal + processVal + amsVal + premiVal + hematOngkirVal + trxVal + campVal;
                             
@@ -2514,7 +2518,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         dayData.uniqueOrders.add(orderId);
                         if (!dayData.orderIds.includes(orderId)) {
                             dayData.orderIds.push(orderId);
-                                         if (!tempParsedOrderPayouts[orderId]) {
+                        }
+                        if (!tempParsedOrderPayouts[orderId]) {
                             tempParsedOrderPayouts[orderId] = {
                                 amount: 0,
                                 originalAmount: 0,
@@ -2560,7 +2565,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 promoXtra: 0,
                                 isPaid: false
                             };
-                        }          }
+                        }
                         tempParsedOrderPayouts[orderId].amount += settlementVal;
                         const isMainOrderRow = typeVal.includes('pesanan') || typeVal.includes('order') || typeVal.includes('payment') || typeVal.includes('gmv');
                         if (isMainOrderRow) {
