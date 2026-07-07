@@ -886,6 +886,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalNet = displayGross - totalRefunds - (activeDiskonOngkirPenjual + activeDiskonPlatform + activeDiskonVoucherPlatform + activeDiskonBelanjaIklan);
             totalPayout = calculatedTotalPayout;
             totalKerugianPayout = calculatedTotalKerugianPayout;
+            totalVouchers = activeDiskonPenjual;
         } else {
             if (orderPayouts) {
                 Object.values(orderPayouts).forEach(p => {
@@ -2292,7 +2293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const cashbackCoinsVal = colMap.cashbackCoins !== -1 ? Math.abs(parseExcelNumber(row[colMap.cashbackCoins], isShopee)) : 0;
                             const promoOngkirVal = colMap.promoOngkirPenjual !== -1 ? Math.abs(parseExcelNumber(row[colMap.promoOngkirPenjual], isShopee)) : 0;
                             
-                            voucherVal = totalDiscountVal + sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
+                            voucherVal = sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
                             refundVal = colMap.refund !== -1 ? Math.abs(parseExcelNumber(row[colMap.refund], isShopee)) : 0;
 
                             const adminVal = colMap.admin !== -1 ? Math.abs(parseExcelNumber(row[colMap.admin], isShopee)) : 0;
