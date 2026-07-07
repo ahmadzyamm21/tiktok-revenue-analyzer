@@ -4318,8 +4318,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filterStatus === 'onhold' && !isOnHold) return;
             if (filterStatus === 'cancelled' && !isCancelled) return;
             if (filterStatus === 'returned' && !isReturn) return;
-            // Exclude rows without resi unless they are settled (cair/menang)
-            if (!hasResi && !isSettled) return;
+            // Exclude rows without resi unless they are settled (cair/menang) or cancelled
+            if (!hasResi && !isSettled && !isCancelled) return;
             // Apply search query
             const assocIdStr = payoutInfo && payoutInfo.associatedOrderId ? payoutInfo.associatedOrderId.toLowerCase() : '';
             const matchSearch = !query || 
