@@ -19,7 +19,7 @@
     <!-- SheetJS CDN for Excel parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="styles.css?v=1.5.3">
+    <link rel="stylesheet" href="styles.css?v=1.5.4">
 </head>
 <body>
     <div class="app-container">
@@ -400,6 +400,18 @@
                                 </label>
                                 <input type="file" id="input-order-file" accept=".xlsx, .csv" style="display: none;">
                                 <span id="order-file-status" style="font-size: 11.5px; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 150px;">Belum ada file</span>
+                            </div>
+                        </div>
+
+                        <!-- File 3: Shopee Ads Report (Optional) -->
+                        <div style="padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);">
+                            <div style="font-weight: 500; font-size: 12.5px; color: #FFF; margin-bottom: 8px;" id="uploader-file-3-label">3. File Laporan Iklan Shopee (Ads) — Opsional</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label class="btn btn-secondary btn-sm" for="input-shopee-ads-file" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: normal; margin-bottom: 0; padding: 6px 12px; font-size: 11.5px; border-color: var(--accent-orange); color: var(--accent-orange); background: transparent;">
+                                    <i class="fas fa-upload"></i> Pilih Berkas Iklan
+                                </label>
+                                <input type="file" id="input-shopee-ads-file" accept=".xlsx, .csv" multiple style="display: none;">
+                                <span id="shopee-ads-file-status" style="font-size: 11.5px; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 150px;">Belum ada file</span>
                             </div>
                         </div>
                     </div>
@@ -1471,6 +1483,6 @@
     </div>
 
     <!-- Custom Script -->
-    <script src="app_v10.js?v=1.5.3"></script>
+    <script src="app_v10.js?v=1.5.4"></script>
 </body>
 </html>

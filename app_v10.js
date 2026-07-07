@@ -2548,6 +2548,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
 
+                        const gmvAdsVal = tempParsedGmvAds[dateKey] || 0;
                         return {
                             id: 'log_imp_' + dateKey.replace(/-/g, '') + '_' + Date.now(),
                             date: dateKey,
@@ -2556,7 +2557,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             refunds: agg.refunds,
                             vouchers: agg.vouchers,
                             adminFees: agg.adminFees,
-                            adsSpend: agg.adsSpend,
+                            adsSpend: agg.adsSpend + gmvAdsVal,
                             adjustments: agg.adjustments,
                             orderIds: agg.orderIds,
                             channels: {
@@ -3782,6 +3783,164 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // ------------------------------------------
+    // Shopee Ads Report File Parser
+    // ------------------------------------------
+    const inputShopeeAdsFile = document.getElementById('input-shopee-ads-file');
+    const shopeeAdsFileStatus = document.getElementById('shopee-ads-file-status');
+
+    if (inputShopeeAdsFile) {
+        inputShopeeAdsFile.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (!files || files.length === 0) return;
+
+            inputShopeeAdsFile.value = ''; // Reset input
+            shopeeAdsFileStatus.textContent = files.length > 1 ? `${files.length} file dipilih` : files[0].name;
+            showToast(`Membaca ${files.length} file iklan Shopee...`, 'info');
+
+            let filesProcessed = 0;
+            let totalAdsSpendFound = 0;
+
+            function parseAdsDate(rawDate) {
+                if (!rawDate) return '';
+                if (rawDate instanceof Date) {
+                    const y = rawDate.getFullYear();
+                    const m = String(rawDate.getMonth() + 1).padStart(2, '0');
+                    const d = String(rawDate.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                const str = rawDate.toString().trim();
+                let match = str.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/);
+                if (match) return `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+                match = str.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+                if (match) return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+                const parsedD = new Date(str);
+                if (!isNaN(parsedD.getTime())) {
+                    const y = parsedD.getFullYear();
+                    const m = String(parsedD.getMonth() + 1).padStart(2, '0');
+                    const d = String(parsedD.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                }
+                return '';
+            }
+
+            function processNextAdsFile(fileIndex) {
+                if (fileIndex >= files.length) {
+                    // All ads files processed — update preview
+                    showToast(`Selesai menganalisis ${filesProcessed} file iklan! Total biaya: ${formatRupiah(totalAdsSpendFound)}`, 'success');
+                    
+                    // If we already have preview logs, recalculate and refresh the preview display
+                    if (tempParsedLogs.length > 0) {
+                        tempParsedLogs.forEach(log => {
+                            const dateVal = log.date;
+                            if (tempParsedGmvAds[dateVal]) {
+                                log.adsSpend = (log.adsSpend || 0) + tempParsedGmvAds[dateVal];
+                            }
+                        });
+                        // Re-render preview HTML
+                        const totalGrossVal = tempParsedLogs.reduce((sum, item) => sum + item.gross, 0);
+                        const totalHppSum = tempParsedLogs.reduce((sum, item) => sum + (item.hpp || 0), 0);
+                        const totalAdminFeesVal = tempParsedLogs.reduce((sum, item) => sum + item.adminFees, 0);
+                        const totalAdsSpendVal = tempParsedLogs.reduce((sum, item) => sum + item.adsSpend, 0);
+
+                        let previewHtml = `
+                            📅 Rentang Tanggal: <strong>${tempParsedLogs[0].date}</strong> s/d <strong>${tempParsedLogs[tempParsedLogs.length - 1].date}</strong> (${tempParsedLogs.length} hari)<br>
+                            💰 Estimasi Omset Bruto: <strong>${formatRupiah(totalGrossVal)}</strong><br>
+                            📦 Total Pesanan: <strong>${tempParsedLogs.reduce((sum, item) => sum + item.orders, 0)} Pcs</strong><br>
+                            💸 Potongan Voucher Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0))}</strong><br>
+                            ❌ Nilai Retur Terdeteksi: <strong>${formatRupiah(tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0))}</strong><br>
+                            🏦 Biaya Admin Platform: <strong>${formatRupiah(totalAdminFeesVal)}</strong><br>
+                            📢 Biaya Iklan (Ads): <strong style="color: var(--accent-orange);">${formatRupiah(totalAdsSpendVal)}</strong><br>
+                            🔍 Data Pencairan Ditemukan: <strong>${Object.keys(tempParsedOrderPayouts).length} Order ID</strong>
+                        `;
+                        if (orderItemsDb && orderItemsDb.length > 0 && totalHppSum > 0) {
+                            previewHtml += `<br>📦 Total HPP (Modal Produk): <strong style="color: var(--accent-pink);">${formatRupiah(totalHppSum)}</strong>`;
+                            const estNetPayout = totalGrossVal - tempParsedLogs.reduce((sum, item) => sum + item.vouchers, 0) - tempParsedLogs.reduce((sum, item) => sum + item.refunds, 0) - totalAdminFeesVal - totalAdsSpendVal;
+                            const estNetProfit = estNetPayout - totalHppSum;
+                            previewHtml += `<br>🚀 Estimasi Laba Bersih: <strong style="color: var(--accent-green);">${formatRupiah(estNetProfit)}</strong>`;
+                        }
+                        previewDetails.innerHTML = previewHtml;
+                    } else {
+                        // Just show a quick message in the preview block if it is the only file uploaded
+                        excelParsePreview.style.display = 'block';
+                        previewDetails.innerHTML = `📢 Biaya Iklan Shopee Berhasil Dibaca: <strong>${formatRupiah(totalAdsSpendFound)}</strong> dari ${filesProcessed} berkas iklan.<br>
+                        <span style="font-size: 11px; color: var(--text-muted);">Silakan unggah berkas Laporan Keuangan (Settlement) juga agar data keuangan harian lainnya dapat diimpor bersamaan.</span>`;
+                        btnConfirmExcelImport.style.display = 'inline-flex';
+                    }
+                    return;
+                }
+
+                const file = files[fileIndex];
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const data = new Uint8Array(evt.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+
+                        workbook.SheetNames.forEach(sheetName => {
+                            const worksheet = workbook.Sheets[sheetName];
+                            updateSheetRange(worksheet);
+                            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            if (!jsonData || jsonData.length < 2) return;
+
+                            let headerRowIndex = -1;
+                            let colMap = { date: -1, cost: -1 };
+
+                            for (let r = 0; r < Math.min(20, jsonData.length); r++) {
+                                const row = jsonData[r];
+                                if (!row) continue;
+                                const dateIdx = row.findIndex(c => {
+                                    if (!c) return false;
+                                    const cl = c.toString().toLowerCase();
+                                    return cl.includes('tanggal') || cl.includes('date') || cl.includes('waktu') || cl.includes('hari') || cl.includes('day') || cl.includes('period') || cl.includes('periode');
+                                });
+                                const costIdx = row.findIndex(c => {
+                                    if (!c) return false;
+                                    const cl = c.toString().toLowerCase();
+                                    return cl.includes('biaya') || cl.includes('expense') || cl.includes('cost') || cl.includes('spent') || cl.includes('jumlah') || cl.includes('amount') || cl.includes('total') || cl.includes('faktur');
+                                });
+
+                                if (dateIdx !== -1 && costIdx !== -1) {
+                                    headerRowIndex = r;
+                                    colMap.date = dateIdx;
+                                    colMap.cost = costIdx;
+                                    break;
+                                }
+                            }
+
+                            if (headerRowIndex !== -1) {
+                                for (let r = headerRowIndex + 1; r < jsonData.length; r++) {
+                                    const row = jsonData[r];
+                                    if (!row || row.length === 0) continue;
+                                    const rawDate = row[colMap.date];
+                                    const rawCost = row[colMap.cost];
+                                    
+                                    const dateVal = parseAdsDate(rawDate);
+                                    const costVal = parseExcelNumber(rawCost, true); // true for Shopee numbers
+
+                                    if (dateVal && costVal > 0) {
+                                        tempParsedGmvAds[dateVal] = (tempParsedGmvAds[dateVal] || 0) + costVal;
+                                        totalAdsSpendFound += costVal;
+                                    }
+                                }
+                            }
+                        });
+
+                        filesProcessed++;
+                        processNextAdsFile(fileIndex + 1);
+                    } catch (err) {
+                        console.error('Error parsing ads file:', err);
+                        showToast(`Gagal membaca file iklan ${file.name}: ${err.message}`, 'error');
+                        processNextAdsFile(fileIndex + 1);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            processNextAdsFile(0);
         });
     }
 
