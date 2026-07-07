@@ -4338,12 +4338,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (settlementAmt > 0) {
                     settledAmountSum += settlementAmt;
                 }
-            } else if (isReturnedOnly) {
+            }
+            if (isReturnedOnly) {
                 returnedOrderIds.add(item.orderId);
-                if (resolution === 'rugi') {
+                if (resolution === 'rugi' || (isSettled && payoutInfo && payoutInfo.amount < 0)) {
                     returnedHppSum += itemHpp;
                 }
-            } else if (isCancelled) {
+            } else if (isCancelled && !isSettled) {
                 cancelledOrderIds.add(item.orderId);
                 if (isPaketGagal && (resolution === 'rugi' || resolution === 'menang_hilang')) {
                     returnedHppSum += itemHpp;
