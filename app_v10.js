@@ -1035,6 +1035,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pnlAdmin) pnlAdmin.textContent = `-${formatRupiah(totalAdminFees)}`;
         if (pnlAdminPct) pnlAdminPct.textContent = `${((totalAdminFees / pctDenom) * 100).toFixed(1)}%`;
 
+        // Populate admin fee details
+        const totalBiayaLainnya = Math.max(0, totalAdminFees - totalKomisiDinamis - totalBiayaPemrosesan - totalKomisiAfiliasi - totalBiayaCashback);
+        const elKomisiDinamis = document.getElementById('pnl-komisi-dinamis');
+        const elKomisiDinamisPct = document.getElementById('pnl-komisi-dinamis-pct');
+        const elBiayaPemrosesan = document.getElementById('pnl-biaya-pemrosesan');
+        const elBiayaPemrosesanPct = document.getElementById('pnl-biaya-pemrosesan-pct');
+        const elKomisiAfiliasi = document.getElementById('pnl-komisi-afiliasi');
+        const elKomisiAfiliasiPct = document.getElementById('pnl-komisi-afiliasi-pct');
+        const elBiayaCashback = document.getElementById('pnl-biaya-cashback');
+        const elBiayaCashbackPct = document.getElementById('pnl-biaya-cashback-pct');
+        const elBiayaLainnya = document.getElementById('pnl-biaya-lainnya');
+        const elBiayaLainnyaPct = document.getElementById('pnl-biaya-lainnya-pct');
+
+        if (elKomisiDinamis) elKomisiDinamis.textContent = `-${formatRupiah(totalKomisiDinamis)}`;
+        if (elKomisiDinamisPct) elKomisiDinamisPct.textContent = `${((totalKomisiDinamis / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaPemrosesan) elBiayaPemrosesan.textContent = `-${formatRupiah(totalBiayaPemrosesan)}`;
+        if (elBiayaPemrosesanPct) elBiayaPemrosesanPct.textContent = `${((totalBiayaPemrosesan / pctDenom) * 100).toFixed(1)}%`;
+        if (elKomisiAfiliasi) elKomisiAfiliasi.textContent = `-${formatRupiah(totalKomisiAfiliasi)}`;
+        if (elKomisiAfiliasiPct) elKomisiAfiliasiPct.textContent = `${((totalKomisiAfiliasi / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaCashback) elBiayaCashback.textContent = `-${formatRupiah(totalBiayaCashback)}`;
+        if (elBiayaCashbackPct) elBiayaCashbackPct.textContent = `${((totalBiayaCashback / pctDenom) * 100).toFixed(1)}%`;
+        if (elBiayaLainnya) elBiayaLainnya.textContent = `-${formatRupiah(totalBiayaLainnya)}`;
+        if (elBiayaLainnyaPct) elBiayaLainnyaPct.textContent = `${((totalBiayaLainnya / pctDenom) * 100).toFixed(1)}%`;
+
         if (pnlSellerVoucher) pnlSellerVoucher.textContent = `-${formatRupiah(totalVouchers)}`;
         if (pnlSellerVoucherPct) pnlSellerVoucherPct.textContent = `${((totalVouchers / pctDenom) * 100).toFixed(1)}%`;
 
