@@ -880,7 +880,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             displayGross = settledAmountSum;
-            displayOrders = settledItemCount;
+            const totalUploadedOrders = orderItemsDb.filter(item => item.date && item.date.startsWith(analysisMonth)).length;
+            displayOrders = totalUploadedOrders > 0 ? totalUploadedOrders : settledItemCount;
             totalRefunds = calculatedTotalRefunds;
             totalRefundBatal = calculatedRefundBatal;
             totalRefundPaketGagal = calculatedRefundPaketGagal;
@@ -4549,7 +4550,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Update KPI values
-        if (document.getElementById('kpi-payouts-total')) document.getElementById('kpi-payouts-total').textContent = totalOrderIds.size + ' Order';
+        const totalUploadedOrders = orderItemsDb.filter(item => item.date && item.date.startsWith(analysisMonth)).length;
+        if (document.getElementById('kpi-payouts-total')) {
+            document.getElementById('kpi-payouts-total').textContent = (totalUploadedOrders > 0 ? totalUploadedOrders : totalOrderIds.size) + ' Order';
+        }
         if (document.getElementById('kpi-payouts-settled')) document.getElementById('kpi-payouts-settled').textContent = formatRupiah(settledAmountSum);
         if (document.getElementById('kpi-payouts-settled-sub')) document.getElementById('kpi-payouts-settled-sub').textContent = `${settledOrderIds.size} Order Berhasil Cair`;
         if (document.getElementById('kpi-payouts-returned')) document.getElementById('kpi-payouts-returned').textContent = `${returnedOrderIds.size} Order`;
