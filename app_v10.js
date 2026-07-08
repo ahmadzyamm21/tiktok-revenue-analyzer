@@ -2454,6 +2454,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const dayData = dailyAggregates[aggDate];
                         
                         let grossVal = 0;
+                        let origGross = 0;
                         let settlementVal = 0;
                         let voucherVal = 0;
                         let refundVal = 0;
@@ -2499,16 +2500,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         let promoOngkirVal = 0;
 
                         if (isShopee) {
-                            grossVal = Math.max(0, parseExcelNumber(row[colMap.gross], isShopee));
+                            origGross = Math.max(0, parseExcelNumber(row[colMap.gross], isShopee));
+                            totalDiscountVal = Math.abs(parseExcelNumber(row[colMap.voucher], isShopee));
+                            grossVal = Math.max(0, origGross - totalDiscountVal);
                             settlementVal = parseExcelNumber(row[colMap.settlement], isShopee);
                             
-                            totalDiscountVal = Math.abs(parseExcelNumber(row[colMap.voucher], isShopee));
                             sellerVoucherVal = Math.abs(parseExcelNumber(row[colMap.sellerVoucher], isShopee));
                             voucherCoFundVal = colMap.voucherCoFund !== -1 ? Math.abs(parseExcelNumber(row[colMap.voucherCoFund], isShopee)) : 0;
                             cashbackCoinsVal = colMap.cashbackCoins !== -1 ? Math.abs(parseExcelNumber(row[colMap.cashbackCoins], isShopee)) : 0;
                             promoOngkirVal = colMap.promoOngkirPenjual !== -1 ? Math.abs(parseExcelNumber(row[colMap.promoOngkirPenjual], isShopee)) : 0;
                             
-                            voucherVal = totalDiscountVal + sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
+                            voucherVal = sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
                             refundVal = colMap.refund !== -1 ? Math.abs(parseExcelNumber(row[colMap.refund], isShopee)) : 0;
 
                             const adminVal = colMap.admin !== -1 ? Math.abs(parseExcelNumber(row[colMap.admin], isShopee)) : 0;
@@ -2679,7 +2681,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         tempParsedOrderPayouts[orderId].voucher += voucherVal;
                         if (isShopee) {
-                            tempParsedOrderPayouts[orderId].subTotalDiskonProduk += totalDiscountVal;
+                            tempParsedOrderPayouts[orderId].subTotalDiskonProduk += 0;
                             tempParsedOrderPayouts[orderId].subVoucherToko += sellerVoucherVal;
                             tempParsedOrderPayouts[orderId].subPromoGratisOngkir += promoOngkirVal;
                             tempParsedOrderPayouts[orderId].subVoucherCofund += voucherCoFundVal;
@@ -2709,7 +2711,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         tempParsedOrderPayouts[orderId].diskonOngkirPenjual += diskonOngkirPenjualVal;
                         tempParsedOrderPayouts[orderId].diskonVoucherPlatform += diskonVoucherPlatformVal;
                         
-                        const subtotalSetelahDiskonPenjualVal = colMap.subtotalSetelahDiskonPenjual !== -1 ? parseExcelNumber(row[colMap.subtotalSetelahDiskonPenjual], isShopee) : 0;
+                        let subtotalSetelahDiskonPenjualVal = colMap.subtotalSetelahDiskonPenjual !== -1 ? parseExcelNumber(row[colMap.subtotalSetelahDiskonPenjual], isShopee) : 0;
+                        if (isShopee && colMap.subtotalSetelahDiskonPenjual === -1) {
+                            subtotalSetelahDiskonPenjualVal = Math.max(0, origGross - totalDiscountVal);
+                        }
                         tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual = (tempParsedOrderPayouts[orderId].subtotalSetelahDiskonPenjual || 0) + subtotalSetelahDiskonPenjualVal;
                         
                         tempParsedOrderPayouts[orderId].biayaLayananPreOrder += biayaLayananPreOrderVal;
