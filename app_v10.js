@@ -748,6 +748,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let displayGross = totalGross;
         let displayOrders = totalOrders;
 
+        let activeSubTotalDiskonProduk = 0;
+        let activeSubVoucherToko = 0;
+        let activeSubPromoGratisOngkir = 0;
+        let activeSubVoucherCofund = 0;
+        let activeSubCashbackKoin = 0;
+
         if (orderItemsDb && orderItemsDb.length > 0) {
             const orderIdCounts = {};
             orderItemsDb.forEach(item => {
@@ -764,11 +770,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let calculatedTotalRefunds = 0;
             let calculatedRefundBatal = 0;
             let calculatedRefundPaketGagal = 0;
-            let activeSubTotalDiskonProduk = 0;
-            let activeSubVoucherToko = 0;
-            let activeSubPromoGratisOngkir = 0;
-            let activeSubVoucherCofund = 0;
-            let activeSubCashbackKoin = 0;
+            activeSubTotalDiskonProduk = 0;
+            activeSubVoucherToko = 0;
+            activeSubPromoGratisOngkir = 0;
+            activeSubVoucherCofund = 0;
+            activeSubCashbackKoin = 0;
             activeDiskonPenjual = 0;
             activeDiskonOngkirPenjual = 0;
             activeDiskonPlatform = 0;
