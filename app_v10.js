@@ -39,6 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let orderPayouts = JSON.parse(localStorage.getItem('tiktok_order_payouts')) || {};
     let dailyGmvAdsDb = JSON.parse(localStorage.getItem('tiktok_daily_gmv_ads')) || {};
     let analysisMonth = localStorage.getItem('tiktok_analysis_month') || '2026-05';
+    let hppSkuDb = {};
+    try {
+        hppSkuDb = JSON.parse(localStorage.getItem('tiktok_sku_hpp')) || {};
+    } catch (e) {
+        hppSkuDb = {};
+    }
 
     let revenueTrendChart = null;
     let channelDonutChart = null;
@@ -3000,12 +3006,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ------------------------------------------
     // Database HPP SKU State & UI Logic
     // ------------------------------------------
-    let hppSkuDb = {};
-    try {
-        hppSkuDb = JSON.parse(localStorage.getItem('tiktok_sku_hpp')) || {};
-    } catch (e) {
-        hppSkuDb = {};
-    }
 
     function updateHppFromDatabase() {
         let updated = false;
