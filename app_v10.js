@@ -3627,14 +3627,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnBackupHpp) {
         btnBackupHpp.addEventListener('click', () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(hppSkuDb, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `tiktok_revenue_hpp_sku_${Date.now()}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast('Database HPP berhasil diekspor.', 'success');
+            const hppList = Object.values(hppSkuDb).map(item => ({
+                'Seller SKU': item.sku || '',
+                'Nama Produk': item.product || '',
+                'Variasi': item.variation || '',
+                'HPP Satuan': item.hpp || 0,
+                'Stok': item.stock || 0
+            }));
+            
+            try {
+                const worksheet = XLSX.utils.json_to_sheet(hppList);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Database HPP");
+                XLSX.writeFile(workbook, `database_hpp_${Date.now()}.xlsx`);
+                showToast('Database HPP berhasil diekspor ke Excel.', 'success');
+            } catch (err) {
+                showToast('Gagal mengekspor HPP ke Excel: ' + err.message, 'error');
+            }
         });
     }
 
@@ -3679,7 +3688,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                     sku: skuVal,
                                     product: productVal,
                                     variation: variationVal,
-                                    hpp: hppVal
+                                    hpp: hppVal,
+                                    stock: row[4] !== undefined ? (parseInt(row[4]) || 0) : 0
                                 };
                                 count++;
                             }
