@@ -819,12 +819,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                const isReturnedOnly = !isCancelledOnly && hasValidShipment && (statusLower.includes('retur') || 
+                const isReturnedOnly = !isCancelledOnly && hasValidShipment && (
+                                       statusLower.includes('retur') || 
                                        statusLower.includes('refund') || 
                                        statusLower.includes('return') || 
                                        (payoutInfo && payoutInfo.isReturned) ||
-                                       (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
-                                       (item.returnQty && item.returnQty > 0));
+                                       (
+                                           (
+                                               (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
+                                               (item.returnQty && item.returnQty > 0)
+                                           ) && 
+                                           !(item.returnType && (
+                                               item.returnType.includes('masalah diselesaikan') || 
+                                               item.returnType.includes('resolved') || 
+                                               item.returnType.includes('batal') || 
+                                               item.returnType.includes('cancel') || 
+                                               item.returnType.includes('ditolak') || 
+                                               item.returnType.includes('reject')
+                                           ))
+                                       )
+                                    ) && !(payoutInfo && payoutInfo.amount > 0 && (payoutInfo.refund || 0) === 0);
 
                 const isReturn = !isCancelledOnly && (resolution === 'menang' || resolution === 'menang_balik' || resolution === 'menang_hilang' || isReturnedOnly);
                 const isBatal = isCancelled;
@@ -2424,7 +2438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const cashbackCoinsVal = colMap.cashbackCoins !== -1 ? Math.abs(parseExcelNumber(row[colMap.cashbackCoins], isShopee)) : 0;
                             const promoOngkirVal = colMap.promoOngkirPenjual !== -1 ? Math.abs(parseExcelNumber(row[colMap.promoOngkirPenjual], isShopee)) : 0;
                             
-                            voucherVal = sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
+                            voucherVal = totalDiscountVal + sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
                             refundVal = colMap.refund !== -1 ? Math.abs(parseExcelNumber(row[colMap.refund], isShopee)) : 0;
 
                             const adminVal = colMap.admin !== -1 ? Math.abs(parseExcelNumber(row[colMap.admin], isShopee)) : 0;
@@ -3833,7 +3847,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         returnQty: headers.findIndex(h => h.includes('sku quantity of return') || h.includes('jumlah pengembalian sku') || h.includes('return qty') || h.includes('returned quantity') || h.includes('jumlah retur')),
                         shippedTime: headers.findIndex(h => h.includes('shipped time') || h.includes('waktu pengiriman') || h.includes('tanggal pengiriman') || h.includes('waktu dikirim') || h.includes('waktu pengiriman diatur')),
                         originalPrice: headers.findIndex(h => h.includes('sku unit original price') || h.includes('harga asli produk') || h.includes('original price') || h.includes('harga awal') || h.includes('harga asli')),
-                        subtotalBeforeDiscount: headers.findIndex(h => h.includes('sku subtotal before discount') || h.includes('harga jual produk') || h.includes('subtotal sebelum diskon') || h.includes('subtotal before discount') || h.includes('harga sebelum diskon') || h.includes('subtotal pesanan'))
+                        subtotalBeforeDiscount: isOrderShopee ? -1 : headers.findIndex(h => h.includes('sku subtotal before discount') || h.includes('harga jual produk') || h.includes('subtotal sebelum diskon') || h.includes('subtotal before discount') || h.includes('harga sebelum diskon') || h.includes('subtotal pesanan'))
                     };
 
                     if (colMap.orderId === -1 || colMap.sku === -1) {
@@ -4246,12 +4260,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
             const isCancelled = isCancelledOnly;
             const isPaketGagal = isCancelledOnly && hasValidShipment;
-            const isReturnedOnly = !isCancelledOnly && hasValidShipment && (statusLower.includes('retur') || 
+            const isReturnedOnly = !isCancelledOnly && hasValidShipment && (
+                                   statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
                                    (payoutInfo && payoutInfo.isReturned) ||
-                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
-                                   (item.returnQty && item.returnQty > 0));
+                                   (
+                                       (
+                                           (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
+                                           (item.returnQty && item.returnQty > 0)
+                                       ) && 
+                                       !(item.returnType && (
+                                           item.returnType.includes('masalah diselesaikan') || 
+                                           item.returnType.includes('resolved') || 
+                                           item.returnType.includes('batal') || 
+                                           item.returnType.includes('cancel') || 
+                                           item.returnType.includes('ditolak') || 
+                                           item.returnType.includes('reject')
+                                       ))
+                                   )
+                                ) && !(payoutInfo && payoutInfo.amount > 0 && (payoutInfo.refund || 0) === 0);
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             
@@ -4545,12 +4573,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasValidShipment = hasResi && (!isCancelledOnly ? true : hasShipped);
             const isCancelled = isCancelledOnly;
             const isPaketGagal = isCancelledOnly && hasValidShipment;
-            const isReturnedOnly = !isCancelledOnly && hasValidShipment && (statusLower.includes('retur') || 
+            const isReturnedOnly = !isCancelledOnly && hasValidShipment && (
+                                   statusLower.includes('retur') || 
                                    statusLower.includes('refund') || 
                                    statusLower.includes('return') || 
                                    (payoutInfo && payoutInfo.isReturned) ||
-                                   (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
-                                   (item.returnQty && item.returnQty > 0));
+                                   (
+                                       (
+                                           (item.returnType && (item.returnType.includes('return') || item.returnType.includes('refund') || item.returnType.includes('disetujui'))) ||
+                                           (item.returnQty && item.returnQty > 0)
+                                       ) && 
+                                       !(item.returnType && (
+                                           item.returnType.includes('masalah diselesaikan') || 
+                                           item.returnType.includes('resolved') || 
+                                           item.returnType.includes('batal') || 
+                                           item.returnType.includes('cancel') || 
+                                           item.returnType.includes('ditolak') || 
+                                           item.returnType.includes('reject')
+                                       ))
+                                   )
+                                ) && !(payoutInfo && payoutInfo.amount > 0 && (payoutInfo.refund || 0) === 0);
             
             const itemOriginalPrice = item.subtotalBeforeDiscount || (item.originalPrice * item.qty) || 1;
             

@@ -277,7 +277,19 @@
                                     <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-refund-pct">0.0%</td>
                                 </tr>
                                 <tr class="deduction-detail-row" style="display: none;">
-                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Selisih Ongkir & Subsidi Platform</td>
+                                    <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">
+                                        <div class="tooltip-container" onclick="this.classList.toggle('active')">
+                                            • Selisih Ongkir & Subsidi Platform <span class="info-icon">i</span>
+                                            <div class="tooltip-content">
+                                                <strong>Selisih Ongkir & Subsidi Platform:</strong>
+                                                Selisih (residual) pencocokan Omset Kotor ke Dana Cair setelah Biaya Admin, Diskon/Voucher, & Refund.
+                                                <br><br>
+                                                • <strong>Negatif (-):</strong> Ongkir/biaya tambahan yang didebit oleh ekspedisi/Shopee.
+                                                <br>
+                                                • <strong>Positif (+):</strong> Subsidi gratis ongkir atau penyesuaian saldo dari Shopee.
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-shipping-adjustment-deduction">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-shipping-adjustment-pct">0.0%</td>
                                 </tr>

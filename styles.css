@@ -1067,3 +1067,89 @@ body.theme-shopee .progress-ring-bg {
 body.theme-shopee .progress-ring-text {
     color: #222222 !important;
 }
+
+/* Tooltip styling */
+.tooltip-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.info-icon {
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-style: normal;
+    font-weight: bold;
+    transition: var(--transition-fast);
+}
+
+.tooltip-container:hover .info-icon {
+    background: var(--accent-pink);
+    color: #fff;
+}
+
+body.theme-shopee .info-icon {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.theme-shopee .tooltip-container:hover .info-icon {
+    background: #EE4D2D;
+    color: #fff;
+}
+
+.tooltip-content {
+    visibility: hidden;
+    opacity: 0;
+    width: 280px;
+    background: rgba(15, 18, 28, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    text-align: left;
+    border-radius: 8px;
+    padding: 12px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 20px;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: normal;
+    font-weight: normal;
+}
+
+body.theme-shopee .tooltip-content {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #222222;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.tooltip-container:hover .tooltip-content,
+.tooltip-container.active .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.tooltip-content strong {
+    color: var(--accent-cyan);
+    display: block;
+    margin-bottom: 4px;
+}
+
+body.theme-shopee .tooltip-content strong {
+    color: #EE4D2D;
+}
