@@ -758,6 +758,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let calculatedTotalRefunds = 0;
             let calculatedRefundBatal = 0;
             let calculatedRefundPaketGagal = 0;
+            let activeSubTotalDiskonProduk = 0;
+            let activeSubVoucherToko = 0;
+            let activeSubPromoGratisOngkir = 0;
+            let activeSubVoucherCofund = 0;
+            let activeSubCashbackKoin = 0;
             activeDiskonPenjual = 0;
             activeDiskonOngkirPenjual = 0;
             activeDiskonPlatform = 0;
@@ -889,13 +894,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 settledItemCount++;
 
                 if (payoutInfo) {
-                    const count = orderIdCounts[item.orderId] || 1;
-                    activeDiskonPenjual += (payoutInfo.voucher || 0) / count;
-                    activeDiskonOngkirPenjual += (payoutInfo.diskonOngkirPenjual || 0) / count;
-                    activeDiskonPlatform += (payoutInfo.diskonPlatform || 0) / count;
-                    activeDiskonVoucherPlatform += (payoutInfo.diskonVoucherPlatform || 0) / count;
-                    activeDiskonBelanjaIklan += (payoutInfo.diskonBelanjaIklan || 0) / count;
-                }
+                     const count = orderIdCounts[item.orderId] || 1;
+                     activeDiskonPenjual += (payoutInfo.voucher || 0) / count;
+                     activeDiskonOngkirPenjual += (payoutInfo.diskonOngkirPenjual || 0) / count;
+                     activeDiskonPlatform += (payoutInfo.diskonPlatform || 0) / count;
+                     activeDiskonVoucherPlatform += (payoutInfo.diskonVoucherPlatform || 0) / count;
+                     activeDiskonBelanjaIklan += (payoutInfo.diskonBelanjaIklan || 0) / count;
+                     
+                     activeSubTotalDiskonProduk += (payoutInfo.subTotalDiskonProduk || 0) / count;
+                     activeSubVoucherToko += (payoutInfo.subVoucherToko || 0) / count;
+                     activeSubPromoGratisOngkir += (payoutInfo.subPromoGratisOngkir || 0) / count;
+                     activeSubVoucherCofund += (payoutInfo.subVoucherCofund || 0) / count;
+                     activeSubCashbackKoin += (payoutInfo.subCashbackKoin || 0) / count;
+                 }
 
 
 
@@ -1150,6 +1161,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (pnlSellerVoucher) pnlSellerVoucher.textContent = `-${formatRupiah(totalVouchers)}`;
         if (pnlSellerVoucherPct) pnlSellerVoucherPct.textContent = `${((totalVouchers / pctDenom) * 100).toFixed(1)}%`;
+
+        // Update Voucher details
+        const elSubTotalDiskonProduk = document.getElementById('pnl-sub-total-diskon-produk');
+        const elSubTotalDiskonProdukPct = document.getElementById('pnl-sub-total-diskon-produk-pct');
+        const elSubVoucherToko = document.getElementById('pnl-sub-voucher-toko');
+        const elSubVoucherTokoPct = document.getElementById('pnl-sub-voucher-toko-pct');
+        const elSubPromoGratisOngkir = document.getElementById('pnl-sub-promo-gratis-ongkir');
+        const elSubPromoGratisOngkirPct = document.getElementById('pnl-sub-promo-gratis-ongkir-pct');
+        const elSubVoucherCofund = document.getElementById('pnl-sub-voucher-cofund');
+        const elSubVoucherCofundPct = document.getElementById('pnl-sub-voucher-cofund-pct');
+        const elSubCashbackKoin = document.getElementById('pnl-sub-cashback-koin');
+        const elSubCashbackKoinPct = document.getElementById('pnl-sub-cashback-koin-pct');
+
+        if (elSubTotalDiskonProduk) elSubTotalDiskonProduk.textContent = `-${formatRupiah(activeSubTotalDiskonProduk)}`;
+        if (elSubTotalDiskonProdukPct) elSubTotalDiskonProdukPct.textContent = `${((activeSubTotalDiskonProduk / pctDenom) * 100).toFixed(1)}%`;
+        if (elSubVoucherToko) elSubVoucherToko.textContent = `-${formatRupiah(activeSubVoucherToko)}`;
+        if (elSubVoucherTokoPct) elSubVoucherTokoPct.textContent = `${((activeSubVoucherToko / pctDenom) * 100).toFixed(1)}%`;
+        if (elSubPromoGratisOngkir) elSubPromoGratisOngkir.textContent = `-${formatRupiah(activeSubPromoGratisOngkir)}`;
+        if (elSubPromoGratisOngkirPct) elSubPromoGratisOngkirPct.textContent = `${((activeSubPromoGratisOngkir / pctDenom) * 100).toFixed(1)}%`;
+        if (elSubVoucherCofund) elSubVoucherCofund.textContent = `-${formatRupiah(activeSubVoucherCofund)}`;
+        if (elSubVoucherCofundPct) elSubVoucherCofundPct.textContent = `${((activeSubVoucherCofund / pctDenom) * 100).toFixed(1)}%`;
+        if (elSubCashbackKoin) elSubCashbackKoin.textContent = `-${formatRupiah(activeSubCashbackKoin)}`;
+        if (elSubCashbackKoinPct) elSubCashbackKoinPct.textContent = `${((activeSubCashbackKoin / pctDenom) * 100).toFixed(1)}%`;
+
+        // Dynamic toggle visibility for Voucher row based on values
+        const rowVoucher = document.querySelector('[onclick*="voucher-detail-row"]');
+        const toggleIconVoucher = document.querySelector('.toggle-icon-voucher');
+        if (activeSubTotalDiskonProduk === 0 && activeSubVoucherToko === 0 && activeSubPromoGratisOngkir === 0 && activeSubVoucherCofund === 0 && activeSubCashbackKoin === 0) {
+            if (toggleIconVoucher) toggleIconVoucher.style.display = 'none';
+            if (rowVoucher) {
+                rowVoucher.style.cursor = 'default';
+                rowVoucher.setAttribute('data-disabled', 'true');
+            }
+            document.querySelectorAll('.voucher-detail-row').forEach(function(r){ r.style.display = 'none'; });
+        } else {
+            if (toggleIconVoucher) toggleIconVoucher.style.display = 'inline-block';
+            if (rowVoucher) {
+                rowVoucher.style.cursor = 'pointer';
+                rowVoucher.removeAttribute('data-disabled');
+            }
+        }
 
         if (pnlRefund) pnlRefund.textContent = `-${formatRupiah(totalRefunds)}`;
         if (pnlRefundPct) pnlRefundPct.textContent = `${((totalRefunds / pctDenom) * 100).toFixed(1)}%`;
@@ -2428,15 +2480,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         let trxVal = 0;
                         let campVal = 0;
 
+                        let totalDiscountVal = 0;
+                        let sellerVoucherVal = 0;
+                        let voucherCoFundVal = 0;
+                        let cashbackCoinsVal = 0;
+                        let promoOngkirVal = 0;
+
                         if (isShopee) {
                             grossVal = Math.max(0, parseExcelNumber(row[colMap.gross], isShopee));
                             settlementVal = parseExcelNumber(row[colMap.settlement], isShopee);
                             
-                            const totalDiscountVal = Math.abs(parseExcelNumber(row[colMap.voucher], isShopee));
-                            const sellerVoucherVal = Math.abs(parseExcelNumber(row[colMap.sellerVoucher], isShopee));
-                            const voucherCoFundVal = colMap.voucherCoFund !== -1 ? Math.abs(parseExcelNumber(row[colMap.voucherCoFund], isShopee)) : 0;
-                            const cashbackCoinsVal = colMap.cashbackCoins !== -1 ? Math.abs(parseExcelNumber(row[colMap.cashbackCoins], isShopee)) : 0;
-                            const promoOngkirVal = colMap.promoOngkirPenjual !== -1 ? Math.abs(parseExcelNumber(row[colMap.promoOngkirPenjual], isShopee)) : 0;
+                            totalDiscountVal = Math.abs(parseExcelNumber(row[colMap.voucher], isShopee));
+                            sellerVoucherVal = Math.abs(parseExcelNumber(row[colMap.sellerVoucher], isShopee));
+                            voucherCoFundVal = colMap.voucherCoFund !== -1 ? Math.abs(parseExcelNumber(row[colMap.voucherCoFund], isShopee)) : 0;
+                            cashbackCoinsVal = colMap.cashbackCoins !== -1 ? Math.abs(parseExcelNumber(row[colMap.cashbackCoins], isShopee)) : 0;
+                            promoOngkirVal = colMap.promoOngkirPenjual !== -1 ? Math.abs(parseExcelNumber(row[colMap.promoOngkirPenjual], isShopee)) : 0;
                             
                             voucherVal = totalDiscountVal + sellerVoucherVal + voucherCoFundVal + cashbackCoinsVal + promoOngkirVal;
                             refundVal = colMap.refund !== -1 ? Math.abs(parseExcelNumber(row[colMap.refund], isShopee)) : 0;
@@ -2603,6 +2661,22 @@ document.addEventListener('DOMContentLoaded', () => {
                             tempParsedOrderPayouts[orderId].associatedOrderId = (row[colMap.orderId] || '').toString().trim();
                         }
                         tempParsedOrderPayouts[orderId].voucher += voucherVal;
+                        if (!tempParsedOrderPayouts[orderId].subTotalDiskonProduk) {
+                            tempParsedOrderPayouts[orderId].subTotalDiskonProduk = 0;
+                            tempParsedOrderPayouts[orderId].subVoucherToko = 0;
+                            tempParsedOrderPayouts[orderId].subPromoGratisOngkir = 0;
+                            tempParsedOrderPayouts[orderId].subVoucherCofund = 0;
+                            tempParsedOrderPayouts[orderId].subCashbackKoin = 0;
+                        }
+                        if (isShopee) {
+                            tempParsedOrderPayouts[orderId].subTotalDiskonProduk += totalDiscountVal;
+                            tempParsedOrderPayouts[orderId].subVoucherToko += sellerVoucherVal;
+                            tempParsedOrderPayouts[orderId].subPromoGratisOngkir += promoOngkirVal;
+                            tempParsedOrderPayouts[orderId].subVoucherCofund += voucherCoFundVal;
+                            tempParsedOrderPayouts[orderId].subCashbackKoin += cashbackCoinsVal;
+                        } else {
+                            tempParsedOrderPayouts[orderId].subVoucherToko += voucherVal;
+                        }
                         tempParsedOrderPayouts[orderId].refund += refundVal;
                         tempParsedOrderPayouts[orderId].adminFees += adminFeesVal;
                         tempParsedOrderPayouts[orderId].ads += adsCost;

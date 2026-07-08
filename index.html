@@ -205,7 +205,7 @@
                                     <td style="text-align: right; font-weight: 600; color: #FFF;" id="pnl-gross-rev">Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted);">100.0%</td>
                                 </tr>
-                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.deduction-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); if (!isHidden) { document.querySelectorAll('.admin-detail-row, .layanan-detail-row').forEach(function(r){ r.style.display = 'none'; }); if (document.querySelector('.toggle-icon-admin')) document.querySelector('.toggle-icon-admin').textContent = '▶'; if (document.querySelector('.toggle-icon-layanan')) document.querySelector('.toggle-icon-layanan').textContent = '▶'; } this.querySelector('.toggle-icon-deduction').textContent = isHidden ? '▼' : '▶';">
+                                <tr style="cursor: pointer;" onclick="var rows = document.querySelectorAll('.deduction-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); if (!isHidden) { document.querySelectorAll('.admin-detail-row, .layanan-detail-row, .voucher-detail-row').forEach(function(r){ r.style.display = 'none'; }); if (document.querySelector('.toggle-icon-admin')) document.querySelector('.toggle-icon-admin').textContent = '▶'; if (document.querySelector('.toggle-icon-layanan')) document.querySelector('.toggle-icon-layanan').textContent = '▶'; if (document.querySelector('.toggle-icon-voucher')) document.querySelector('.toggle-icon-voucher').textContent = '▶'; } this.querySelector('.toggle-icon-deduction').textContent = isHidden ? '▼' : '▶';">
                                     <td style="padding-left: 25px; color: var(--text-muted);">(-) Total Potongan & Biaya <span class="toggle-icon-deduction" style="font-size: 10px; margin-left: 5px; color: var(--accent-cyan);">▶</span></td>
                                     <td style="text-align: right; color: var(--accent-pink);" id="pnl-total-deductions">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted);" id="pnl-total-deductions-pct">0.0%</td>
@@ -266,24 +266,44 @@
                                     <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-biaya-lainnya">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-biaya-lainnya-pct">0.0%</td>
                                 </tr>
-                                <tr class="deduction-detail-row" style="display: none;">
+                                <tr class="deduction-detail-row" style="display: none; cursor: pointer; background: rgba(255,255,255,0.01);" onclick="if (this.getAttribute('data-disabled') === 'true') { event.stopPropagation(); return; } var rows = document.querySelectorAll('.voucher-detail-row'); var isHidden = rows[0].style.display === 'none'; rows.forEach(function(r){ r.style.display = isHidden ? 'table-row' : 'none'; }); this.querySelector('.toggle-icon-voucher').textContent = isHidden ? '▼' : '▶'; event.stopPropagation();">
                                     <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">
-                                        <div class="tooltip-container" onclick="this.classList.toggle('active')">
-                                            • Voucher & Diskon Toko <span class="info-icon">i</span>
-                                            <div class="tooltip-content">
+                                        • Voucher & Diskon Toko <span class="toggle-icon-voucher" style="font-size: 8px; margin-left: 3px; color: var(--accent-cyan);">▶</span>
+                                        <span class="tooltip-container" onclick="event.stopPropagation(); this.classList.toggle('active');" style="margin-left: 5px;">
+                                            <span class="info-icon">i</span>
+                                            <span class="tooltip-content">
                                                 <strong>Voucher & Diskon Toko:</strong>
-                                                Akumulasi seluruh promosi dan potongan harga produk yang Anda biayai/sponsori sendiri.
-                                                <br><br>
-                                                • <strong>Total Diskon Produk:</strong> Potongan promo harga coret di toko Anda.
-                                                <br>
-                                                • <strong>Voucher Toko:</strong> Voucher belanja yang digunakan pembeli.
-                                                <br>
-                                                • <strong>Promo Gratis Ongkir Toko:</strong> Ongkir yang Anda tanggung untuk pembeli.
-                                            </div>
-                                        </div>
+                                                Akumulasi seluruh promosi dan potongan harga produk yang Anda biayai/sponsori sendiri. Klik baris ini untuk melihat rinciannya.
+                                            </span>
+                                        </span>
                                     </td>
                                     <td style="text-align: right; color: var(--accent-pink); font-size: 12px;" id="pnl-seller-voucher">-Rp 0</td>
                                     <td style="text-align: right; color: var(--text-muted); font-size: 12px;" id="pnl-seller-voucher-pct">0.0%</td>
+                                </tr>
+                                <tr class="voucher-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Total Diskon Produk</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-sub-total-diskon-produk">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-sub-total-diskon-produk-pct">0.0%</td>
+                                </tr>
+                                <tr class="voucher-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Voucher Toko</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-sub-voucher-toko">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-sub-voucher-toko-pct">0.0%</td>
+                                </tr>
+                                <tr class="voucher-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Promo Gratis Ongkir Toko</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-sub-promo-gratis-ongkir">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-sub-promo-gratis-ongkir-pct">0.0%</td>
+                                </tr>
+                                <tr class="voucher-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Voucher Co-Fund</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-sub-voucher-cofund">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-sub-voucher-cofund-pct">0.0%</td>
+                                </tr>
+                                <tr class="voucher-detail-row" style="display: none; background: rgba(255,255,255,0.005);">
+                                    <td style="padding-left: 65px; color: var(--text-muted); font-size: 11px;">- Cashback Koin</td>
+                                    <td style="text-align: right; color: var(--accent-pink); font-size: 11px;" id="pnl-sub-cashback-koin">-Rp 0</td>
+                                    <td style="text-align: right; color: var(--text-muted); font-size: 11px;" id="pnl-sub-cashback-koin-pct">0.0%</td>
                                 </tr>
                                 <tr class="deduction-detail-row" style="display: none;">
                                     <td style="padding-left: 45px; color: var(--text-muted); font-size: 12px;">• Retur & Pengembalian Dana</td>
