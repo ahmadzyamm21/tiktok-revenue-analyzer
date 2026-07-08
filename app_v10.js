@@ -2635,6 +2635,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 biayaAsuransi: 0,
                                 gratisOngkirXtra: 0,
                                 promoXtra: 0,
+                                subTotalDiskonProduk: 0,
+                                subVoucherToko: 0,
+                                subPromoGratisOngkir: 0,
+                                subVoucherCofund: 0,
+                                subCashbackKoin: 0,
                                 isPaid: false
                             };
                         }
@@ -2661,13 +2666,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             tempParsedOrderPayouts[orderId].associatedOrderId = (row[colMap.orderId] || '').toString().trim();
                         }
                         tempParsedOrderPayouts[orderId].voucher += voucherVal;
-                        if (!tempParsedOrderPayouts[orderId].subTotalDiskonProduk) {
-                            tempParsedOrderPayouts[orderId].subTotalDiskonProduk = 0;
-                            tempParsedOrderPayouts[orderId].subVoucherToko = 0;
-                            tempParsedOrderPayouts[orderId].subPromoGratisOngkir = 0;
-                            tempParsedOrderPayouts[orderId].subVoucherCofund = 0;
-                            tempParsedOrderPayouts[orderId].subCashbackKoin = 0;
-                        }
                         if (isShopee) {
                             tempParsedOrderPayouts[orderId].subTotalDiskonProduk += totalDiscountVal;
                             tempParsedOrderPayouts[orderId].subVoucherToko += sellerVoucherVal;
